@@ -41,6 +41,42 @@ The extracted basefile remains under the Git-ignored research/local directory. I
 
 After this succeeds, repeat separately for client_360.dll or engine_360.dll as needed. Compare PE image-base, architecture, entry point, and code section size. Use the [Ghidra setup guide](GHIDRA_SETUP.md) to load the original XEX2 module with an Xbox-aware loader, rather than assuming a regular Windows PE loader has the right imports and memory mapping.
 
+## Server module verified — October 23, 2026
+
+The owner successfully decoded and inspected the **server_360.dll** module on Windows:
+
+| Attribute | Observed value |
+|---|---|
+| Original encrypted XEX2 module | 7,774,208 bytes |
+| Local decoded basefile | 7,798,784 bytes (MZ/PE32) |
+| Machine | 0x01F2 — PowerPC FP |
+| XEX module flags | 0x00000009 — Title, DLL |
+| XEX load address / PE image base | 0x89780000 |
+| XEX entry point / PE entry VA | 0x89DED900 (**match**) |
+| PE entry RVA | 0x66D900 |
+| PE section count | 7 |
+| PE .text size | **5,740,436 bytes** (about 5.47 MiB) |
+| PE .text RVA | 0x170000 |
+| PE .pdata size | 151,488 bytes |
+| XEX image size | 0x830000 |
+| PE SizeOfImage | 0x850200 |
+| Import libraries | xam.xex (1), xboxkrnl.exe (49), tier0_360.dll (49), vstdlib_360.dll (9) |
+
+The **PE entry RVA lies within the .text virtual range** (0x170000 to 0x6E9794). There are **108 import entries in total** across the four libraries. The difference between PE SizeOfImage and the XEX image-size field is recorded, not treated as failure.
+
+These are **header-level observations**, not decompiled functions. No Ghidra import has yet been confirmed.
+
+The existing PE inspection script formerly printed the *launcher* address when inspecting the server. This has been corrected with optional module-specific verification:
+
+```powershell
+git pull
+py tools\inspect_pe.py "research\local\server_360.basefile" --expected-xex-base 0x89780000 --expected-xex-entry 0x89DED900
+```
+
+**Do not repeat the basefile extraction**; the local file is already available and the extraction tool deliberately refuses overwrites.
+
+For the first function-analysis step, follow [GHIDRA_SETUP.md](GHIDRA_SETUP.md) and import the **original** `game-extracted/left4dead2/bin/server_360.dll` with XEXLoaderWV. The loader may use XEX-specific imports and metadata unavailable in the standalone PE.
+
 ## Later stages
 
 - Locate engine and gameplay functions, interface boundaries, and dependencies.
