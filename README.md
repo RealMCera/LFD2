@@ -15,12 +15,13 @@ This public repo holds tools and independently written research notes—not copy
 
 ## Next step on Windows
 
-Download the Windows `xex2ool.exe` from [landaire/acceleration releases](https://github.com/landaire/acceleration/releases), and put it in `tools/bin/` (ignored by Git).
+Install the official Windows `xex2ool.exe` release using the provided PowerShell installer (or download it manually from [landaire/acceleration releases](https://github.com/landaire/acceleration/releases)). The installer places it under Git-ignored `tools/bin/`.
 
 Then open PowerShell in `C:\Users\FrontDesk\LFD2` and run:
 
 ```powershell
 git pull
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\install_xex2ool.ps1
 py tools\prepare_xex.py
 ```
 
