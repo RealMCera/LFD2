@@ -1,68 +1,40 @@
-# Left 4 Dead 2 Xbox 360 — XEX analysis
+# L4D2 Xbox 360 XEX2 analysis history
 
-## Verified state (October 23, 2026)
+## Confirmed data from the owner's October 23, 2026 local runs
 
-The owner successfully extracted `game-extracted/default.xex`. Our Python header inspector reported:
+The archive was unpacked on Windows and the main executable at `game-extracted/default.xex` identified and inspected.
 
-- Format **XEX2**, size **757,760 bytes**, 16 optional headers
-- Title ID `454108D4`, Media ID `0E79403B`
-- Encryption **1: normal (encrypted)**
-- Compression **1: basic**, NOT normal/LZX
-- All five header-inspector unit tests passed
+- XEX2 executable size: **757,760 bytes**
+- Title ID: `454108D4`; Media ID: `0E79403B`
+- XEX version/base version: **0.0.0.3**
+- 16 optional XEX headers; module flags `0x00000001`
+- Encryption: **Normal**; compression: **Basic**
+- xex2ool v0.4.0 was successfully installed and executed
+- Image base `0x82000000`, entry `0x82010CB8`, image size `0x000C0000`
+- Imports: `xam.xex` (7), `xboxkrnl.exe` (43)
+- Resources: 1 (address `0x82021080`, size `0x9A6F0`)
+- The xex2ool `basefile` command created `research/local/default.basefile`, **786,432 bytes**, with initial bytes `4D 5A` (**MZ**).
+- The basefile size matches the reported XEX image size. Complete PE validity and executable code structure remain **unverified**.
 
-The original XEX is still encrypted. The header report alone does **not** mean machine code can yet be disassembled.
+The original XEX and local basefile must **not** be uploaded to this public repository.
 
-## Next workflow: use xex2ool locally
-
-`xex2ool` is an independently maintained open-source XEX2 analysis CLI. It documents `info`, `imports`, and `basefile` commands:
-
-- Project and usage: https://github.com/landaire/acceleration/blob/main/crates/xex2ool/README.md
-- Official release builds: https://github.com/landaire/acceleration/releases
-
-### 1. Get the Windows CLI
-
-Recommended: run the checked-in installer after `git pull`:
-
-    powershell -NoProfile -ExecutionPolicy Bypass -File tools\install_xex2ool.ps1
-
-The installer queries the upstream **v0.4.0** release, selects a Windows binary asset if it can identify one unambiguously, and installs `xex2ool.exe` under `tools/bin/`. It refuses to guess if multiple or no suitable assets are found, and prints the available upstream filenames. Review third-party binaries before running. `-ExecutionPolicy Bypass` applies only to the subprocess, not your permanent system setting.
-
-Manual alternative: download the appropriate Windows x64 binary from the [official releases](https://github.com/landaire/acceleration/releases/tag/v0.4.0), unzip and copy `xex2ool.exe` into `LFD2\tools\bin\`. Create that directory if necessary; it is ignored by Git. Or add the executable to PATH, or pass its full path with `--tool`.
-
-### 2. Run metadata inspection first
-
-In PowerShell, with your terminal in `C:\Users\FrontDesk\LFD2`:
+## Commands already completed
 
 ```powershell
-git pull
+py tools\extract_local.py "$archive"
+py tools\inspect_xex.py
 py tools\prepare_xex.py
-```
-
-This runs the external tool's `info` and `imports` commands on your original `game-extracted\default.xex`, without modifying it or writing a basefile.
-
-If your `xex2ool.exe` is elsewhere:
-
-```powershell
-py tools\prepare_xex.py --tool "C:\Full\Path\To\xex2ool.exe"
-```
-
-Share the info/import summary as console text. Review it for private keys or similar secrets first; never share any keys or decrypted executable bytes.
-
-### 3. Generate a local basefile after successful inspection
-
-```powershell
 py tools\prepare_xex.py --extract
 ```
 
-This calls `xex2ool basefile` and writes the result under `research/local/default.basefile`. No files are sent over the network by our Python helper. The original XEX remains untouched. Output must not already exist; the script refuses to overwrite files.
+## Next commands
 
-The script prints the new file's **size** and **first 16 bytes**. If it begins with `MZ`, it may be a PE image; otherwise, identify the representation before importing it into a disassembler. Even a PE-like image can require Xbox-specific memory mapping and import handling.
+```powershell
+git pull
+py -m unittest discover -s tests -v
+py tools\inspect_pe.py
+```
 
-## Later: Ghidra (PowerPC)
+Then follow [GHIDRA_SETUP.md](GHIDRA_SETUP.md) for the version-matched Ghidra and Xbox XEX loader workflow.
 
-- Ghidra official releases: https://github.com/NationalSecurityAgency/ghidra/releases
-- Xbox 360 XEX loader: https://github.com/zeroKilo/XEXLoaderWV
-- Prefer a loader build confirmed compatible with the Ghidra version you install; check the loader's release notes.
-- The reverse-engineering process involves mapping code and data sections, resolving imports, determining function boundaries, and independently documenting subsystems. Decompilation output is **not original C/C++ source** and will need extensive work to become buildable.
-
-Keep the original XEX, any decrypted basefile, game assets, and disassembler project files local. Do not publish them to this public repo.
+**Important:** xex2ool extraction recovers a decoded executable image; it is not itself a C/C++ decompilation or playable reconstruction.
