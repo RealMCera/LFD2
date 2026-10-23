@@ -21,7 +21,13 @@ The original XEX is still encrypted. The header report alone does **not** mean m
 
 ### 1. Get the Windows CLI
 
-Download a Windows binary from an official release (not a random file mirror), unzip it and place `xex2ool.exe` in `LFD2\tools\bin\`. Create `tools\bin\` if necessary. That directory is ignored by Git. Alternatively add the executable to PATH, or supply `--tool` and its full local path.
+Recommended: run the checked-in installer after `git pull`:
+
+    powershell -NoProfile -ExecutionPolicy Bypass -File tools\install_xex2ool.ps1
+
+The installer queries the upstream **v0.4.0** release, selects a Windows binary asset if it can identify one unambiguously, and installs `xex2ool.exe` under `tools/bin/`. It refuses to guess if multiple or no suitable assets are found, and prints the available upstream filenames. Review third-party binaries before running. `-ExecutionPolicy Bypass` applies only to the subprocess, not your permanent system setting.
+
+Manual alternative: download the appropriate Windows x64 binary from the [official releases](https://github.com/landaire/acceleration/releases/tag/v0.4.0), unzip and copy `xex2ool.exe` into `LFD2\tools\bin\`. Create that directory if necessary; it is ignored by Git. Or add the executable to PATH, or pass its full path with `--tool`.
 
 ### 2. Run metadata inspection first
 
