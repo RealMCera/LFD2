@@ -1,6 +1,6 @@
 # Left 4 Dead 2 — Xbox 360 reverse-engineering workspace
 
-**Status: archive extracted locally; XEX inspection is next. This is not a source decompilation or playable game build.**
+**Status: archive extracted; XEX2 header and game identity verified. Compression/encryption inspection is next. This is not a source decompilation or playable game build.**
 
 This project documents independent research into the Xbox 360 edition of Left 4 Dead 2. No proprietary executable, assets, keys, or recovered source code are published here.
 
@@ -8,7 +8,8 @@ This project documents independent research into the Xbox 360 edition of Left 4 
 
 - Locally extracted **96 files** from a **3.81 GB ZArchive** (reported by the project owner).
 - xVerter reported **100% extraction** and identified **one XEX**: `game-extracted/default.xex`.
-- The executable's **XEX2 header has not yet been read**, and its code has **not been decompiled**.
+- The executable's **XEX2 header has been read**: size **757,760 bytes**, module flags `0x00000001` (title module), PE data offset `0x1000`, **16 optional headers**.
+- Execution ID: title **`454108D4`**, media **`0E79403B`**, matching the **World** edition; code has **not** been decrypted or decompiled.
 
 ## Next step on Windows
 
@@ -16,10 +17,11 @@ Open PowerShell in `C:\Users\FrontDesk\LFD2` and run:
 
 ```powershell
 git pull
+py -m unittest discover -s tests -v
 py tools\inspect_xex.py
 ```
 
-The new script reads only executable metadata locally (format signature, flags, offsets, optional headers, Title ID/Media ID if present). It does not decrypt or decompile executable code.
+The script reads executable metadata locally, including encryption and compression types when the base-file descriptor is present (but not secrets or code). It does not decrypt or decompile executable code.
 
 See [full XEX analysis guide](docs/XEX_ANALYSIS.md), [project roadmap](docs/ROADMAP.md), [Windows extraction guide](docs/EXTRACTION.md), and [research note template](docs/RESEARCH_TEMPLATE.md).
 
