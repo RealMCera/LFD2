@@ -22,7 +22,7 @@ The inspector prints only PE header fields and section metadata, not code. The `
 - Server XEX image size: `0x00830000`
 - Server XEX entry point: `0x89DED900`
 
-If the PE and XEX entry addresses disagree, record that fact rather than assuming the PE is corrupted.
+**Completed in the owner's most recent report:** 13/13 unit tests passed and both server address comparisons displayed **MATCH**. If future versions of the files disagree, record that fact rather than assuming the PE is corrupted.
 
 ## 1b. Confirm where the rest of the game code lives
 
@@ -54,7 +54,7 @@ A newer Ghidra version may be available, but the XEXLoaderWV **12.1.3** ZIP is e
 
 ## 3. Import an original XEX2 module, not its exported basefile (recommended)
 
-In the Ghidra project, choose **File → Import File**. After verifying that it can decode successfully, prioritize:
+In the Ghidra project, choose **File → Import File** and select the original Xbox 360 XEX2 container:
 
 `C:\Users\FrontDesk\LFD2\game-extracted\left4dead2\bin\server_360.dll`
 
@@ -66,7 +66,7 @@ Confirm **server** load address `0x89780000`, entry `0x89DED900`, and imported l
 
 Do not invent a fake `.pdb` or `.xdb`; none was provided, so leave symbol-loading options disabled.
 
-**Alternative:** use `research/local/default.basefile` if a PE loader is compatible and you have confirmed the correct image base and PowerPC architecture. The original XEX is preferable since the XEX-specific loader can use its metadata and imports.
+**Fallback for server analysis:** use `research/local/server_360.basefile` if an appropriate PowerPC PE loader is available and the image base is set to `0x89780000`. Prefer the original XEX2 module because its loader may preserve Xbox-specific imports, metadata, and memory mapping.
 
 ## 4. What to record first
 
@@ -92,7 +92,7 @@ The recommended first investigation is the loader startup and import thunks; ide
 - One resource: name `454108D4`, address `0x82021080`, size `0x9A6F0`
 - Imported libraries: `xam.xex` v2.0.9328.0 (7), `xboxkrnl.exe` v2.0.9328.0 (43)
 
-**Additional PE verification:** PE32, PowerPC FP (0x01F2), six sections, entry RVA 0x10CB8, image base 0x82000000, PE SizeOfImage 0x40200, text section 32,872 bytes. All nine synthetic tests passed. No functions have yet been decompiled.
+**Earlier launcher PE verification:** PE32, PowerPC FP (0x01F2), six sections, entry RVA 0x10CB8, image base 0x82000000, PE SizeOfImage 0x40200, text section 32,872 bytes. **Latest server verification:** 13 tests passed and both server address comparisons matched. No functions have yet been decompiled.
 
 **First-function checklist:** After analysis completes, use Ghidra's Go To address action (usually **G**) and enter `89DED900`; inspect whether the disassembly there is recognized as a function, and open the Decompiler pane. Note function count and any warnings. If the expected entry is not mapped, capture the loader error rather than forcing the wrong language.
 
