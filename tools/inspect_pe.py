@@ -81,10 +81,27 @@ def parse_pe(data: bytes) -> dict:
     }
 
 
+def compare_xex_addresses(info: dict, xex_base: int | None,
+                          xex_entry: int | None) -> dict[str, bool]:
+    """Check only comparable addresses; never assume PE and XEX sizes are equal."""
+    comparisons = {}
+    if xex_base is not None:
+        comparisons["image_base"] = int(info["image_base"], 16) == xex_base
+    if xex_entry is not None:
+        comparisons["entry_va_from_pe"] = (
+            int(info["entry_va_from_pe"], 16) == xex_entry
+        )
+    return comparisons
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("path", type=Path, nargs="?", default=DEFAULT,
                         help="Local basefile path (default: research/local/default.basefile)")
+    parser.add_argument("--expected-xex-base", type=lambda s: int(s, 0),
+                        help="Optional XEX load address for comparison, e.g. 0x89780000")
+    parser.add_argument("--expected-xex-entry", type=lambda s: int(s, 0),
+                        help="Optional XEX entry address for comparison, e.g. 0x89DED900")
     args = parser.parse_args()
     try:
         path = args.path.expanduser().resolve()
@@ -102,8 +119,22 @@ def main() -> int:
                 f" raw={section['file_offset']}+{section['file_size']:,}"
                 f" flags={section['characteristics']}"
             )
-        print("\nExpected XEX-derived entry: 0x82010CB8, load address: 0x82000000.")
-        print("Compare the values above; differences may require Xbox-specific mapping.")
+        print("\nXEX comparison:")
+        if args.expected_xex_base is None and args.expected_xex_entry is None:
+            print("  Not requested (use --expected-xex-base and --expected-xex-entry).")
+        else:
+            comparisons = compare_xex_addresses(
+                info, args.expected_xex_base, args.expected_xex_entry
+            )
+            for field, matches in comparisons.items():
+                expected = (args.expected_xex_base if field == "image_base"
+                            else args.expected_xex_entry)
+                print(f"  {field}: expected 0x{expected:X} — "
+                      f"{'MATCH' if matches else 'MISMATCH'}")
+            if not all(comparisons.values()):
+                print("Address mismatch: verify the input module and XEX metadata.")
+                return 1
+        print("Note: PE SizeOfImage and XEX Image Size may differ.")
         print("No proprietary binary data was emitted or uploaded.")
         return 0
     except (OSError, ValueError, struct.error) as exc:
