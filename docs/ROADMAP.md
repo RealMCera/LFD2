@@ -11,7 +11,9 @@ User-reported Windows PowerShell outputs from xVerter:
 - `xverter convert`: **100% completed**, reported successful extraction
 - Extracted directory: `game-extracted/` (local, Git-ignored)
 - Xbox 360 executable discovered: `game-extracted/default.xex` (**one .xex**)
-- XEX header metadata / Title ID: **not yet inspected**
+- XEX header: **XEX2**, size **757,760 bytes**, flags `0x00000001`, PE offset `0x1000`, security information offset `0x98`, **16 optional headers**
+- Execution identity: Title ID **`454108D4`** and Media ID **`0E79403B`** (matches World release)
+- Encryption and compression: **not yet reported**
 - No decompilation or executable decryption has been completed
 
 ## Milestones
@@ -19,7 +21,8 @@ User-reported Windows PowerShell outputs from xVerter:
 - [x] Identify original archive format and metadata.
 - [x] Extract local archive contents successfully.
 - [x] Locate an Xbox 360 executable file named `default.xex`.
-- [ ] Inspect XEX2 magic and execution metadata (script ready: `tools/inspect_xex.py`).
+- [x] Inspect XEX2 magic and execution ID metadata.
+- [ ] Inspect base-file encryption and compression flags (inspector updated; awaiting output).
 - [ ] Generate a private local extracted-file inventory (optional).
 - [ ] Document import tables, executable architecture, and security/packing status.
 - [ ] Configure and validate a suitable executable loader/reverse-engineering environment.
@@ -29,4 +32,4 @@ User-reported Windows PowerShell outputs from xVerter:
 
 See [XEX analysis guide](XEX_ANALYSIS.md) and [extraction guide](EXTRACTION.md).
 
-**Status:** archive extraction completed; XEX inspection is next. No playable build or recovered game source exists in this repository.
+**Status:** archive extraction and initial XEX identity verified; encryption/compression flags are next. No playable build or recovered game source exists in this repository.
