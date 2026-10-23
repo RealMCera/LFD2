@@ -50,6 +50,35 @@ class XexHeaderTests(unittest.TestCase):
         finally:
             tmp.cleanup()
 
+    def test_file_format_flags(self):
+        tmp, path = self.make_file(count=2)
+        try:
+            data = bytearray(path.read_bytes())
+            struct.pack_into(">II", data, 24, 0x00040006, 0x40)
+            struct.pack_into(">II", data, 32, 0x000003FF, 0x80)
+            struct.pack_into(">IIIIBBBBI", data, 0x40, 1, 2, 3, 4, 0, 0, 1, 1, 0)
+            struct.pack_into(">IHH", data, 0x80, 16, 1, 2)
+            path.write_bytes(data)
+            report = inspect_xex(path)
+            self.assertTrue(report["base_file_format_present"])
+            self.assertEqual(report["encryption_type"], "1: normal (encrypted)")
+            self.assertEqual(report["compression_type"], "2: normal (LZX)")
+            self.assertEqual(report["title_id"], "00000004")
+        finally:
+            tmp.cleanup()
+
+    def test_file_format_invalid_length(self):
+        tmp, path = self.make_file(count=2)
+        try:
+            data = bytearray(path.read_bytes())
+            struct.pack_into(">II", data, 32, 0x000003FF, 0x80)
+            struct.pack_into(">IHH", data, 0x80, 4, 1, 2)
+            path.write_bytes(data)
+            with self.assertRaisesRegex(ValueError, "invalid size"):
+                inspect_xex(path)
+        finally:
+            tmp.cleanup()
+
 
 if __name__ == "__main__":
     unittest.main()
