@@ -2,7 +2,7 @@
 import struct
 import unittest
 
-from tools.inspect_pe import parse_pe
+from tools.inspect_pe import compare_xex_addresses, parse_pe
 
 
 def synthetic_pe():
@@ -48,6 +48,16 @@ class PeTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Truncated"):
             parse_pe(bytes(data))
 
+
+    def test_server_module_address_match(self):
+        result = parse_pe(bytes(synthetic_pe()))
+        comparison = compare_xex_addresses(result, 0x82000000, 0x82010CB8)
+        self.assertEqual(comparison, {"image_base": True, "entry_va_from_pe": True})
+
+    def test_other_module_address_mismatch(self):
+        result = parse_pe(bytes(synthetic_pe()))
+        comparison = compare_xex_addresses(result, 0x89780000, 0x89DED900)
+        self.assertEqual(comparison, {"image_base": False, "entry_va_from_pe": False})
 
 if __name__ == "__main__":
     unittest.main()
