@@ -10,7 +10,10 @@ import argparse
 import sys
 from pathlib import Path
 
-from inspect_xex import inspect_xex
+if __package__:
+    from .inspect_xex import inspect_xex
+else:
+    from inspect_xex import inspect_xex
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_ROOT = REPO_ROOT / "game-extracted"
