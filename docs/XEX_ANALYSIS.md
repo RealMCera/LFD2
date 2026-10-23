@@ -38,3 +38,32 @@ Sources on XEX layout:
     py -m unittest discover -s tests -v
 
 These unit tests use synthetic XEX-like buffers, **not** copies of the game.
+
+## Confirmed results from the owner's Windows inspection (2026-10-23)
+
+- `default.xex` size: **757,760 bytes**.
+- Format: **XEX2**, module flags: `0x00000001` (title module).
+- PE payload offset: `0x00001000`; security information offset: `0x00000098`.
+- Optional headers: **16**, Execution ID present.
+- Title ID: `454108D4`, Media ID: `0E79403B` (verified World-release identifiers).
+- Execution version/base version raw: `0x00000003` / `0x00000003`.
+- No decryption, unpacked PE, disassembly, or code decompilation has happened.
+
+## Next: identify encryption and compression
+
+The inspector now also reads the XEX2 **Base File Format** optional-header descriptor (`0x000003FF`), when present. It prints the encryption type (none/encrypted) and compression type (none/basic/LZX/delta) without printing keys or extracting proprietary code.
+
+From PowerShell in this repository, run:
+
+    git pull
+    py -m unittest discover -s tests -v
+    py tools\inspect_xex.py
+
+Share only the new metadata lines starting with `base_file_format_present`, `base_file_format_size`, `encryption_type`, and `compression_type` (or the full brief tool text output).
+
+## Future: Ghidra
+
+- Official releases: https://github.com/NationalSecurityAgency/ghidra/releases
+- Xbox 360 XEX loader: https://github.com/zeroKilo/XEXLoaderWV
+- Prefer a Ghidra/loader combination with explicitly documented compatibility; do not assume the newest loader ZIP works with every Ghidra version.
+- If encrypted/packed, an appropriate XEX-aware loader/decompressor is needed before normal PowerPC disassembly. Do not publish binary dumps or proprietary code.
