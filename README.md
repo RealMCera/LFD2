@@ -1,31 +1,38 @@
 # Left 4 Dead 2 — Xbox 360 reverse-engineering workspace
 
-**Status: research scaffolding, not a decompilation or playable build.**
+**Status: archive extracted locally; XEX inspection is next. This is not a source decompilation or playable game build.**
 
-This repository documents independent analysis of the Xbox 360 edition of Left 4 Dead 2. It contains no proprietary executable, game data, console keys, or recovered source code. Analyze only game files you are permitted to use locally.
+This project documents independent research into the Xbox 360 edition of Left 4 Dead 2. No proprietary executable, assets, keys, or recovered source code are published here.
 
-## Windows quickstart
+## Current findings — October 23, 2026
 
-1. Download your own ZAR archive from Google Drive to your Windows PC.
-2. Install Python 3 and xVerter (command: **py -m pip install --upgrade xverter**).
-3. Open a terminal in this repository; run **py tools\extract_local.py --info-only**.
-4. Paste the full local archive path when prompted.
-5. Once identification succeeds, run **py tools\extract_local.py** to extract locally.
+- Locally extracted **96 files** from a **3.81 GB ZArchive** (reported by the project owner).
+- xVerter reported **100% extraction** and identified **one XEX**: \`game-extracted/default.xex\`.
+- The executable's **XEX2 header has not yet been read**, and its code has **not been decompiled**.
 
-Full instructions: [Windows extraction guide](docs/EXTRACTION.md).
+## Next step on Windows
 
-The archive is approximately 3.81 GB; the connected Drive service imposes a 256 MB file download limit, so we have **not** inspected its header or extracted its contents. xVerter supports ZArchive; the name alone does not establish that this specific file uses that format.
+Open PowerShell in \`C:\Users\FrontDesk\LFD2\` and run:
 
-## Next milestones
+\`\`\`powershell
+git pull
+py tools\inspect_xex.py
+\`\`\`
 
-- Inspect actual archive signature and metadata.
-- Extract locally and find default.xex or other XEX executables, if present.
-- Record architecture and executable metadata.
-- Perform original function/subsystem research.
-- Consider independently authored tests and implementations.
+The new script reads only executable metadata locally (format signature, flags, offsets, optional headers, Title ID/Media ID if present). It does not decrypt or decompile executable code.
 
-See [roadmap](docs/ROADMAP.md) and [research template](docs/RESEARCH_TEMPLATE.md).
+See [full XEX analysis guide](docs/XEX_ANALYSIS.md), [project roadmap](docs/ROADMAP.md), [Windows extraction guide](docs/EXTRACTION.md), and [research note template](docs/RESEARCH_TEMPLATE.md).
 
-The optional tool **tools/inventory.py** generates a local SHA-256 file manifest into research/inventory.json, which is ignored by Git.
+## Local tools
 
-**Do not commit game binaries or extracted assets.** Unpacking an archive does not reconstruct proprietary source code.
+- \`tools/extract_local.py\`: identifies and extracts a locally held archive using xVerter.
+- \`tools/inspect_xex.py\`: reads Xbox 360 XEX2 header metadata without external libraries.
+- \`tools/inventory.py\`: inventories local extracted files, sizes, and SHA-256 hashes (optional).
+
+Unit tests for the XEX2 inspector use synthetic data:
+
+\`\`\`powershell
+py -m unittest discover -s tests -v
+\`\`\`
+
+Keep game data in \`game-extracted/\`; the directory is excluded by \`.gitignore\`. **Never upload copyrighted game assets, executable binaries, decompiler dumps, or secrets to this public repository.** 
