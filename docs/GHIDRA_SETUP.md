@@ -36,6 +36,10 @@ Review other extracted files and possible code-bearing containers before assumin
 
 The PE reports `SizeOfImage = 0x40200` versus XEX image size `0xC0000`. These are **different fields** and may include Xbox-specific packaging or mapped resources; record the mismatch but do not treat it alone as a parsing failure.
 
+## 1c. Game modules discovered
+
+The inventory confirms that **21 DLL-named files are also XEX2 executable modules**. In addition to the launcher, priority targets include server_360.dll, client_360.dll, and engine_360.dll. See [MODULE_MAP.md](MODULE_MAP.md) for the exact local extraction and inspection commands. Their code and architecture have not been examined yet.
+
 ## 2. Install a **matching** Ghidra and Xbox 360 loader pair
 
 Choose these versions specifically for compatibility:
@@ -48,11 +52,13 @@ Choose these versions specifically for compatibility:
 
 A newer Ghidra version may be available, but the XEXLoaderWV **12.1.3** ZIP is explicitly built for Ghidra 12.1.3. **Do not mix Ghidra 12.2 with an extension built for 12.1.3** unless upstream documents compatibility.
 
-## 3. Import the original XEX, not the exported basefile (recommended)
+## 3. Import an original XEX2 module, not its exported basefile (recommended)
 
-In the Ghidra project: **File → Import File**, choose:
+In the Ghidra project, choose **File → Import File**. After verifying that it can decode successfully, prioritize:
 
-`C:\Users\FrontDesk\LFD2\game-extracted\default.xex`
+`C:\Users\FrontDesk\LFD2\game-extracted\left4dead2\bin\server_360.dll`
+
+The previous `default.xex` can also serve as a small first loader-validation target.
 
 The Xbox 360 loader should recognize the `XEX2` signature and propose a PowerPC big-endian language such as `PowerPC:BE:64:A2ALT-32addr`. If Ghidra only offers a raw-binary loader, stop and verify that XEXLoaderWV was installed and enabled.
 
