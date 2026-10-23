@@ -1,0 +1,22 @@
+# Keep original game binaries, dumps, extracted data and analysis local
+game-extracted/
+game/
+original/
+roms/
+*.zar
+*.xex
+*.iso
+*.xiso
+*.xbe
+*.bin
+*.pak
+*.vpk
+*.zip
+*.7z
+*.rar
+research/inventory.json
+research/local/
+*.gpr
+*.rep/
+__pycache__/
+*.pyc
