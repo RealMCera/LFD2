@@ -13,19 +13,17 @@ This repository contains original research utilities, documentation, and synthet
 - xex2ool produced local `research/local/default.basefile`: **786,432 bytes**.
 - PE inspector verified **PE32, PowerPC FP (`0x01F2`), 6 sections**, and an entry-point address matching the XEX.
 - The launcher PE `.text` is only **32,872 bytes**, but the project found **21 additional XEX2 DLL modules**. The gameplay-oriented `server_360.dll` was successfully decoded locally: **PE32, PowerPC FP, 7 sections, 5,740,436 bytes of .text code**. Its XEX/PE entry is **`0x89DED900`**, base **`0x89780000`**. Other DLL code sections remain to be examined.
-- All **11** synthetic unit tests passed in the latest owner's report, before two newly added address-comparison tests.
+- All **13** synthetic unit tests passed; the server XEX/PE load address and entry-point comparisons both returned **MATCH**.
 
-## Next command on Windows
+## Next step: import server_360.dll in Ghidra
 
-From the LFD2 checkout:
+**The 13 tests and both server address comparisons have passed. No more extraction is required.**
 
-```powershell
-git pull
-py -m unittest discover -s tests -v
-py tools\inspect_pe.py "research\local\server_360.basefile" --expected-xex-base 0x89780000 --expected-xex-entry 0x89DED900
-```
+Install **64-bit JDK 21**, **Ghidra 12.1.3**, and the matching **XEXLoaderWV 12.1.3** release extension. Follow the [Ghidra setup guide](docs/GHIDRA_SETUP.md).
 
-The decoded server basefile is already available; **do not rerun extraction**. These commands validate the module-specific address comparison and run the additional synthetic tests. Next, follow [GHIDRA_SETUP.md](docs/GHIDRA_SETUP.md) to import the original Xbox 360 `server_360.dll` using XEXLoaderWV.
+In a non-shared Ghidra project outside the repo, import the **original XEX2 container** at `game-extracted/left4dead2/bin/server_360.dll`, not `research/local/server_360.basefile`. Confirm the loader's image base `0x89780000` and entry `0x89DED900`, run auto-analysis, then view the entry point in the decompiler.
+
+If the Xbox loader is missing or an import fails, capture Ghidra's exact message. Keep all executable contents and the Ghidra project local.
 
 ## Next stage: Ghidra
 
