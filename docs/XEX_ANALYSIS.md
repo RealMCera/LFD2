@@ -1,69 +1,62 @@
-# Executable analysis — starting from default.xex
+# Left 4 Dead 2 Xbox 360 — XEX analysis
 
-**Status: archive extracted and one local XEX found; no executable metadata has been reported yet.**
+## Verified state (October 23, 2026)
 
-The original Xbox 360 executable is stored locally at `game-extracted/default.xex`, relative to the repository root. Keep the file on your computer; do not upload it.
+The owner successfully extracted `game-extracted/default.xex`. Our Python header inspector reported:
 
-## Step 1 — update your local clone
+- Format **XEX2**, size **757,760 bytes**, 16 optional headers
+- Title ID `454108D4`, Media ID `0E79403B`
+- Encryption **1: normal (encrypted)**
+- Compression **1: basic**, NOT normal/LZX
+- All five header-inspector unit tests passed
 
-From PowerShell in the LFD2 repository:
+The original XEX is still encrypted. The header report alone does **not** mean machine code can yet be disassembled.
 
-    git pull
+## Next workflow: use xex2ool locally
 
-## Step 2 — read the XEX header, no other software required
+`xex2ool` is an independently maintained open-source XEX2 analysis CLI. It documents `info`, `imports`, and `basefile` commands:
 
-    py tools\inspect_xex.py
+- Project and usage: https://github.com/landaire/acceleration/blob/main/crates/xex2ool/README.md
+- Official release builds: https://github.com/landaire/acceleration/releases
 
-The script uses only Python's standard library and prints XEX2 magic, module flags, offsets, optional-header count, and the execution ID fields (Title ID, Media ID, version, disc number) if available. It does **not** decrypt, unpack, run, disassemble, or modify the file.
+### 1. Get the Windows CLI
 
-If the file isn't at the default location, provide an absolute path in double quotes:
+Download a Windows binary from an official release (not a random file mirror), unzip it and place `xex2ool.exe` in `LFD2\tools\bin\`. Create `tools\bin\` if necessary. That directory is ignored by Git. Alternatively add the executable to PATH, or supply `--tool` and its full local path.
 
-    py tools\inspect_xex.py "D:\\somewhere\\default.xex"
+### 2. Run metadata inspection first
 
-If it reports a non-XEX2 magic, do not force it: inspect and verify the file separately.
+In PowerShell, with your terminal in `C:\Users\FrontDesk\LFD2`:
 
-## Step 3 — first source-like analysis (later)
+```powershell
+git pull
+py tools\prepare_xex.py
+```
 
-- Download Ghidra from its official site: https://ghidra-sre.org/
-- An Xbox 360 XEX-aware loader may be required, such as https://github.com/zeroKilo/XEXLoaderWV . Check extension compatibility with your installed Ghidra version.
-- Retail XEX code may be encrypted/compressed. A XEX-aware toolchain is often needed before meaningful PowerPC code appears. No decrypted PE basefile is included in this repository.
-- Work with original research notes rather than posting proprietary assembly, full decompiler listings, binaries, or extracted game assets.
+This runs the external tool's `info` and `imports` commands on your original `game-extracted\default.xex`, without modifying it or writing a basefile.
 
-Sources on XEX layout:
-- https://free60.org/System-Software/Formats/XEX/
-- https://github.com/xenia-manager/xenia-manager/blob/main/source/XeniaManager.Files/XexFile.cs
+If your `xex2ool.exe` is elsewhere:
 
-## Testing the inspector
+```powershell
+py tools\prepare_xex.py --tool "C:\Full\Path\To\xex2ool.exe"
+```
 
-    py -m unittest discover -s tests -v
+Share the info/import summary as console text. Review it for private keys or similar secrets first; never share any keys or decrypted executable bytes.
 
-These unit tests use synthetic XEX-like buffers, **not** copies of the game.
+### 3. Generate a local basefile after successful inspection
 
-## Confirmed results from the owner's Windows inspection (2026-10-23)
+```powershell
+py tools\prepare_xex.py --extract
+```
 
-- `default.xex` size: **757,760 bytes**.
-- Format: **XEX2**, module flags: `0x00000001` (title module).
-- PE payload offset: `0x00001000`; security information offset: `0x00000098`.
-- Optional headers: **16**, Execution ID present.
-- Title ID: `454108D4`, Media ID: `0E79403B` (verified World-release identifiers).
-- Execution version/base version raw: `0x00000003` / `0x00000003`.
-- No decryption, unpacked PE, disassembly, or code decompilation has happened.
+This calls `xex2ool basefile` and writes the result under `research/local/default.basefile`. No files are sent over the network by our Python helper. The original XEX remains untouched. Output must not already exist; the script refuses to overwrite files.
 
-## Next: identify encryption and compression
+The script prints the new file's **size** and **first 16 bytes**. If it begins with `MZ`, it may be a PE image; otherwise, identify the representation before importing it into a disassembler. Even a PE-like image can require Xbox-specific memory mapping and import handling.
 
-The inspector now also reads the XEX2 **Base File Format** optional-header descriptor (`0x000003FF`), when present. It prints the encryption type (none/encrypted) and compression type (none/basic/LZX/delta) without printing keys or extracting proprietary code.
+## Later: Ghidra (PowerPC)
 
-From PowerShell in this repository, run:
-
-    git pull
-    py -m unittest discover -s tests -v
-    py tools\inspect_xex.py
-
-Share only the new metadata lines starting with `base_file_format_present`, `base_file_format_size`, `encryption_type`, and `compression_type` (or the full brief tool text output).
-
-## Future: Ghidra
-
-- Official releases: https://github.com/NationalSecurityAgency/ghidra/releases
+- Ghidra official releases: https://github.com/NationalSecurityAgency/ghidra/releases
 - Xbox 360 XEX loader: https://github.com/zeroKilo/XEXLoaderWV
-- Prefer a Ghidra/loader combination with explicitly documented compatibility; do not assume the newest loader ZIP works with every Ghidra version.
-- If encrypted/packed, an appropriate XEX-aware loader/decompressor is needed before normal PowerPC disassembly. Do not publish binary dumps or proprietary code.
+- Prefer a loader build confirmed compatible with the Ghidra version you install; check the loader's release notes.
+- The reverse-engineering process involves mapping code and data sections, resolving imports, determining function boundaries, and independently documenting subsystems. Decompilation output is **not original C/C++ source** and will need extensive work to become buildable.
+
+Keep the original XEX, any decrypted basefile, game assets, and disassembler project files local. Do not publish them to this public repo.
