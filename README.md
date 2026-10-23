@@ -1,45 +1,43 @@
 # Left 4 Dead 2 — Xbox 360 reverse-engineering workspace
 
-**Status: ZArchive extracted, XEX2 identity verified, base-file encryption/compression identified. This is NOT a finished decompilation or playable build.**
+**Current status: Xbox 360 XEX decoded into a local MZ basefile; PE structure and Ghidra import are next. This is NOT a complete decompilation or playable build.**
 
-This public repo holds tools and independently written research notes—not copyrighted game binaries, extracted assets, decryption keys, or recovered source dumps.
+This public repo contains independent research tools, documentation, and synthetic tests. All proprietary data stays in local, Git-ignored directories.
 
-## Verified October 23, 2026
+## Verified Windows results — October 23, 2026
 
-- **96 files** extracted from a 3.81 GB ZArchive; `game-extracted/default.xex` located.
-- `default.xex` is an Xbox 360 **XEX2**, size **757,760 bytes**.
-- Title ID **`454108D4`**, Media ID **`0E79403B`**, 16 optional headers.
-- Base-file descriptor: encryption **normal (1)**, compression **basic (1)**.
-- All five synthetic XEX inspector tests passed.
-- **Not yet decrypted or decompiled.**
+- Extracted **96 files** from a 3.81 GB ZArchive.
+- Xbox 360 **XEX2** `game-extracted/default.xex`: **757,760 bytes**.
+- Title ID `454108D4`, Media ID `0E79403B`.
+- XEX encryption: **normal**; compression: **basic**.
+- xex2ool **v0.4.0** reported the load address `0x82000000`, image size `0xC0000`, entry point `0x82010CB8`.
+- Imported system libraries: **xam.xex (7)** and **xboxkrnl.exe (43)**.
+- The `basefile` command wrote `research/local/default.basefile` (**786,432 bytes**) and the file begins with **MZ**.
+- PE/COFF sections and architecture have **not yet been verified**. Game functions have **not been decompiled**.
 
-## Next step on Windows
+## Next: validate the PE and install Ghidra
 
-Install the official Windows `xex2ool.exe` release using the provided PowerShell installer (or download it manually from [landaire/acceleration releases](https://github.com/landaire/acceleration/releases)). The installer places it under Git-ignored `tools/bin/`.
-
-Then open PowerShell in `C:\Users\FrontDesk\LFD2` and run:
+Open PowerShell inside `C:\Users\FrontDesk\LFD2`:
 
 ```powershell
 git pull
-powershell -NoProfile -ExecutionPolicy Bypass -File tools\install_xex2ool.ps1
-py tools\prepare_xex.py
-```
-
-It will print metadata and import information locally without modifying `default.xex`. Once that succeeds, the optional `py tools\prepare_xex.py --extract` creates an ignored, local basefile for further analysis.
-
-See [full XEX workflow](docs/XEX_ANALYSIS.md), [roadmap](docs/ROADMAP.md), and [extraction guide](docs/EXTRACTION.md).
-
-## Local tools
-
-- `tools/extract_local.py`: reads/extracts a local ZArchive via xVerter.
-- `tools/inspect_xex.py`: inspects XEX2 execution, encryption, and compression headers.
-- `tools/prepare_xex.py`: calls third-party xex2ool for local info/imports and optional basefile extraction.
-- `tools/inventory.py`: optional SHA-256 inventory of extracted files.
-
-Tests (synthetic data only):
-
-```powershell
 py -m unittest discover -s tests -v
+py tools\inspect_pe.py
 ```
 
-**Never commit original XEX files, decrypted basefiles, game assets, decompiler dumps, or keys to this repository.**
+The new `inspect_pe.py` reads only header and section metadata from the local basefile. It does not upload game code.
+
+See the [step-by-step Ghidra setup guide](docs/GHIDRA_SETUP.md) for **Ghidra 12.1.3** paired with **XEXLoaderWV 12.1.3** (version-matched). The Xbox-specific loader is designed to import the original `default.xex` so imports and memory mapping can be handled correctly.
+
+## Local tooling
+
+- `tools/extract_local.py` — local ZArchive identification/extraction with xVerter.
+- `tools/inspect_xex.py` — XEX2 metadata inspection.
+- `tools/install_xex2ool.ps1` — install upstream xex2ool (Windows).
+- `tools/prepare_xex.py` — query xex2ool and optionally extract an ignored local basefile.
+- `tools/inspect_pe.py` — new header-only PE inspector.
+- `tools/inventory.py` — optional SHA-256 file manifest of extracted data.
+
+Research history and milestones: [ROADMAP](docs/ROADMAP.md).
+
+**Do not upload the original XEX, decrypted basefile, extracted game assets, or copies of proprietary decompiler output to this public repository.**
