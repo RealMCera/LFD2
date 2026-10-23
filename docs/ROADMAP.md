@@ -14,7 +14,7 @@ The following results were reported by the project owner's Windows tools:
 - PE image base `0x82000000`, entry RVA `0x10CB8` => virtual entry `0x82010CB8`. **Matches XEX entry**.
 - PE SizeOfImage `0x40200`, **different from** XEX image-size field `0xC0000`. This may reflect Xbox-specific packaging/mapping; do not assume equivalence.
 - PE sections (virtual bytes): `.rdata` 8,100; `.pdata` 952; `.text` **32,872**; `.data` 4,184; `.idata` 326; `.XBLD` 48.
-- **9 synthetic tests passed**. Ghidra disassembly and source reconstruction have **NOT** begun.
+- **11 synthetic tests passed** in the owner's latest run (before two newly added PE address-comparison tests). Ghidra disassembly and source reconstruction have **NOT** begun.
 
 ### Module discovery update — 2026-10-23
 
@@ -28,9 +28,24 @@ The inventory identified **21 DLL-named Xbox XEX2 modules plus default.xex (22 t
 
 Responsibilities based on file names are hypotheses, not verified disassembly. Detailed inventory and next commands: [MODULE_MAP.md](MODULE_MAP.md).
 
+### Server gameplay module verified — 2026-10-23
+
+The owner successfully ran xex2ool and the PE inspector on `left4dead2/bin/server_360.dll`:
+
+- Module flag `0x00000009` (Title + DLL), normal encryption, basic compression.
+- Decoded local basefile `research/local/server_360.basefile`: **7,798,784 bytes**, valid PE32, **PowerPC FP (0x01F2)**.
+- XEX/PE load address: `0x89780000`, entry point: `0x89DED900`, matching across formats.
+- PE entry RVA `0x66D900` is within the executable `.text` section.
+- **7 sections**; `.text` contains **5,740,436 bytes** of executable instructions (about 5.47 MiB).
+- Four imported libraries: xam.xex **1**, xboxkrnl.exe **49**, tier0_360.dll **49**, vstdlib_360.dll **9** (108 import entries total).
+- XEX image size `0x830000`; PE SizeOfImage `0x850200`. These fields differ; do not assume they are identical.
+- This is bytecode extraction/metadata verification, **not a source decompilation**.
+
+See [module map](MODULE_MAP.md) for the full PE section report and server-specific address-check command.
+
 ### Important scope check
 
-The `.text` section in this XEX is only about **32 KiB**. That is small for an entire commercial game engine, so do not assume `default.xex` contains all of Left 4 Dead 2's game code. It could be a small launcher/bootstrap component, or the game code could be packaged differently. The current evidence alone does not establish why. Before claiming a whole-game decompilation, inventory the other **95** extracted files and identify other code-bearing containers.
+The `default.xex` launcher has only about **32 KiB** of code, but the newly verified **server_360.dll has 5.74 MB of code**. This confirms the launcher alone was not a sensible whole-game target. The other 20 DLL-named XEX2 modules still need separate analysis; successful decoding of the server module does not imply the game has been fully decompiled.
 
 ## Milestones
 
@@ -41,14 +56,15 @@ The `.text` section in this XEX is only about **32 KiB**. That is small for an e
 - [x] Add lightweight extracted-file inventory: `tools/summarize_extract.py`.
 - [x] Inventory extracted files and locate the 21 DLL-named XEX2 modules.
 - [x] Add `tools/catalog_modules.py` and synthetic tests for DLL/XEX detection.
-- [ ] Scan XEX security/header metadata across all executable modules.
-- [ ] Decode the server_360.dll basefile locally and verify its PE code sections.
+- [x] Scan XEX security/header metadata across all 22 modules (all normal-encrypted, basic-compressed; Title ID 454108D4).
+- [x] Decode the server_360.dll basefile locally and verify its PE code sections and entry point.
+- [x] Replace hard-coded launcher address comparison with optional module-specific PE/XEX checks.
 - [ ] Install **Ghidra 12.1.3** and **XEXLoaderWV 12.1.3** (matching versions).
-- [ ] Import `default.xex` with the Xbox-aware loader.
+- [ ] Import `left4dead2/bin/server_360.dll` with the Xbox-aware loader.
 - [ ] Validate loader memory map, PowerPC function boundaries, and import tables.
-- [ ] Record first entry function and discover whether this XEX invokes other modules.
+- [ ] Identify server DLL entry function and gameplay-related function boundaries, then study dependencies.
 - [ ] Assess scope of a possible buildable decompilation; write independent research and tests.
 
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status: launcher PE metadata verified and actual gameplay/engine modules located; function-level code analysis pending.**
+**Status: server game module executable code extracted and PE verified; Ghidra function analysis is next.**
