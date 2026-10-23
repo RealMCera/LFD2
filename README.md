@@ -1,40 +1,44 @@
 # Left 4 Dead 2 — Xbox 360 reverse-engineering workspace
 
-**Status: archive extracted; XEX2 header and game identity verified. Compression/encryption inspection is next. This is not a source decompilation or playable game build.**
+**Status: ZArchive extracted, XEX2 identity verified, base-file encryption/compression identified. This is NOT a finished decompilation or playable build.**
 
-This project documents independent research into the Xbox 360 edition of Left 4 Dead 2. No proprietary executable, assets, keys, or recovered source code are published here.
+This public repo holds tools and independently written research notes—not copyrighted game binaries, extracted assets, decryption keys, or recovered source dumps.
 
-## Current findings — October 23, 2026
+## Verified October 23, 2026
 
-- Locally extracted **96 files** from a **3.81 GB ZArchive** (reported by the project owner).
-- xVerter reported **100% extraction** and identified **one XEX**: `game-extracted/default.xex`.
-- The executable's **XEX2 header has been read**: size **757,760 bytes**, module flags `0x00000001` (title module), PE data offset `0x1000`, **16 optional headers**.
-- Execution ID: title **`454108D4`**, media **`0E79403B`**, matching the **World** edition; code has **not** been decrypted or decompiled.
+- **96 files** extracted from a 3.81 GB ZArchive; `game-extracted/default.xex` located.
+- `default.xex` is an Xbox 360 **XEX2**, size **757,760 bytes**.
+- Title ID **`454108D4`**, Media ID **`0E79403B`**, 16 optional headers.
+- Base-file descriptor: encryption **normal (1)**, compression **basic (1)**.
+- All five synthetic XEX inspector tests passed.
+- **Not yet decrypted or decompiled.**
 
 ## Next step on Windows
 
-Open PowerShell in `C:\Users\FrontDesk\LFD2` and run:
+Download the Windows `xex2ool.exe` from [landaire/acceleration releases](https://github.com/landaire/acceleration/releases), and put it in `tools/bin/` (ignored by Git).
+
+Then open PowerShell in `C:\Users\FrontDesk\LFD2` and run:
 
 ```powershell
 git pull
-py -m unittest discover -s tests -v
-py tools\inspect_xex.py
+py tools\prepare_xex.py
 ```
 
-The script reads executable metadata locally, including encryption and compression types when the base-file descriptor is present (but not secrets or code). It does not decrypt or decompile executable code.
+It will print metadata and import information locally without modifying `default.xex`. Once that succeeds, the optional `py tools\prepare_xex.py --extract` creates an ignored, local basefile for further analysis.
 
-See [full XEX analysis guide](docs/XEX_ANALYSIS.md), [project roadmap](docs/ROADMAP.md), [Windows extraction guide](docs/EXTRACTION.md), and [research note template](docs/RESEARCH_TEMPLATE.md).
+See [full XEX workflow](docs/XEX_ANALYSIS.md), [roadmap](docs/ROADMAP.md), and [extraction guide](docs/EXTRACTION.md).
 
 ## Local tools
 
-- `tools/extract_local.py`: identifies and extracts a locally held archive using xVerter.
-- `tools/inspect_xex.py`: reads Xbox 360 XEX2 header metadata without external libraries.
-- `tools/inventory.py`: inventories local extracted files, sizes, and SHA-256 hashes (optional).
+- `tools/extract_local.py`: reads/extracts a local ZArchive via xVerter.
+- `tools/inspect_xex.py`: inspects XEX2 execution, encryption, and compression headers.
+- `tools/prepare_xex.py`: calls third-party xex2ool for local info/imports and optional basefile extraction.
+- `tools/inventory.py`: optional SHA-256 inventory of extracted files.
 
-Unit tests for the XEX2 inspector use synthetic data:
+Tests (synthetic data only):
 
 ```powershell
 py -m unittest discover -s tests -v
 ```
 
-Keep game data in `game-extracted/`; the directory is excluded by `.gitignore`. **Never upload copyrighted game assets, executable binaries, decompiler dumps, or secrets to this public repository.** 
+**Never commit original XEX files, decrypted basefiles, game assets, decompiler dumps, or keys to this repository.**
