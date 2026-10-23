@@ -14,7 +14,7 @@ The following results were reported by the project owner's Windows tools:
 - PE image base `0x82000000`, entry RVA `0x10CB8` => virtual entry `0x82010CB8`. **Matches XEX entry**.
 - PE SizeOfImage `0x40200`, **different from** XEX image-size field `0xC0000`. This may reflect Xbox-specific packaging/mapping; do not assume equivalence.
 - PE sections (virtual bytes): `.rdata` 8,100; `.pdata` 952; `.text` **32,872**; `.data` 4,184; `.idata` 326; `.XBLD` 48.
-- **11 synthetic tests passed** in the owner's latest run (before two newly added PE address-comparison tests). Ghidra disassembly and source reconstruction have **NOT** begun.
+- **13 synthetic tests passed** in the owner's latest run, including two PE/XEX comparison tests. Ghidra disassembly and source reconstruction have **NOT** begun.
 
 ### Module discovery update — 2026-10-23
 
@@ -39,7 +39,8 @@ The owner successfully ran xex2ool and the PE inspector on `left4dead2/bin/serve
 - **7 sections**; `.text` contains **5,740,436 bytes** of executable instructions (about 5.47 MiB).
 - Four imported libraries: xam.xex **1**, xboxkrnl.exe **49**, tier0_360.dll **49**, vstdlib_360.dll **9** (108 import entries total).
 - XEX image size `0x830000`; PE SizeOfImage `0x850200`. These fields differ; do not assume they are identical.
-- This is bytecode extraction/metadata verification, **not a source decompilation**.
+- **Follow-up verification:** the two explicit server address checks returned **MATCH** for base `0x89780000` and entry `0x89DED900`; **13 of 13 unit tests passed**.
+- This is executable extraction/metadata verification, **not a source decompilation**.
 
 See [module map](MODULE_MAP.md) for the full PE section report and server-specific address-check command.
 
