@@ -1,32 +1,31 @@
 # Left 4 Dead 2 — Xbox 360 reverse-engineering workspace
 
-**Status: research scaffolding. This is not a game decompilation or playable build.**
+**Status: research scaffolding, not a decompilation or playable build.**
 
-This repository documents independent research into the Xbox 360 edition of Left 4 Dead 2. It contains no proprietary executable, extracted game assets, code, encryption keys, or disassembly. Use only game files you are permitted to analyze locally.
+This repository documents independent analysis of the Xbox 360 edition of Left 4 Dead 2. It contains no proprietary executable, game data, console keys, or recovered source code. Analyze only game files you are permitted to use locally.
 
-## Working from your own `.zar` archive
+## Windows quickstart
 
-First confirm the archive format with an appropriate local inspection/conversion tool. The format has **not yet been verified by examination of file bytes**. Do not treat the extension alone as proof of the contained format.
+1. Download your own ZAR archive from Google Drive to your Windows PC.
+2. Install Python 3 and xVerter (command: **py -m pip install --upgrade xverter**).
+3. Open a terminal in this repository; run **py tools\extract_local.py --info-only**.
+4. Paste the full local archive path when prompted.
+5. Once identification succeeds, run **py tools\extract_local.py** to extract locally.
 
-After you have extracted it locally, inventory the output:
+Full instructions: [Windows extraction guide](docs/EXTRACTION.md).
 
-```powershell
-py tools/inventory.py "game-extracted" --out "research/inventory.json"
-```
+The archive is approximately 3.81 GB; the connected Drive service imposes a 256 MB file download limit, so we have **not** inspected its header or extracted its contents. xVerter supports ZArchive; the name alone does not establish that this specific file uses that format.
 
-The script creates a local listing containing file paths, sizes, and SHA-256 hashes. The output is ignored by Git.
+## Next milestones
 
-## Next targets
+- Inspect actual archive signature and metadata.
+- Extract locally and find default.xex or other XEX executables, if present.
+- Record architecture and executable metadata.
+- Perform original function/subsystem research.
+- Consider independently authored tests and implementations.
 
-1. Identify archive/container type and extraction method.
-2. Extract your own files locally; locate `default.xex` if present.
-3. Determine executable metadata and PowerPC architecture.
-4. Load executable in an appropriate reverse-engineering environment (such as Ghidra with a validated XEX loader).
-5. Record module imports, function boundaries, and original research notes.
-6. Work toward independently written code/tests if feasible.
+See [roadmap](docs/ROADMAP.md) and [research template](docs/RESEARCH_TEMPLATE.md).
 
-See [docs/ROADMAP.md](docs/ROADMAP.md). Never commit game assets, decompiler output copied from proprietary binaries, executable dumps, or secrets.
+The optional tool **tools/inventory.py** generates a local SHA-256 file manifest into research/inventory.json, which is ignored by Git.
 
-## Reality check
-
-A source-compatible, buildable Left 4 Dead 2 decompilation cannot be generated simply by converting a compressed game archive. The research and tooling must be developed incrementally. This repository is currently only an organizational starting point.
+**Do not commit game binaries or extracted assets.** Unpacking an archive does not reconstruct proprietary source code.
