@@ -20,3 +20,6 @@ research/local/
 *.rep/
 __pycache__/
 *.pyc
+
+# Locally downloaded third-party executables
+tools/bin/
