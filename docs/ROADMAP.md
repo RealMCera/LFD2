@@ -2,34 +2,38 @@
 
 ## Verified local results — 2026-10-23
 
-Reported from the project's Windows PowerShell workflow:
+The following results were reported by the project owner's Windows tools:
 
-- ZArchive: **3,809,468,161 bytes**, recognized, **96 files**, extraction completed at 100%.
-- Local executable: `game-extracted/default.xex`, **757,760 bytes**, format **XEX2**.
-- Title ID: `454108D4`; Media ID: `0E79403B`; version: **0.0.0.3**.
-- Encryption: **Normal**. Compression: **Basic**.
-- xex2ool binary was successfully installed and ran `info`, `imports`, and `basefile`.
-- Load address: `0x82000000`; entry point: `0x82010CB8`; image size: `0xC0000`.
-- Resource count **1**, named `454108D4`, address `0x82021080`, size `0x9A6F0`.
-- Imports: `xam.xex` **7**, `xboxkrnl.exe` **43** (v2.0.9328.0, min v2.0.8507.0).
-- Decoded local basefile: `research/local/default.basefile`, **786,432 bytes**, starts with **MZ**.
-- The extracted basefile has **not** been fully verified as a valid PE, and no function decompilation has been performed.
+- Source ZArchive: **3,809,468,161 bytes**; **96 files**, extraction completed successfully.
+- Original `default.xex`: **757,760 bytes**, Xbox 360 **XEX2**, encryption **normal**, compression **basic**.
+- Title ID `454108D4`, Media ID `0E79403B`, version 0.0.0.3.
+- XEX load address `0x82000000`, entry `0x82010CB8`, reported image size `0xC0000`.
+- Imports: `xam.xex` **7**, `xboxkrnl.exe` **43**.
+- xex2ool extracted `research/local/default.basefile`: **786,432 bytes**, starts with `MZ`.
+- PE inspector recognized **PE32**, machine `0x01F2` (**PowerPC FP**), **6 sections**.
+- PE image base `0x82000000`, entry RVA `0x10CB8` => virtual entry `0x82010CB8`. **Matches XEX entry**.
+- PE SizeOfImage `0x40200`, **different from** XEX image-size field `0xC0000`. This may reflect Xbox-specific packaging/mapping; do not assume equivalence.
+- PE sections (virtual bytes): `.rdata` 8,100; `.pdata` 952; `.text` **32,872**; `.data` 4,184; `.idata` 326; `.XBLD` 48.
+- **9 synthetic tests passed**. Ghidra disassembly and source reconstruction have **NOT** begun.
+
+### Important scope check
+
+The `.text` section in this XEX is only about **32 KiB**. That is small for an entire commercial game engine, so do not assume `default.xex` contains all of Left 4 Dead 2's game code. It could be a small launcher/bootstrap component, or the game code could be packaged differently. The current evidence alone does not establish why. Before claiming a whole-game decompilation, inventory the other **95** extracted files and identify other code-bearing containers.
 
 ## Milestones
 
-- [x] Identify and extract source ZArchive.
-- [x] Find XEX2 and verify game identity.
-- [x] Identify encryption and compression.
-- [x] Run xex2ool information and import analysis.
-- [x] Produce a local MZ basefile without publishing it.
-- [x] Add `tools/inspect_pe.py` to inspect PE/COFF header metadata.
-- [ ] Verify PE signature, machine type, sections, image base, entry address.
-- [ ] Install matching **Ghidra 12.1.3** and **XEXLoaderWV 12.1.3**.
-- [ ] Import `default.xex` with the PowerPC-aware XEX loader.
-- [ ] Validate mapped entry point, imports, functions, and analysis quality.
-- [ ] Produce original research notes and independently written code/tests.
-- [ ] Assess whether a complete buildable recreation is realistically feasible.
+- [x] Extract ZArchive and locate XEX2 executable.
+- [x] Determine XEX encryption and compression.
+- [x] Run xex2ool `info`, `imports`, `basefile`.
+- [x] Verify PE32 machine, sections, image base, and entry point.
+- [x] Add lightweight extracted-file inventory: `tools/summarize_extract.py`.
+- [ ] Inventory the other 95 files for possible code-bearing containers.
+- [ ] Install **Ghidra 12.1.3** and **XEXLoaderWV 12.1.3** (matching versions).
+- [ ] Import `default.xex` with the Xbox-aware loader.
+- [ ] Validate loader memory map, PowerPC function boundaries, and import tables.
+- [ ] Record first entry function and discover whether this XEX invokes other modules.
+- [ ] Assess scope of a possible buildable decompilation; write independent research and tests.
 
-See [Ghidra setup](GHIDRA_SETUP.md) and [XEX analysis](XEX_ANALYSIS.md).
+See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status: executable decoding completed; PE validation and Ghidra function analysis still pending.**
+**Status: XEX and PE metadata validated; code analysis and scope discovery pending.**
