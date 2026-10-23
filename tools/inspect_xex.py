@@ -14,6 +14,9 @@ from pathlib import Path
 XEX2_HEADER = struct.Struct(">4sIIIII")
 OPTIONAL_ENTRY = struct.Struct(">II")
 EXECUTION_ID = 0x00040006
+BASE_FILE_FORMAT = 0x000003FF
+ENCRYPTION_TYPES = {0: "none", 1: "normal (encrypted)"}
+COMPRESSION_TYPES = {0: "none", 1: "basic", 2: "normal (LZX)", 3: "delta"}
 MAX_OPTIONAL_HEADERS = 4096
 
 
@@ -40,6 +43,7 @@ def inspect_xex(path: Path) -> dict:
             "security_info_offset": f"0x{security_offset:08X}",
             "optional_header_count": count,
             "execution_id_present": False,
+            "base_file_format_present": False,
         }
         entries = [
             OPTIONAL_ENTRY.unpack_from(directory, i * OPTIONAL_ENTRY.size)
@@ -67,6 +71,25 @@ def inspect_xex(path: Path) -> dict:
                 "disc_number": disc,
                 "disc_count": discs,
                 "save_game_id": f"{save:08X}",
+            })
+            break
+        # XEX base-file format descriptor: size (u32), encryption (u16),
+        # compression (u16), followed by format-specific fields.
+        # Metadata only: do not decrypt keys, decompress, or export code.
+        for key, offset in entries:
+            if key != BASE_FILE_FORMAT:
+                continue
+            result["base_file_format_present"] = True
+            if offset < XEX2_HEADER.size or offset + 8 > size:
+                raise ValueError("Base-file format descriptor points outside the XEX file.")
+            fp.seek(offset)
+            declared_size, encryption, compression = struct.unpack(">IHH", fp.read(8))
+            if declared_size < 8 or declared_size > size - offset:
+                raise ValueError("Base-file format descriptor has an invalid size.")
+            result.update({
+                "base_file_format_size": declared_size,
+                "encryption_type": f"{encryption}: {ENCRYPTION_TYPES.get(encryption, 'unknown')}",
+                "compression_type": f"{compression}: {COMPRESSION_TYPES.get(compression, 'unknown')}",
             })
             break
         return result
