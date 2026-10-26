@@ -64,6 +64,26 @@ The helper now provides a bounded diagnostic that reads only fixed header fields
 
 Separately, one Windows ISO extraction unit test compared the short Windows 8.3 path against a resolved long path; its expectation has been corrected. This did not involve any ISO data or game extraction.
 
+## October 26 ZIP directory alignment evidence
+
+The read-only diagnostic confirmed:
+
+- EOCD offset: **1,083,750,400**
+- Directory size: **2,355,200** bytes
+- Declared central records: **24,435**
+- First record: filename 21 bytes, extra field 1,997 bytes, file comment 0 bytes.
+- Expected second header: **1,083,752,464**, but actual bytes are zeros.
+- First plausible next central header: **1,083,752,522**, a **+58 byte** gap.
+
+The standard ZIP specification uses variable-length filename, extra field, and comment sections. This diagnostic suggests an unusual directory gap or console-specific alignment, but **does not yet prove why**. The new reader scans at most **128 bytes** forward *within the confirmed central directory*, requires structurally plausible central headers, and counts recovered gaps. It does not parse or extract compressed file payloads. If it encounters more than 128 unknown bytes, it refuses to guess.
+
+    cd C:\Users\FrontDesk\LFD2
+    git pull
+    py -m unittest discover -s tests -v
+    py tools\inspect_map_materials.py --pack
+
+Results for the real archive are still pending. Avoid claiming full support until the reader successfully validates and counts its entries.
+
 ## Next engineering milestones
 
 1. Verify Source texture-name paths and matching material files in the console archives or BSP pakfile.
