@@ -253,6 +253,38 @@ Start-Process (Resolve-Path '.\docs\map-viewer.html').Path
 
 Choose the existing `c1m1_hotel_spawns_uv.mesh.json` in Chrome, reopen the map loader, and use **SELECT UP TO 16 LOCAL PNGs** to choose the converted images together from `research\local\hotel-textures\png\`. See [MULTI_MATERIAL_PREVIEW.md](docs/MULTI_MATERIAL_PREVIEW.md). This is a material-matched texture *preview*; full VMT dependency resolution, displacements, lighting and gameplay are still outstanding.
 
+## Eight real Source materials rendering in Chrome (owner screenshot)
+
+The October 26 Chrome screenshot confirms **8 original texture PNGs loaded**, **11,872 hotel brush triangles textured** (43.4% of the **27,374** converted triangles), **0 skipped**, with recognizable original hotel ceiling tile, beige wall and trim. The remaining gray floor/voids might be unconverted materials, tool brushes, or geometry beyond the brush mesh; do not invent the material based on color alone.
+
+**New:** aim the crosshair at the gray floor and press **I**. [docs/surface-inspector.js](docs/surface-inspector.js) raycasts the original triangles from the player's camera and reveals the precise BSP material name, triangle ID and hit distance. It also indicates if a multi-texture PNG is loaded for that material. The map loader includes an IDENTIFY MATERIAL button and a SELECT INSPECTED MATERIAL control.
+
+The local texture tool now supports `--focus floor` to list or prepare plausible floor/ground textures and `--material` to select **one exact BSP material name**; if no direct Xbox VTFX file exists, it reports this instead of applying the wrong image. No archives are modified; PNG outputs stay ignored/private. These changes await owner validation on the real map.
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\prepare_hotel_textures.py --focus floor
+```
+
+To prepare floor candidates (up to 8) privately:
+
+```powershell
+py tools\prepare_hotel_textures.py --focus floor --run
+```
+
+To target exactly what the crosshair inspector found:
+
+```powershell
+py tools\prepare_hotel_textures.py --material 'CONCRETE/CONCRETE_FLOOR_10'
+py tools\prepare_hotel_textures.py --material 'CONCRETE/CONCRETE_FLOOR_10' --run
+```
+
+The concrete path above is an **example** from the hotel's referenced names, not a claim that it's the gray floor currently beneath the camera. Replace it with the actual reported inspector name.
+
+Reload Chrome with Ctrl+Shift+R after `git pull`, choose the local UV mesh again and reselect any PNGs (file pickers do not persist them). See [MULTI_MATERIAL_PREVIEW.md](docs/MULTI_MATERIAL_PREVIEW.md).
+
 ## Further research and options
 
 - [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
