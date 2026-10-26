@@ -1,57 +1,54 @@
-# Left 4 Dead 2 — Xbox 360 reverse-engineering workspace
+# Left 4 Dead 2 Xbox 360 → Chrome port research
 
-**Status: Xbox 360 server executable decoded and PE verified, but not decompiled. A separate original browser survival demo is playable from docs/index.html; no original L4D2 port exists.**
+**Target: a genuine Left 4 Dead 2 browser port using original game behavior and the user's locally owned game files, closer in architecture to the BO1 Zombies browser project at vel.gg/bsz. This does NOT run in Chrome yet.**
 
-This repository contains original research utilities, documentation, and synthetic tests. Xbox binaries, extracted assets, keys, decoded basefiles, and Ghidra project files stay on your Windows PC.
+The current [After the Siren demo](docs/index.html) is a **separate, basic JavaScript raycasting experiment**. It is NOT the original game, does not use Source, and is **not the target implementation**. We will stop treating improvements to the demo's graphics as progress toward running actual L4D2.
 
-## Verified facts — 2026-10-23
+## The browser-port architecture
 
-- Extracted a ZArchive of **96 files**.
-- `default.xex`: **757,760 bytes**, XEX2, encryption **normal**, compression **basic**.
-- Title ID `454108D4`, Media ID `0E79403B`.
-- Loaded at `0x82000000`, with entry point `0x82010CB8` and imports from `xam.xex` (7) and `xboxkrnl.exe` (43).
-- xex2ool produced local `research/local/default.basefile`: **786,432 bytes**.
-- PE inspector verified **PE32, PowerPC FP (`0x01F2`), 6 sections**, and an entry-point address matching the XEX.
-- The launcher PE `.text` is only **32,872 bytes**, but the project found **21 additional XEX2 DLL modules**. The gameplay-oriented `server_360.dll` was successfully decoded locally: **PE32, PowerPC FP, 7 sections, 5,740,436 bytes of .text code**. Its XEX/PE entry is **`0x89DED900`**, base **`0x89780000`**. Other DLL code sections remain to be examined.
-- All **13** synthetic unit tests passed; the server XEX/PE load address and entry-point comparisons both returned **MATCH**.
+The BO1 Zombies project runs native C++ game-engine code recompiled into WebAssembly with custom web graphics, sound and game-data systems. See the [technical description of bo1z-client](https://github.com/jplot/bo1z-client).
 
-## Play the Chrome browser prototype
+Our equivalent would require:
+1. Validating the Xbox 360 Source engine maps, model and asset formats.
+2. Rendering **locally supplied original maps** using WebGL2/WebGPU.
+3. Recovering or recreating the portable C++ functionality of the L4D2 client, server, engine and dependencies.
+4. Compiling functioning portable code to WebAssembly through Emscripten and implementing the browser-facing system services.
+5. Keeping proprietary game data local, not bundling it into this public repository.
 
-**New:** [After the Siren — playable first-person zombie survival demo](docs/index.html). This is a separate, original browser proof of concept. It is **not** an emulation or port of the commercial Left 4 Dead 2 game, and it does not bundle game assets.
+The Xbox 360 **PowerPC XEX2** binaries cannot themselves be compiled by Emscripten, and Ghidra decompiler output is not automatically buildable source.
 
-To play directly in Chrome on Windows:
+**Full porting strategy and completion gates: [WEB_PORT_PLAN.md](docs/WEB_PORT_PLAN.md).**
 
-    cd C:\Users\FrontDesk\LFD2
-    git pull
-    Start-Process (Resolve-Path ".\docs\index.html").Path
+## Completed original-game research
 
-This opens the game in your default browser. For Chrome specifically, you can right-click docs/index.html in File Explorer and choose Open with → Google Chrome. The one-file demo includes WASD movement, mouse-look, shooting, AI teammates, pickups and five waves. To make it playable at a shareable web address, see [Chrome play and GitHub Pages setup](docs/PLAY.md) (choose branch main and /docs in GitHub Settings → Pages).
+- Local `.zar` unpack: **96 files**, including **22 Xbox 360 XEX2 modules**, **24 BSP maps**, and **8 .360.zip packages**.
+- Extracted and inspected XEX2 loader and gameplay-related server module.
+- `left4dead2/bin/server_360.dll` local decoded PE32/PowerPC image: **5,740,436 bytes of .text**, base `0x89780000`, entry `0x89DED900`.
+- Verified original XEX/PE memory addresses and all **13** synthetic tests in the owner's last report.
+- **No engine source recovered**, no browser-native build, no actual map rendered yet.
 
-## Next step: import server_360.dll in Ghidra
+## Next research command (Windows PowerShell)
 
-**The 13 tests and both server address comparisons have passed. No more extraction is required.**
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\probe_source_assets.py
+```
 
-Install **64-bit JDK 21**, **Ghidra 12.1.3**, and the matching **XEXLoaderWV 12.1.3** release extension. Follow the [Ghidra setup guide](docs/GHIDRA_SETUP.md).
+This probes the **headers only** of a few original BSP maps and Xbox ZIP packages. The console summary tells us which byte order and archive layout we must support to load the real environments into Chrome. It does not export or upload game resources.
 
-In a non-shared Ghidra project outside the repo, import the **original XEX2 container** at `game-extracted/left4dead2/bin/server_360.dll`, not `research/local/server_360.basefile`. Confirm the loader's image base `0x89780000` and entry `0x89DED900`, run auto-analysis, then view the entry point in the decompiler.
+The source file is [tools/probe_source_assets.py](tools/probe_source_assets.py).
 
-If the Xbox loader is missing or an import fails, capture Ghidra's exact message. Keep all executable contents and the Ghidra project local.
+## Further research and options
 
-## Next stage: Ghidra
+- [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
+- [Verified executable/module map](docs/MODULE_MAP.md)
+- [Detailed reverse-engineering roadmap](docs/ROADMAP.md)
+- [Legacy standalone original zombie demo](docs/PLAY.md)
 
-For the compatible **Ghidra 12.1.3** + **XEXLoaderWV 12.1.3** installation and `server_360.dll` import, follow [GHIDRA_SETUP.md](docs/GHIDRA_SETUP.md). Install JDK 21, use the official compiled Ghidra ZIP and matching XEXLoaderWV extension ZIP, and create a non-shared project outside this repo.
+Research tools include `tools/inspect_xex.py`, `tools/prepare_xex.py`, `tools/inspect_pe.py`, and `tools/catalog_modules.py`.
 
-## Local utilities
+The publicly released [Valve Source SDK 2013](https://github.com/ValveSoftware/source-sdk-2013) includes HL2/HL2:DM/TF2 code, **not a complete L4D2 engine**; it has license restrictions. Any Source/L4D2-derived project must respect the rights of the game publisher and third-party authors.
 
-- `tools/extract_local.py` — ZArchive extraction via xVerter
-- `tools/inspect_xex.py` — XEX metadata
-- `tools/install_xex2ool.ps1` — xex2ool Windows installer
-- `tools/prepare_xex.py` — xex2ool info/import/basefile
-- `tools/inspect_pe.py` — PE/COFF structure and sections
-- `tools/summarize_extract.py` — extracted-file overview and possible executable modules
-- `tools/catalog_modules.py` — enumerate Xbox 360 modules and security metadata (including .dll files)
-- `tools/inventory.py` — optional full SHA-256 inventory
-
-Full verification details: [ROADMAP](docs/ROADMAP.md) and [MODULE_MAP](docs/MODULE_MAP.md).
-
-**Do not commit original executable or game data, decrypted basefiles, or proprietary disassembler outputs to this public GitHub repository.**
+**Never commit Xbox game executables, decrypted binaries, maps, textures, models, music, or other commercial assets to this public GitHub repository.**
