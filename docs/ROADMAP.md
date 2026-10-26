@@ -78,7 +78,8 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] Load and render the original hotel's 27,374-triangle geometry in Chrome; screenshot confirmed an untextured aerial view.
 - [x] Build private Source entity spawn extraction and browser start-position controls (awaiting owner testing).
 - [x] Confirm a real first-person hotel corridor appears in Chrome from `info_player_start` (screenshot, October 26).
-- [x] Add read-only Source BSP texdata/texinfo/string-table material mapper plus Xbox ZIP filename inspector (awaiting owner's metadata output).
+- [x] Verify material mapping on owner's hotel BSP: 228 texdata, 3,392 texinfos, 189 unique referenced materials, zero unmapped faces.
+- [x] Document the Python ZIP extra-field compatibility issue; build a safe custom central-directory parser and synthetic tests (awaiting owner validation on Xbox ZIP).
 - [ ] Identify original material paths, console texture payload format, and valid Xbox archive directory structure.
 - [ ] Add mesh UVs and material indices, convert original textures locally, then render them in WebGL2.
 - [ ] Add displacements, props, collision, and navigation.
@@ -88,7 +89,7 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status: real first-person hotel corridor is screenshot-confirmed in Chrome. Original Source material/texture discovery is the next step; actual L4D2 gameplay is not running in the browser.**
+**Status: hotel BSP material names mapped; custom Xbox ZIP directory reader is next to verify. Original textures and actual L4D2 game code are not yet rendered/running in Chrome.**
 
 ### New full-disc ISO input (pending local verification)
 
