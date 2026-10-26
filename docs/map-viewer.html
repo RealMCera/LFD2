@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LFD2 — Real BSP Geometry Viewer</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#091015;color:#e2e8ea;font-family:Segoe UI,Arial,sans-serif}
+header{height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;background:#101b22;border-bottom:1px solid #40545b}
+header b{letter-spacing:.16em;font-size:15px}header b em{color:#f2aa6d;font-style:normal}header small{letter-spacing:.08em;color:#8eacb3;font-size:11px}
+main{height:calc(100vh - 95px);min-height:400px;position:relative}
+#canvas{width:100%;height:100%;display:block;outline:0}
+#loader{position:absolute;top:19px;left:19px;max-width:365px;width:calc(100vw - 38px);padding:23px;background:#121e28ed;border:1px solid #5c7c87ad;box-shadow:0 16px 50px #0008;z-index:3}
+#loader h1{font-size:28px;margin:8px 0 10px;line-height:1.1;letter-spacing:-.045em}
+#loader h1 span{color:#f2b980}
+#loader p{color:#aebfc6;font-size:13px;line-height:1.65}
+#loader label{display:block;cursor:pointer;text-align:center;background:#e6a66f;color:#141e22;font-weight:900;padding:14px;letter-spacing:.09em;font-size:12px}
+#loader label:hover{background:#ffd09c}#file{display:none}
+#status{white-space:pre-wrap;color:#b4c5ca;font:12px/1.6 Consolas,monospace;margin-top:14px}
+#show{position:absolute;top:15px;left:15px;display:none;z-index:2;background:#14232bcc;color:#f1ca9d;padding:9px 15px;border:1px solid #70909b;cursor:pointer}
+#stats{position:absolute;right:14px;top:15px;text-align:right;font:12px Consolas,monospace;color:#ffd098;text-shadow:0 2px 8px #000;z-index:2}
+#cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#ffe1b5;font-size:22px;display:none;pointer-events:none}
+#help{position:absolute;bottom:16px;right:16px;max-width:390px;background:#09131acc;border:1px solid #43616b;color:#bdcad1;padding:13px 16px;font-size:11px;line-height:1.7}
+footer{height:41px;display:flex;justify-content:space-between;align-items:center;padding:0 22px;font-size:11px;color:#95a8af;border-top:1px solid #344a50}
+footer a{color:#f1ba87}
+@media(max-width:600px){header small{display:none}#loader{padding:13px}#loader h1{font-size:24px}#help{max-width:230px;padding:8px;font-size:10px}}
+</style>
+</head>
+<body>
+<header><b>LFD<em>2</em> / REAL GAME MAP RESEARCH</b><small>LOCAL DATA · CHROME WEBGL2 · EARLY PROTOTYPE</small></header>
+<main>
+<canvas id="canvas" tabindex="0" aria-label="Source BSP map geometry viewport"></canvas>
+<div id="loader">
+<div style="color:#e5b585;font-size:11px;font-weight:bold;letter-spacing:.18em">XBOX 360 BSP · LOCAL FILES ONLY</div>
+<h1>Explore the <span>original map geometry.</span></h1>
+<p>This experimental renderer opens a mesh converted from your own L4D2 BSP. No map files or game assets are uploaded. Brush surfaces only for now: no textures, props, weapons, enemies or complete Source engine.</p>
+<label for="file">SELECT A LOCAL .MESH.JSON FILE</label><input type="file" id="file" accept=".json,application/json">
+<div id="status">Convert the original hotel BSP locally first:
+
+py tools\bsp_to_browser_mesh.py
+
+Then select:
+research\local\c1m1_hotel.mesh.json</div>
+</div>
+<button id="show" type="button">OPEN MAP LOADER</button>
+<div id="stats">NO MAP LOADED</div><div id="cross">+</div>
+<div id="help">CLICK VIEWPORT TO AIM · WASD FLY · MOUSE / ARROW KEYS LOOK · SPACE ASCEND · CTRL DESCEND · SHIFT SPEED BOOST · ESC RELEASE MOUSE · H HIDE HELP</div>
+</main>
+<footer><span>Only local browser memory is used; no copyright assets hosted.</span><a href="WEB_PORT_PLAN.md">Port roadmap</a></footer>
+<script id="vs" type="x-shader/x-vertex">#version 300 es
+precision highp float;
+in vec3 aPos;
+uniform vec3 uCamera;
+uniform float uYaw,uPitch,uAspect;
+out vec3 vWorld;
+void main(){
+  vec3 forward=vec3(cos(uYaw)*cos(uPitch),sin(uYaw)*cos(uPitch),sin(uPitch));
+  vec3 right=vec3(-sin(uYaw),cos(uYaw),0.0);
+  vec3 up=cross(forward,right);
+  vec3 delta=aPos-uCamera;
+  vec3 eye=vec3(dot(delta,right),dot(delta,up),dot(delta,forward));
+  float nearP=2.0,farP=25000.0;
+  float z=eye.z*(farP+nearP)/(farP-nearP)-(2.0*farP*nearP)/(farP-nearP);
+  gl_Position=vec4(eye.x*1.35/uAspect,eye.y*1.35,z,eye.z);
+  vWorld=aPos;
+}
+</script>
+<script id="fs" type="x-shader/x-fragment">#version 300 es
+precision highp float;
+in vec3 vWorld;
+out vec4 outColor;
+void main(){
+ vec3 n=normalize(cross(dFdx(vWorld),dFdy(vWorld)));
+ vec3 base=abs(n.z)>0.72?vec3(.33,.38,.36):vec3(.25,.32,.36);
+ float light=.45+.5*abs(dot(n,normalize(vec3(.36,.47,.9))));
+ outColor=vec4(base*light,1.0);
+}
+</script>
+<script>
+"use strict";
+const cvs=document.getElementById("canvas"),input=document.getElementById("file"),status=document.getElementById("status");
+const loader=document.getElementById("loader"),show=document.getElementById("show"),stats=document.getElementById("stats"),cross=document.getElementById("cross"),help=document.getElementById("help");
+const gl=cvs.getContext("webgl2",{alpha:false,antialias:true,depth:true});
+let program=null,positionBuffer=null,indexBuffer=null,indexCount=0,uniforms={},cam={x:0,y:0,z:300,yaw:0,pitch:-.65},mesh=null,keys=new Set();
+let last=performance.now();
+function message(s){status.textContent=s}
+function shader(kind,text){const s=gl.createShader(kind);gl.shaderSource(s,text);gl.compileShader(s);
+ if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s}
+function init(){
+ const vs=shader(gl.VERTEX_SHADER,document.getElementById("vs").textContent),fs=shader(gl.FRAGMENT_SHADER,document.getElementById("fs").textContent);
+ program=gl.createProgram();gl.attachShader(program,vs);gl.attachShader(program,fs);gl.linkProgram(program);
+ if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));
+ gl.deleteShader(vs);gl.deleteShader(fs);gl.useProgram(program);
+ positionBuffer=gl.createBuffer();indexBuffer=gl.createBuffer();
+ gl.bindBuffer(gl.ARRAY_BUFFER,positionBuffer);
+ let loc=gl.getAttribLocation(program,"aPos");gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,0);
+ gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indexBuffer);
+ uniforms.camera=gl.getUniformLocation(program,"uCamera");
+ uniforms.yaw=gl.getUniformLocation(program,"uYaw");
+ uniforms.pitch=gl.getUniformLocation(program,"uPitch");
+ uniforms.aspect=gl.getUniformLocation(program,"uAspect");
+ gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.depthFunc(gl.LEQUAL);gl.clearColor(.06,.1,.14,1);
+}
+if(!gl){message("WebGL2 unavailable; enable hardware acceleration in Chrome.");input.disabled=true}
+else{try{init()}catch(e){message("WebGL2 shader error: "+e.message);input.disabled=true}}
+function validate(data){
+ if(data.format!=="source-brush-mesh-0.1"||!Array.isArray(data.vertices)||!Array.isArray(data.indices))throw Error("Not a supported local mesh");
+ if(!data.vertices.length||data.vertices.length%3||data.indices.length%3)throw Error("Invalid vertex or index array length");
+ if(data.vertices.length>18000000||data.indices.length>9000000)throw Error("Map too large for safety limit");
+ let count=data.vertices.length/3;
+ for(let k=0;k<data.indices.length;k++){const n=data.indices[k];if(!Number.isInteger(n)||n<0||n>=count)throw Error("Index out of range")}
+ if(!data.bounds||data.bounds.length!==2)throw Error("Missing bounds");
+ return count;
+}
+input.addEventListener("change",async()=>{
+ const f=input.files&&input.files[0];if(!f||!gl||!program)return;
+ if(f.size>200000000){message("File exceeds 200MB safety limit");return}
+ try{
+  message("Reading locally. Nothing is sent over the network...");
+  const data=JSON.parse(await f.text()),count=validate(data);
+  const positions=new Float32Array(data.vertices),indices=new Uint32Array(data.indices);
+  for(let k=0;k<positions.length;k++)if(!Number.isFinite(positions[k]))throw Error("Invalid world coordinate");
+  gl.bindBuffer(gl.ARRAY_BUFFER,positionBuffer);gl.bufferData(gl.ARRAY_BUFFER,positions,gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indexBuffer);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,indices,gl.STATIC_DRAW);
+  indexCount=indices.length;mesh={name:f.name,triangles:indices.length/3};
+  const a=data.bounds[0],b=data.bounds[1],span=Math.max(b[0]-a[0],b[1]-a[1],b[2]-a[2]);
+  cam.x=(a[0]+b[0])/2;cam.y=(a[1]+b[1])/2;cam.z=b[2]+Math.max(350,span*.25);
+  cam.yaw=.3;cam.pitch=-1;
+  loader.style.display="none";show.style.display="block";cross.style.display="block";
+  stats.textContent=count.toLocaleString()+" verts / "+mesh.triangles.toLocaleString()+" triangles";
+ }catch(e){message("Unable to open mesh: "+e.message)}
+});
+show.addEventListener("click",()=>{loader.style.display=loader.style.display==="none"?"block":"none"});
+cvs.addEventListener("click",()=>{if(indexCount&&cvs.requestPointerLock){const p=cvs.requestPointerLock();if(p&&p.catch)p.catch(()=>{})}});
+document.addEventListener("mousemove",e=>{
+ if(document.pointerLockElement===cvs){cam.yaw+=(e.movementX||0)*.002;cam.pitch=Math.max(-1.5,Math.min(1.5,cam.pitch-(e.movementY||0)*.002))}
+});
+document.addEventListener("keydown",e=>{
+ if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code))e.preventDefault();
+ keys.add(e.code);
+ if(e.code==="KeyH"&&!e.repeat)help.style.display=help.style.display==="none"?"block":"none";
+});
+document.addEventListener("keyup",e=>keys.delete(e.code));
+window.addEventListener("blur",()=>keys.clear());
+function frame(now){
+ const dt=Math.min(.05,(now-last)/1000);last=now;
+ if(indexCount){
+  if(keys.has("ArrowLeft"))cam.yaw-=1.5*dt;
+  if(keys.has("ArrowRight"))cam.yaw+=1.5*dt;
+  if(keys.has("ArrowUp"))cam.pitch=Math.min(1.5,cam.pitch+1.2*dt);
+  if(keys.has("ArrowDown"))cam.pitch=Math.max(-1.5,cam.pitch-1.2*dt);
+  const f=Number(keys.has("KeyW"))-Number(keys.has("KeyS"));
+  const s=Number(keys.has("KeyD"))-Number(keys.has("KeyA"));
+  const u=Number(keys.has("Space"))-Number(keys.has("ControlLeft")||keys.has("ControlRight"));
+  const speed=(keys.has("ShiftLeft")||keys.has("ShiftRight")?1000:250)*dt;
+  cam.x+=(Math.cos(cam.yaw)*f-Math.sin(cam.yaw)*s)*speed;
+  cam.y+=(Math.sin(cam.yaw)*f+Math.cos(cam.yaw)*s)*speed;
+  cam.z+=u*speed;
+ }
+ if(gl&&program){
+  const density=Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.floor(cvs.clientWidth*density)),h=Math.max(1,Math.floor(cvs.clientHeight*density));
+  if(cvs.width!==w||cvs.height!==h){cvs.width=w;cvs.height=h}
+  gl.viewport(0,0,cvs.width,cvs.height);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  if(indexCount){
+   gl.useProgram(program);gl.uniform3f(uniforms.camera,cam.x,cam.y,cam.z);
+   gl.uniform1f(uniforms.yaw,cam.yaw);gl.uniform1f(uniforms.pitch,cam.pitch);
+   gl.uniform1f(uniforms.aspect,cvs.width/cvs.height);
+   gl.drawElements(gl.TRIANGLES,indexCount,gl.UNSIGNED_INT,0);
+  }
+ }
+ if(mesh&&Math.floor(now/500)!==Math.floor((now-dt*1000)/500))
+  stats.textContent=mesh.triangles.toLocaleString()+" tris · "+cam.x.toFixed(0)+", "+cam.y.toFixed(0)+", "+cam.z.toFixed(0);
+ requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
