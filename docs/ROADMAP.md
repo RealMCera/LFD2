@@ -98,13 +98,13 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] Add Source BSP UV/material-ID mesh enrichment and synthetic tests (awaiting owner use and WebGL rendering).
 - [x] Owner confirmed 82/82 tests, UV-enriched 27,374-triangle hotel private mesh with 187 rendered material IDs and 82,122 UV pairs.
 - [x] Add opt-in local PNG + material ID textured overlay to existing Chrome WebGL2 viewer (syntax and mock-data-flow checks pass; real Chrome validation pending).
-- [ ] Install third-party VTFX Reader Windows EXE privately; current `convert_local_vtfx.py` output stopped because executable was absent.
-- [ ] Decode first original VTFX wall texture into a private PNG and visually verify orientation/color.
+- [x] Convert the first private 512×512 Xbox plaster VTFX to PNG; screenshot confirms original material on 1,404 triangles in Chrome.
+- [x] Owner-verified complete Source UV-enriched private mesh and WebGL one-material overlay.
 - [ ] Locate original Xbox material/texture files, especially in zip1.360.zip, and validate any actual texture decoder.
 - [ ] Verify complete console ZIP directory parsing, original VMT material-file matches, and console texture format.
 - [x] Correct Windows 8.3 short-path vs resolved long-path ISO unit-test expectation (re-run tests pending).
 - [ ] Identify original material paths, console texture payload format, and valid Xbox archive directory structure.
-- [ ] Add mesh UVs and material indices, convert original textures locally, then render them in WebGL2.
+- [x] Add optional multi-PNG WebGL overlay, safe non-ambiguous basename matching and opt-in local 8-material conversion, with synthetic tests; await owner results.
 - [ ] Add displacements, props, collision, and navigation.
 - [ ] Evaluate native portable reimplementation/recompiler feasibility and missing Xbox/Source engine services.
 - [ ] Build a limited original-game C++ subsystem as WebAssembly, then integrate gameplay, audio, asset loading, controls, and networking.
@@ -112,7 +112,7 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status: private UV-enriched mesh (27,374 triangles; 187 rendered material IDs) owner-verified, Chrome single-material texture preview committed and syntax checked. VTFX Reader EXE missing; no PNG decoded or textured Chrome screenshot confirmed yet. Original L4D2 gameplay is not running.**
+**Status: screenshot confirms real Xbox plaster texture mapped onto 1,404 original hotel triangles in Chrome; full 27,374 triangle viewer still working. New multi-material preview and opt-in local texture set preparation are committed, pending owner validation. Original L4D2 gameplay is not running in Chrome.**
 
 ### Full-disc ISO input (extraction confirmed; code analysis pending)
 
