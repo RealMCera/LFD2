@@ -17,10 +17,10 @@ import struct
 import sys
 
 try:
-    from .bsp_to_browser_mesh import MAP, BspError, read_directory, read_lump
+    from .bsp_to_browser_mesh import MAP, BspError, read_directory, read_lump, decode_valve_lzma
     from .add_bsp_spawns import ENTITY_PATTERN, PAIR_PATTERN
 except ImportError:
-    from bsp_to_browser_mesh import MAP, BspError, read_directory, read_lump
+    from bsp_to_browser_mesh import MAP, BspError, read_directory, read_lump, decode_valve_lzma
     from add_bsp_spawns import ENTITY_PATTERN, PAIR_PATTERN
 
 GAME_LUMP = 35
@@ -126,6 +126,48 @@ def parse_static_dictionary(blob: bytes, endian: str) -> dict:
             "prop_bytes_remainder":available%prop_count if prop_count else available}
 
 
+def static_payload_candidates(bsp: bytes, game: bytes, directory: list[dict],
+                              game_entry: dict):
+    """Candidate static payload offsets, without trusting compressed filelen.
+
+    Valve's GAMELUMPFLAG_COMPRESSED means filelen reports the *uncompressed*
+    size; using it to slice the disk is incorrect. The LZMA wrapper itself
+    provides a bounded compressed byte length.
+    """
+    offset=game_entry["offset"]
+    game_start=directory[GAME_LUMP]["offset"]
+    for label,chunk,location in (
+        ("bsp_absolute",bsp,offset),
+        ("game_lump_relative",game,offset),
+        ("game_lump_adjusted",game,offset-game_start),
+    ):
+        if 0<=location<len(chunk):
+            yield label, chunk[location:location+min(16*1024*1024,len(chunk)-location)]
+
+
+def probe_compressed_static_payload(bsp: bytes, game: bytes, directory: list[dict],
+                                    entry: dict, endian: str) -> tuple[dict | None,list[str]]:
+    """Try genuine LZMA wrapper only; never guess Xbox prop record layouts."""
+    notes=[]
+    for label,chunk in static_payload_candidates(bsp,game,directory,entry):
+        magic=chunk[:4]
+        if magic!=b"LZMA":
+            notes.append(f"{label}: game lump magic {magic.hex(' ')} (not standard Valve LZMA)")
+            continue
+        try:
+            decoded=decode_valve_lzma(chunk,entry["length"],endian)
+            info=parse_static_dictionary(decoded,endian)
+            if (not info["models"] or not info["prop_count"] or
+                    any(not model.lower().startswith("models/") or
+                        not model.lower().endswith(".mdl") for model in info["models"])):
+                raise BspError("Decompressed static dictionary failed model validation")
+            return {"source":label,"version":entry["version"],"compressed":True,
+                    **info},notes
+        except (BspError, ValueError) as err:
+            notes.append(f"{label}: Valve LZMA probe unsuccessful: {err}")
+    return None, notes
+
+
 def inspect_bsp(bsp: bytes) -> dict:
     endian,directory,layout=read_directory(bsp)
     entities=entity_summary(read_lump(bsp,directory[0],endian))
@@ -137,7 +179,16 @@ def inspect_bsp(bsp: bytes) -> dict:
         if e["id_raw"] not in STATIC_IDS:
             continue
         if e["flags"] & 1:
-            diagnostics.append("Compressed sprp game lump; individual payload not decoded")
+            candidate,notes=probe_compressed_static_payload(bsp,game,directory,e,endian)
+            diagnostics.extend(notes[:3])
+            if candidate:
+                static.append(candidate)
+                diagnostics.append("Compressed sprp model dictionary parsed; "
+                                   "placement-record transforms remain unverified")
+            else:
+                diagnostics.append("Compressed sprp v%d: no validated Valve LZMA "
+                                   "payload/dictionary yet; no placements decoded" %
+                                   e["version"])
             continue
         # Some Source game-lump offsets are BSP absolute; others may point
         # into the decoded GAME_LUMP. Both are checked against known bounds.
