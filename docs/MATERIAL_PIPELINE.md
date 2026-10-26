@@ -47,6 +47,23 @@ py tools\inspect_map_materials.py --pack
 
 The new inspector is supported by synthetic ZIP tests but **has not yet been tried on the user's console archive**. Matching `.vmt` names in a ZIP still does not validate the VTFX image payload format or mean texture rendering works.
 
+## ZIP central directory misalignment investigation
+
+The second owner run used the new ZIP fallback and reported:
+
+    Standard ZIP reader rejected extra data: Corrupt extra field 0e00 (size=24781)
+    Xbox ZIP directory probe also stopped: Invalid central header at entry 1
+
+The archive may have padding, console-specific central metadata, or a different directory layout. **The cause is not established.** We should not blindly scan/extract payload data or invent a successful match.
+
+The helper now provides a bounded diagnostic that reads only fixed header fields and at most 8192 bytes near the failed central directory offset:
+
+    git pull
+    py -m unittest discover -s tests -v
+    py tools\inspect_xbox_zip.py --diagnose
+
+Separately, one Windows ISO extraction unit test compared the short Windows 8.3 path against a resolved long path; its expectation has been corrected. This did not involve any ISO data or game extraction.
+
 ## Next engineering milestones
 
 1. Verify Source texture-name paths and matching material files in the console archives or BSP pakfile.
