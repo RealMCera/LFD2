@@ -66,3 +66,7 @@ The material preview uses Source-engine UVs and tiled WebGL texture sampling. Vi
 - Add metadata-based dependency resolution for VMT `$basetexture`, plus safe opt-in local batch conversion of selected original VTFX textures.
 - Improve original Source material batching, tool surfaces, lightmaps, props, and physically plausible navigation.
 - Research a genuine portable rendering and gameplay engine; a textured viewer alone is not Left 4 Dead 2 running in the browser.
+
+## Update: first original texture displayed in Chrome
+
+The owner's October 26 screenshot confirms that the converted `plaster_int_14.360_resource_0.png` renders on **1,404 Source triangles** inside the working first-person hotel viewer. The original screenshot shows remaining gray geometry where other materials, props and effects are not yet loaded. This resolves the previous missing converter/PNG status. Multi-material extension is now ready for local verification: [MULTI_MATERIAL_PREVIEW.md](MULTI_MATERIAL_PREVIEW.md). Keep the original Xbox files and converted PNGs under ignored `research/local/`; do not commit them to GitHub.
