@@ -1,0 +1,54 @@
+# First real L4D2 level → Chrome WebGL2 preview
+
+**EXPERIMENTAL / not validated on the owner's actual map yet.** This is the first local BSP geometry experiment, not playable Left 4 Dead 2. It reads the user's legitimately obtained Xbox BSP, attempts to reconstruct brush-face triangles, and opens them as an untextured fly-through in a standalone WebGL2 viewer. No Valve binaries, maps, models, textures or game data are uploaded to GitHub.
+
+## Step 1 — Confirm Xbox header details
+
+Open Windows PowerShell inside the checkout and run:
+
+    cd C:\Users\FrontDesk\LFD2
+    git pull
+    py -m unittest discover -s tests -v
+    py tools\inspect_bsp_lumps.py
+
+Check especially lump **58: hdr_faces**, **7: faces**, **3: vertices**, **12: edges**, and **13: surfedges**. The original probe saw version **20**, big-endian **PSBV**, and **0 bytes for lump 7**, so the new inspector reports whether lump 58 holds HDR render faces. Several compressed lump sizes need not be divisible by structure size.
+
+## Step 2 — Convert the local hotel map to a private JSON mesh
+
+    py tools\bsp_to_browser_mesh.py
+
+Input (already extracted):
+
+    game-extracted\left4dead2\maps\c1m1_hotel.360.bsp
+
+Output (Git-ignored, local only):
+
+    research\local\c1m1_hotel.mesh.json
+
+The converter chooses the BSP header layout by bounds checks, tries lump 58 first, then 7 or 27, and recognizes the **Valve LZMA** compression wrapper when present. It validates vertex structure sizes and triangulates ordinary Source brush faces. The default triangle cap is 600,000 as a safety check; it refuses to overwrite an existing mesh.
+
+**If conversion stops, read the error and share the text output only.** Do not upload the map. Xbox variants may use different compression, face layouts, or nonstandard geometry that need explicit support; do not assume conversion will succeed.
+
+## Step 3 — View in Chrome using local files
+
+    Start-Process (Resolve-Path ".\docs\map-viewer.html").Path
+
+If this opens Edge, right-click docs\map-viewer.html → Open with → Google Chrome.
+
+In the viewer choose **SELECT A LOCAL .MESH.JSON FILE**, then browse to:
+
+    C:\Users\FrontDesk\LFD2\research\local\c1m1_hotel.mesh.json
+
+Click the scene to lock the pointer; WASD to fly, mouse/arrow keys to look, Space/Control to fly vertically, Shift to speed up, Escape to release pointer. Since the browser uses a file picker, the map geometry is not hosted or requested from GitHub.
+
+### Known limitations
+
+- No textures, props, static models, NPCs, campaign scripting, physics, ground collision or true L4D2 play yet
+- Displacements currently skipped, so terrain may have holes; brush faces may have gaps or incorrect orientation
+- Browser's GPU and the converter's JSON memory usage may limit map size; Chrome on Windows with WebGL2 needed
+- The default camera begins above the level looking down; users can fly into the geometry, not walk with collision
+- This does not use or execute the PowerPC modules; a real Chrome game port requires extensive engine reimplementation/recompilation
+
+## After the first successful geometry preview
+
+Validate the geometry in hotel, streets, and mall. Add static-prop decoding, displacement meshes, material/texture rendering, spawn entities, movement with collision, and much later the original gameplay via a compatible portable engine. The [real port plan](WEB_PORT_PLAN.md) describes that longer path.
