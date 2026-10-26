@@ -55,7 +55,7 @@ footer a{color:#f1ba87}
   <div id="textureStatus">Load a PNG of this selected material. It stays on your computer.</div>
   <div style="margin-top:16px;padding-top:12px;border-top:1px solid #57717d">
     <p>MULTIPLE ORIGINAL MATERIALS · EXPERIMENTAL</p>
-    <label for="multiTextureFiles">SELECT UP TO 16 LOCAL PNGs</label>
+    <label for="multiTextureFiles">ADD UP TO 16 PNGs · 48 TOTAL</label>
     <input type="file" id="multiTextureFiles" accept=".png,image/png" multiple>
     <button type="button" id="multiTextureToggle">MULTI-TEXTURES ON</button>
     <div id="multiTextureStatus" style="font:11px/1.55 Consolas,monospace;color:#b6c9cc;margin-top:8px;white-space:pre-wrap">Select several PNGs to texture multiple matched Source materials simultaneously.</div>
@@ -65,6 +65,15 @@ footer a{color:#f1ba87}
     <button type="button" id="inspectSurfaceButton">IDENTIFY MATERIAL AT CROSSHAIR · I</button>
     <div id="inspectSurfaceStatus" style="font:11px/1.55 Consolas,monospace;color:#b6c9cc;margin-top:8px;overflow-wrap:anywhere">No surface inspected yet.</div>
     <button type="button" id="inspectUseMaterial">SELECT INSPECTED MATERIAL</button>
+  </div>
+  <div style="margin-top:14px;padding-top:12px;border-top:1px solid #57717d">
+    <p>ORIGINAL MATERIAL COVERAGE · LIVE DIAGNOSTIC</p>
+    <div id="coverageSummary" style="font:11px/1.55 Consolas,monospace;color:#b6c9cc;white-space:pre-wrap">Load a UV-enriched mesh to inspect material coverage.</div>
+    <div style="height:8px;border-radius:8px;background:#34444a;overflow:hidden;margin:9px 0">
+      <div id="coverageBar" style="height:100%;width:0;background:#9ecca5"></div>
+    </div>
+    <button type="button" id="coverageRefresh">REFRESH MATERIAL COVERAGE</button>
+    <pre id="coverageMissing" style="font:10px/1.4 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;color:#b5c2bb;max-height:260px;overflow:auto"></pre>
   </div>
 </div>
 <div id="status">For the new survivor-start view, run:
@@ -213,6 +222,7 @@ input.addEventListener("change",async()=>{
   indexCount=indices.length;mesh={name:f.name,triangles:indices.length/3,bounds:data.bounds};
   if(typeof setUvData==="function")setUvData(data);
   if(typeof setMultiUvData==="function")setMultiUvData(data);
+  if(typeof updateMaterialCoverage==="function")updateMaterialCoverage();
   cameraSpawns=safeSpawns(data);setSpawnList();
   if(cameraSpawns.length)atSpawn(0);else overview();
   loader.style.display="none";show.style.display="block";cross.style.display="block";viewcontrols.style.display="flex";
@@ -295,5 +305,6 @@ requestAnimationFrame(frame);
 <script src="material-preview.js"></script>
 <script src="multi-materials.js"></script>
 <script src="surface-inspector.js"></script>
+<script src="material-coverage.js"></script>
 </body>
 </html>
