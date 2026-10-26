@@ -8,9 +8,9 @@ Open PowerShell:
 
     cd C:\Users\FrontDesk\LFD2
     git pull
-    & "$env:ProgramFiles\Google\Chrome\Application\chrome.exe" (Resolve-Path ".\docs\index.html").Path
+    Start-Process (Resolve-Path ".\docs\index.html").Path
 
-If Chrome is installed in another location, open C:\Users\FrontDesk\LFD2\docs\index.html with **Open with → Google Chrome**. No server, backend, or additional game archive is needed. Desktop mouse and keyboard are recommended.
+The command opens your default browser, which may be Chrome or Edge. For Chrome specifically, open C:\Users\FrontDesk\LFD2\docs\index.html with **Open with → Google Chrome**. No server, backend, or additional game archive is needed. Desktop mouse and keyboard are recommended.
 
 Click **ENTER THE CITY** to begin. Chrome can lock your mouse for first-person aiming. Press Escape to release it. Arrow keys and Space provide a fallback.
 
