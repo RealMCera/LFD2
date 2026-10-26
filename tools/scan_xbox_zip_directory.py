@@ -75,7 +75,10 @@ def scan_directory(stream, filesize: int) -> dict:
                                  errors="replace").replace("\\", "/")
         entries.append({"offset": start+pos, "end": start+entry_end,
                         "name": name, "extra": elen,
-                        "flags": flags, "method": method})
+                        "flags": flags, "method": method,
+                        "local_offset": local_offset,
+                        "compressed_size": fields[8],
+                        "uncompressed_size": fields[9]})
     if not entries:
         raise XboxZipError("No structurally plausible central headers in EOCD region")
     suffixes = Counter(Path(item["name"]).suffix.lower()
@@ -106,7 +109,7 @@ def scan_directory(stream, filesize: int) -> dict:
             "first_offset": entries[0]["offset"], "last_offset": entries[-1]["offset"],
             "last_declared_end": entries[-1]["end"], "directory_end": end,
             "extra_lengths": extras, "methods": methods,
-            "extensions": suffixes, "filenames": names}
+            "extensions": suffixes, "filenames": names, "entries": entries}
 
 
 def scan_xbox_zip(path: Path) -> dict:
