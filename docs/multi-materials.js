@@ -5,8 +5,8 @@ const mmFile=document.getElementById("multiTextureFiles");
 const mmStatus=document.getElementById("multiTextureStatus");
 const mmToggle=document.getElementById("multiTextureToggle");
 let mmMesh=null,mmTextures=new Map(),mmEnabled=true;
-const MM_MAX_FILES=16,MM_MAX_TOTAL=48,MM_MAX_PNG_BYTES=40*1024*1024;
-const MM_MAX_TOTAL_PIXELS=24*1024*1024;
+const MM_MAX_FILES=16,MM_MAX_TOTAL=256,MM_MAX_PNG_BYTES=40*1024*1024;
+const MM_MAX_TOTAL_PIXELS=80*1024*1024;
 let mmPixels=0;
 
 function materialBasename(name) {
@@ -37,7 +37,7 @@ function setMultiUvData(data){
          Array.isArray(data.corner_uvs)&&Array.isArray(data.triangle_material_ids))
         ?data:null;
  if(mmStatus)mmStatus.textContent=mmMesh?
- "Select up to 16 PNGs per round, up to 48 total. Already loaded PNGs can be reselected safely.":
+ "Select up to 16 PNGs per round, or load the complete private texture folder once.":
  "Load the UV-enriched mesh for multi-material preview.";
 }
 function mmGeometry(data,materialId){
@@ -79,7 +79,7 @@ async function loadManyPngs(files){
  if(files.length>MM_MAX_FILES){mmStatus.textContent="Choose at most 16 PNGs in one selection.";return;}
  let added=0,duplicates=0,ignored=0;const errors=[];
  for(const file of files){
-  if(mmTextures.size>=MM_MAX_TOTAL){ignored++;errors.push("Texture limit of 48 reached");continue;}
+  if(mmTextures.size>=MM_MAX_TOTAL){ignored++;errors.push("Browser texture limit of 256 reached");continue;}
   if(!/\.png$/i.test(file.name)||file.size>MM_MAX_PNG_BYTES){ignored++;continue;}
   const id=matchingMaterialIndex(file.name,mmMesh.materials);
   if(id<0){errors.push(file.name+": unmatched or ambiguous");ignored++;continue;}
@@ -89,7 +89,7 @@ async function loadManyPngs(files){
    bitmap=await createImageBitmap(file);
    if(bitmap.width>4096||bitmap.height>4096)throw Error("PNG exceeds 4096px");
    if(mmPixels+bitmap.width*bitmap.height>MM_MAX_TOTAL_PIXELS)
-    throw Error("Private GPU texture pixel budget reached (24M pixels)");
+    throw Error("GPU texture pixel budget reached (80M pixels)");
    const entry=mmInitEntry(id,bitmap);
    mmTextures.set(id,entry);mmPixels+=entry.pixels;added++;
   }catch(err){ignored++;errors.push(file.name+": "+err.message);}
