@@ -35,6 +35,7 @@ Ghidra-derived C-like pseudocode is not automatically correct or buildable C++.
 - [x] Inventory local L4D2 archive, 22 XEX2 modules, 24 maps and eight ZIP-named packages.
 - [x] Decode and inspect one server module with PE/XEX base/entry verification.
 - [x] Add a **header-only** Source BSP / Xbox package probe (no data export).
+- [x] Add experimental local-only Source brush BSP converter with HDR-face and Valve LZMA support plus a WebGL2 mesh viewer (not validated on the actual Xbox map yet).
 - [ ] Run `tools/probe_source_assets.py` on the user's actual extracted files and identify the BSP byte order, header fields, and container signatures.
 
 From PowerShell in the repository:
@@ -51,7 +52,7 @@ Share the short console report, not maps or zipped game data.
 ### Stage 2 — display a real locally owned L4D2 map in 3D
 
 - [ ] Confirm Source BSP version and 64-lump layout from local metadata.
-- [ ] Build a **local-only BSP-to-WebGL2 viewer**: world geometry, basic camera and collision, with temporary materials.
+- [ ] Run the local-only BSP converter on the actual Xbox hotel map, fix any Xbox-specific compression/layout problems, and verify a real map geometry fly-through in Chrome. **The viewer has no collision yet**.
 - [ ] Decode original Xbox ZIP asset manifests locally. The `.360.zip` packages can be a modified Source ZIP format; standard unzip may not work.
 - [ ] Build a local importer for Source models, textures and materials; preserve original assets only in the user's browser/local storage.
 
@@ -80,4 +81,4 @@ Valve's public [Source SDK 2013](https://github.com/ValveSoftware/source-sdk-201
 
 [ReXGlue](https://github.com/rexglue/rexglue-sdk), [Xenon-Recomp](https://github.com/nimauria/Xenon-Recomp) and similar projects are research possibilities, **not validated L4D2-to-browser solutions**. Confirm platform targets and missing instructions/runtime features before choosing any tool.
 
-**Current state:** Only metadata analysis and original standalone HTML prototype are complete. A genuine browser L4D2 port is not playable yet. This plan exists to make progress without describing unfinished work as a finished port.
+**Current state:** BSP header inspection, an experimental private mesh converter and a WebGL2 geometry viewer are committed. The converter has not yet been tested on the owner's BSP; a genuine L4D2 browser game port is not playable. This plan exists to make progress without describing unfinished work as a finished port.
