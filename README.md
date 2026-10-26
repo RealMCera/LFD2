@@ -150,6 +150,27 @@ py tools\scan_source_asset_packs.py --include-map-pak
 
 Full details: [Xbox pack discovery](docs/XBOX_PACK_DISCOVERY.md). This is still filename discovery, not texture extraction or a playable browser game.
 
+## Texture files found — verify file offsets and VTFX headers
+
+**Owner-confirmed (October 26):** All **59 Python tests passed**, and the all-pack scan found the original hotel textures/materials in the local Xbox archives.
+
+- \`left4dead2/zip1.360.zip\`: **4,640 VMT** and **3,922 VTF** directory candidates, with **69 of 189 hotel material names** accounting for **10,315 of 10,840 face references**.
+- \`c1m1_hotel.360.bsp\` embedded PAKFILE: **217 VMT** and **85 VTF** candidates, with **120 of 189 hotel material names** accounting for **525 face references**.
+- The matched-name totals (69+120) and face-reference totals (10,315+525) exactly equal the source totals. **A new exact union/overlap report** now tests whether any matching IDs are duplicated or missing.
+- These are directory filename matches. The actual ZIP member offsets, image signatures and texture decode support have **NOT** yet been verified.
+
+**New read-only tool:** [tools/probe_xbox_texture_headers.py](tools/probe_xbox_texture_headers.py) checks a few top referenced \`.360.vtf\` samples from \`zip1\` and from the BSP's embedded PAKFILE. It reads only a 30-byte ZIP local header, a bounded filename and **up to 16 bytes of candidate texture magic** per sample. It never decompresses or exports the game textures. The extended multi-pack scanner prints precise union and overlap counts.
+
+Run on the owner's Windows PC:
+
+    cd C:\Users\FrontDesk\LFD2
+    git pull
+    py -m unittest discover -s tests -v
+    py tools\scan_source_asset_packs.py --include-map-pak
+    py tools\probe_xbox_texture_headers.py --include-map-pak
+
+If the local file headers and VTFX magic are valid, the next engineering phase can implement local-only image conversion and UV/material rendering; until then, do not assume ordinary ZIP extraction works. Full report: [XBOX_PACK_DISCOVERY.md](docs/XBOX_PACK_DISCOVERY.md).
+
 ## Further research and options
 
 - [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
