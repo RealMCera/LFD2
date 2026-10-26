@@ -83,7 +83,7 @@ class DiscISOTests(unittest.TestCase):
         output = self.root / "destination with spaces"
         with patch.object(MODULE.subprocess, "run") as runner:
             MODULE.extract_iso(image, output, "xdvdfs.exe")
-            runner.assert_called_once_with(["xdvdfs.exe", "unpack", str(image), str(output)], check=True)
+            runner.assert_called_once_with(["xdvdfs.exe", "unpack", str(image), str(output.resolve())], check=True)
 
 
 if __name__ == "__main__":
