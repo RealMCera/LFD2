@@ -65,7 +65,7 @@ class XboxZipTests(unittest.TestCase):
 
     def test_diagnose_corrupt_record_length(self):
         data=bytearray(make_zip())
-        center=data.find(b"PK\\x01\\x02")
+        center=data.find(b"PK\x01\x02")
         struct.pack_into("<H",data,center+28,1800)
         lines=diagnose_alignment(io.BytesIO(data),len(data))
         self.assertTrue(any("Entry 0" in line and "filename_bytes=1800" in line for line in lines))
@@ -73,13 +73,13 @@ class XboxZipTests(unittest.TestCase):
 
     def test_diagnose_gap_between_entries(self):
         data=bytearray(make_zip())
-        cd=data.find(b"PK\\x01\\x02")
+        cd=data.find(b"PK\x01\x02")
         filename_len=struct.unpack_from("<H",data,cd+28)[0]
         extra_len=struct.unpack_from("<H",data,cd+30)[0]
         comment_len=struct.unpack_from("<H",data,cd+32)[0]
         nextpos=cd+46+filename_len+extra_len+comment_len
         data[nextpos:nextpos]=b"XYZ"
-        eocd=data.rfind(b"PK\\x05\\x06")
+        eocd=data.rfind(b"PK\x05\x06")
         original_size=struct.unpack_from("<I",data,eocd+12)[0]
         struct.pack_into("<I",data,eocd+12,original_size+3)
         with self.assertRaisesRegex(XboxZipError,"Invalid central header"):
