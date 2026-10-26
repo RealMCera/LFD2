@@ -285,6 +285,25 @@ The concrete path above is an **example** from the hotel's referenced names, not
 
 Reload Chrome with Ctrl+Shift+R after `git pull`, choose the local UV mesh again and reselect any PNGs (file pickers do not persist them). See [MULTI_MATERIAL_PREVIEW.md](docs/MULTI_MATERIAL_PREVIEW.md).
 
+## Material coverage milestone: 14 original textures on hotel surfaces
+
+**Owner-confirmed screenshot (October 26):** 14 original Xbox VTFX-derived material PNGs render on **13,696 of 27,374** Dead Center hotel brush triangles (**50.0% triangle coverage**). It shows textured floor, walls and ceilings, while some upper walls/door/void surfaces remain gray or dark. Six new materials added 1,824 triangles relative to the previous 8-texture screenshot. Eight reselected PNGs were already loaded, **not eight extraction failures**.
+
+To help distinguish missing images from genuine Source tool/debug or absent geometry, [docs/material-coverage.js](docs/material-coverage.js) now provides a **live original material coverage panel**: exact active textured triangle total, highest-count still-gray Source material names, and candidate surface versus tool/debug/sky/effect categories. The classification is heuristic; a material name alone does not prove it is meant to be visible.
+
+The local [multi-material loader](docs/multi-materials.js) supports **up to 48 total PNGs across 16-file rounds**, with a 24-million-pixel total texture budget and separate already-loaded vs failed/skipped counters. [tools/prepare_hotel_textures.py](tools/prepare_hotel_textures.py) now accepts **`--start N`** to select the next batch in popularity order and avoids ambiguous flat PNG basenames. New tests are committed; actual Windows validation pending.
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\prepare_hotel_textures.py --start 8 --count 8
+py tools\prepare_hotel_textures.py --start 8 --count 8 --run
+Start-Process (Resolve-Path '.\docs\map-viewer.html').Path
+```
+
+Reload the UV mesh, choose all local PNGs (up to 16 per round, keeping previous rounds loaded), then click **REFRESH MATERIAL COVERAGE** in the map loader. Read the remaining original material paths before deciding what to convert next. The original game runtime is not yet running in the browser.
+
 ## Further research and options
 
 - [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
