@@ -115,3 +115,17 @@ py tools\prepare_hotel_textures.py --start 8 --count 8 --run
 `--start` skips eligible material paths in the **same popularity-ordered selection**, while `--focus floor` changes the selection list. The script refuses ambiguous material names that would collide in the flat PNG folder and won't overwrite existing private assets. All new files stay under ignored `research/local/`.
 
 Reopen Chrome, select the existing private UV mesh and use **ADD UP TO 16 PNGs · 48 TOTAL** repeatedly; clicking **REFRESH MATERIAL COVERAGE** updates live counts, including the single material if its preview is enabled. New code passed JavaScript syntax checks and a synthetic coverage calculation, but real-user browser/Python validation of this update is pending.
+
+## Finish this phase without more 8-at-a-time conversion
+
+The earlier 14-material Chrome screenshot was already successful. A new **one-command complete hotel brush-material pipeline** supersedes manually preparing each set of eight PNGs. It resolves original VMT `$basetexture` references from `zip1.360.zip` and the hotel BSP Pak, reuses cached images and writes a `texture-manifest.json` plus unique, directory-safe PNG filenames under ignored `research/local/hotel-complete/`. Chrome can select that entire folder at once; no per-material guessing or re-selection is needed.
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\finish_hotel_materials.py --run
+Start-Process (Resolve-Path '.\docs\map-viewer.html').Path
+```
+
+Choose the UV mesh and then **LOAD COMPLETE LOCAL TEXTURE FOLDER** → `research\local\hotel-complete`. Special Source tool/debug surfaces can optionally be hidden from the gray geometry pass. The build prints explicit unresolved reasons and handles repeated runs without overwriting prior PNGs. The new code needs validation with the owner's private data; a working material renderer isn't yet a full game port. See [FINISH_HOTEL_TEXTURES.md](FINISH_HOTEL_TEXTURES.md).
