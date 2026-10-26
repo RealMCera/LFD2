@@ -38,10 +38,18 @@ except ImportError:
 PRIVATE_ROOT = (ROOT / "research" / "local").resolve()
 DESTINATION = PRIVATE_ROOT / "hotel-textures"
 SKIP_PREFIXES=("tools/","dev/","sky/","effects/","particle/")
+FLOOR_WORDS=("floor","carpet","ground","concrete","asphalt",
+             "pavement","walkway","stair","stairs","road")
 
 
-def choose_materials(faces: Counter, entries: list[dict], count: int) -> list[tuple[str,int,dict]]:
-    """Select popular visible Source materials with exact-name Xbox VTFXs."""
+def choose_materials(faces: Counter, entries: list[dict], count: int,
+                     focus: str = "all",
+                     material: str | None = None) -> list[tuple[str,int,dict]]:
+    """Select visible Source materials with exact-name Xbox VTFX files.
+
+    A chosen BSP material's true VMT basetexture might have another name.
+    In that case, report unavailable instead of selecting a guessed image.
+    """
     by_name={}
     duplicates=set()
     for item in entries:
@@ -50,11 +58,27 @@ def choose_materials(faces: Counter, entries: list[dict], count: int) -> list[tu
         key=material_key(item["name"])
         if key in by_name: duplicates.add(key)
         else: by_name[key]=item
+    source = {raw.casefold().replace("\\","/"): int(face_count)
+              for raw, face_count in faces.items()}
+    if material is not None:
+        key=material.casefold().replace("\\","/").strip("/")
+        if key not in source:
+            raise ValueError(f"Material not present in original hotel BSP: {material}")
+        if key.startswith(SKIP_PREFIXES):
+            raise ValueError(f"Tool/sky/debug material is not a regular surface texture: {material}")
+        if key in duplicates:
+            raise ValueError(f"Duplicate exact-name VTFX entries for material: {material}")
+        if key not in by_name:
+            raise ValueError(f"No direct-name .360.vtf in zip1 for {material}; "
+                             "its VMT may reference another basetexture")
+        return [(key,source[key],by_name[key])]
+    if focus not in ("all","floor"):
+        raise ValueError(f"Unknown material selection focus: {focus}")
     choices=[]
-    for raw,faces_count in sorted(faces.items(),key=lambda x:(-x[1],x[0])):
-        key=raw.casefold().replace("\\","/")
-        if key.startswith(SKIP_PREFIXES) or key in duplicates: continue
-        if key in by_name: choices.append((key,faces_count,by_name[key]))
+    for key,faces_count in sorted(source.items(),key=lambda x:(-x[1],x[0])):
+        if key.startswith(SKIP_PREFIXES) or key in duplicates:continue
+        if focus=="floor" and not any(word in key for word in FLOOR_WORDS):continue
+        if key in by_name:choices.append((key,faces_count,by_name[key]))
         if len(choices)>=count:break
     return choices
 
@@ -122,6 +146,10 @@ def main() -> int:
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--run",action="store_true",
                    help="Explicitly extract and convert a small number of original VTFXs")
+    p.add_argument("--focus",choices=("all","floor"),default="all",
+                   help="Select common materials or prioritize ground/floor names")
+    p.add_argument("--material",type=str,
+                   help="Use one exact material ID from the crosshair surface inspector")
     p.add_argument("--count",type=int,default=8,help="Number of visual materials (1..16)")
     p.add_argument("--bsp",type=Path,default=MAP)
     p.add_argument("--zip",type=Path,default=ZIP1)
@@ -133,7 +161,9 @@ def main() -> int:
         faces=inspect_materials(bsp)["materials"]
         archive=args.zip.expanduser().resolve()
         report=scan_xbox_zip(archive)
-        choices=choose_materials(faces,report["entries"],args.count)
+        choices=choose_materials(faces,report["entries"],args.count,
+                                 focus=args.focus,material=args.material)
+        print(f"Selection: {args.material or args.focus}")
         print(f"Hotel materials: {len(faces)}; selected images: {len(choices)} "
               f"from {archive.name} (no BSP game files uploaded)")
         for key,count,_entry in choices:print(f"  {count:>5} faces · {key}")
