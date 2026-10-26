@@ -120,6 +120,19 @@ Run:
 
 If parsing succeeds, report the recovered-entry count, gap totals, material extension counts and VMT matches. If it stops at a later record, report the exact error; no game payload is touched.
 
+## New: independent Xbox ZIP central-directory scan
+
+The latest Windows run passed **51/51 tests**. The safe sequential Xbox ZIP reader advanced to entry **1,470** before refusing a header near the end of the directory. However, the EOCD declares **24,435 records in 2,355,200 bytes** (~96 bytes/record), which is incompatible with trusting many oversized "extra length" values to step between records.
+
+Instead of widening the 128-byte gap allowance, we've added [tools/scan_xbox_zip_directory.py](tools/scan_xbox_zip_directory.py). It scans only the **EOCD-bounded central directory** for PK central signatures, validates fixed header and filename bounds, and reports how many plausible candidates exist, including potential VMT/VTFX paths. It **never reads compressed game file data**. Synthetic tests are committed; the scanner is not yet verified on the owner's Xbox archive.
+
+    cd C:\Users\FrontDesk\LFD2
+    git pull
+    py -m unittest discover -s tests -v
+    py tools\scan_xbox_zip_directory.py
+
+Share only the printed metadata report. Candidate filenames are a diagnostic, not proof of successful archive decoding.
+
 ## Further research and options
 
 - [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
