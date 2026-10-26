@@ -115,9 +115,14 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] Add --focus floor and --material exact selection to opt-in local Xbox texture conversion with synthetic tests (owner run pending).
 - [ ] Identify actual gray floor material using inspector; convert matching real texture, or investigate VMT basetexture/tool-material dependency.
 
+- [x] Owner screenshot: 14 original material PNGs active on 13,696 of 27,374 original hotel brush triangles (50.0%) including floor.
+- [x] Add live missing-material coverage panel, tool/debug categorization, and 48 total textures under 24M-pixel budget (owner validation pending).
+- [x] Add popularity-offset `--start` to safe local converter, filename collision protection, and synthetic tests (owner validation pending).
+- [ ] Diagnose high-count untextured tool/sky/brush materials versus missing prop/displacement geometry.
+
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status: owner screenshot verifies 8 original Xbox textures applied to 11,872/27,374 Source hotel brush triangles (43.4%) with 0 skipped PNGs. Floor remains gray; crosshair Source-material inspection and floor-targeted private conversion are committed and pending real-PC validation. Original L4D2 gameplay is not running in Chrome.**
+**Status: owner screenshot verifies 14 Xbox-derived PNG materials on 13,696/27,374 original hotel brush triangles (50.0%), including floor and ceiling. New dynamic coverage diagnostics, higher memory-bounded multi-PNG capacity and next-batch conversion committed, awaiting real-PC validation. Original L4D2 gameplay is not running in Chrome.**
 
 ### Full-disc ISO input (extraction confirmed; code analysis pending)
 
