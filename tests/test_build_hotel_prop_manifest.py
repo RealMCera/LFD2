@@ -105,6 +105,23 @@ class HotelPropManifestTests(unittest.TestCase):
             self.assertTrue(any(x["mesh_ready"] for x in record["availability"]))
             self.assertIn("models/props/hotel/chair.360.vtx",sources)
 
+    def test_embedded_map_pak_can_supply_a_local_model(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            make_zip(root/"left4dead2"/"zip0.360.zip",
+                     ["materials/only.vmt"])
+            pak=io.BytesIO()
+            with zipfile.ZipFile(pak,"w",compression=zipfile.ZIP_STORED) as z:
+                z.writestr("models/props/hotel/chair.mdl",b"IDST"+b"\0"*32)
+            bsp=bytearray(compressed_bsp(make_static_data()))
+            off=len(bsp)
+            bsp+=pak.getvalue()
+            struct.pack_into(">4I",bsp,8+40*16,off,len(pak.getvalue()),0,0)
+            sources,packs,errors=scan_model_archive_directories(root,bytes(bsp))
+            self.assertIn("models/props/hotel/chair.mdl",sources)
+            self.assertIn("hotel_BSP_embedded_pak",packs)
+            self.assertEqual(errors,[])
+
     def test_canonical_suffixes_and_prefixes(self):
         self.assertEqual(normalize_archive_path(
             "LEFT4DEAD2/MODELS/props/HOTEL/CHAIR.360.MDL"),
