@@ -93,3 +93,25 @@ py tools\prepare_hotel_textures.py --material 'CONCRETE/CONCRETE_FLOOR_10' --run
 ```
 
 The tool checks whether the selected material is actually referenced by the original hotel and has an exact-name `.360.vtf` in the owner's `zip1.360.zip`. If not, it stops with an informative error; the material's VMT may reference a differently named basetexture, and that dependency will need separate parsing. Previous private PNGs aren't overwritten. Chrome still supports up to 16 simultaneous original materials.
+
+## Latest browser update — 14 materials, 50.0% of original brush triangles
+
+The owner's screenshot on October 26 shows **14 original Xbox textures**, **13,696 of 27,374 triangles textured (50.0%)**, with concrete floor, wall plaster and ceiling tiles visible. Six textures were newly added, while eight selected duplicates were already loaded. Some gray or dark spaces remain unresolved and may be surface materials, tool/skybox brushes or missing brush/displacement/prop content.
+
+The browser's new **MATERIAL COVERAGE** panel gives an exact ranking of the remaining original BSP material IDs by untextured triangle count. It groups Source `TOOLS/` and `DEV/` surfaces as diagnostic tool/debug candidates, not ordinary photorealistic wall textures; this is a heuristic. Aim at a gray patch and press **I** to identify its source material directly.
+
+The loader's multi-texture cap is now **48 total textures** (24 million loaded image pixels maximum), still at most **16 PNGs in each file selection**. Duplicate selections no longer appear as failures. Multiple rounds keep previous successful textures loaded in Chrome until you load a new map or refresh the browser.
+
+To prepare a new batch rather than re-converting the first eight textures:
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\prepare_hotel_textures.py --start 8 --count 8
+py tools\prepare_hotel_textures.py --start 8 --count 8 --run
+```
+
+`--start` skips eligible material paths in the **same popularity-ordered selection**, while `--focus floor` changes the selection list. The script refuses ambiguous material names that would collide in the flat PNG folder and won't overwrite existing private assets. All new files stay under ignored `research/local/`.
+
+Reopen Chrome, select the existing private UV mesh and use **ADD UP TO 16 PNGs · 48 TOTAL** repeatedly; clicking **REFRESH MATERIAL COVERAGE** updates live counts, including the single material if its preview is enabled. New code passed JavaScript syntax checks and a synthetic coverage calculation, but real-user browser/Python validation of this update is pending.
