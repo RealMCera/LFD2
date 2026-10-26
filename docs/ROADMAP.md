@@ -87,6 +87,9 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] Confirm 55/55 unit tests and independent scan of zip0: all 24,435/24,435 central-header candidates structurally plausible; no .vmt filenames reported.
 - [x] Correct erroneous 58-byte alignment hypothesis: old sequential parser was skipping valid central headers due unusual extra-length values.
 - [x] Add multi-pack and embedded BSP PAKFILE directory scanner with synthetic tests (awaiting local results).
+- [x] Confirm all 59 synthetic tests passed; find 4,640 VMT / 3,922 VTF file candidates in zip1.360.zip and 217 VMT / 85 VTF in hotel embedded PAK.
+- [x] Match reported 69 hotel material IDs (10,315 face references) from zip1 and 120 IDs (525 faces) from embedded map PAK; totals suggest complete filename coverage.
+- [x] Add exact union/overlap report and bounded ZIP local-header/VTFX magic probe with synthetic tests; actual owner results pending.
 - [ ] Locate original Xbox material/texture files, especially in zip1.360.zip, and validate any actual texture decoder.
 - [ ] Verify complete console ZIP directory parsing, original VMT material-file matches, and console texture format.
 - [x] Correct Windows 8.3 short-path vs resolved long-path ISO unit-test expectation (re-run tests pending).
@@ -99,7 +102,7 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status: original hotel brush geometry and 189 material names confirmed; 24,435/24,435 console ZIP directory signatures identified. Scanning the other local Xbox asset archives for textures is next. No actual L4D2 gameplay runs in Chrome.**
+**Status: original hotel geometry and 189 material names confirmed; real original material filenames located in zip1.360.zip and map PAKFILE. Next verify their local texture headers and image formats. Textures and actual game are not yet running in Chrome.**
 
 ### New full-disc ISO input (pending local verification)
 
