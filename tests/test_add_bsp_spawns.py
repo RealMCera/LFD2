@@ -57,6 +57,10 @@ class SpawnTests(unittest.TestCase):
         offset=len(data)
         data.extend(SAMPLE)
         struct.pack_into(">4I",data,8,offset,len(SAMPLE),0,0)
+        for index, size in ((3, 12), (12, 4), (13, 4)):
+            ofs=len(data)
+            data.extend(b"\x00" * size)
+            struct.pack_into(">4I",data,8+index*16,ofs,size,0,0)
         spawns=extract_spawns(bytes(data))
         self.assertEqual(len(spawns),3)
 
