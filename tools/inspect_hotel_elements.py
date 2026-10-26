@@ -155,7 +155,10 @@ def inspect_bsp(bsp: bytes) -> dict:
         for source,payload in variants:
             try:
                 candidate=parse_static_dictionary(payload,endian)
-                if any(not model.endswith(".mdl") for model in candidate["models"]):
+                if (not candidate["models"] or not candidate["prop_count"] or
+                        any(not name.lower().startswith("models/") or
+                            not name.lower().endswith(".mdl")
+                            for name in candidate["models"])):
                     continue
                 valid={"source":source,"version":e["version"],**candidate}
                 break
