@@ -232,6 +232,27 @@ Select `research/local/c1m1_hotel_spawns_uv.mesh.json` in Chrome. Reopen the map
 
 Setup and preview details: [CHROME_TEXTURE_PREVIEW.md](docs/CHROME_TEXTURE_PREVIEW.md).
 
+## First genuine texture in Chrome — next: multi-material hallway
+
+**Owner screenshot verified (October 26):** The actual `PLASTER/PLASTER_INT_14` PNG from the Xbox `VTFX` resource is now drawn correctly across **1,404 hotel triangles** using original Source UV coordinates. The viewer still displays all **27,374 brush triangles**, first-person start locations and working controls. This supersedes the earlier report that `vtfx_reader.exe` was missing.
+
+The remaining ceiling, floor and interior faces are gray because the current preview has only one texture. We have added:
+
+- [docs/multi-materials.js](docs/multi-materials.js): opt-in WebGL2 overlay to load up to 16 local original PNGs and assign them only to unambiguously matched Source material IDs. The working one-texture mode remains unchanged.
+- [tools/prepare_hotel_textures.py](tools/prepare_hotel_textures.py): **read-only by default**, selects the highest-frequency eligible `.360.vtf` files from the private game archive; `--run` explicitly extracts and converts a small selection to private `research/local/hotel-textures/png/` for the Chrome multi-file picker. No bulk asset export or GitHub upload.
+- [tests/test_prepare_hotel_textures.py](tests/test_prepare_hotel_textures.py): new synthetic local workflow tests. **The new changes await the owner's Windows test results.**
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\prepare_hotel_textures.py
+py tools\prepare_hotel_textures.py --run
+Start-Process (Resolve-Path '.\docs\map-viewer.html').Path
+```
+
+Choose the existing `c1m1_hotel_spawns_uv.mesh.json` in Chrome, reopen the map loader, and use **SELECT UP TO 16 LOCAL PNGs** to choose the converted images together from `research\local\hotel-textures\png\`. See [MULTI_MATERIAL_PREVIEW.md](docs/MULTI_MATERIAL_PREVIEW.md). This is a material-matched texture *preview*; full VMT dependency resolution, displacements, lighting and gameplay are still outstanding.
+
 ## Further research and options
 
 - [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
