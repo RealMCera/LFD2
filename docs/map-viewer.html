@@ -14,7 +14,7 @@ main{height:calc(100vh - 95px);min-height:400px;position:relative}
 #loader h1 span{color:#f2b980}
 #loader p{color:#aebfc6;font-size:13px;line-height:1.65}
 #loader label{display:block;cursor:pointer;text-align:center;background:#e6a66f;color:#141e22;font-weight:900;padding:14px;letter-spacing:.09em;font-size:12px}
-#loader label:hover{background:#ffd09c}#file,#textureFile,#multiTextureFiles{display:none}
+#loader label:hover{background:#ffd09c}#file,#textureFile,#multiTextureFiles,#finishFolder{display:none}
 #materialPanel{display:none;margin-top:16px;padding-top:13px;border-top:1px solid #57717d}
 #materialPanel select{display:block;width:100%;background:#22343e;color:#f5dbba;padding:8px;border:1px solid #607884;margin:8px 0 11px;font:12px Consolas,monospace}
 #materialPanel button{cursor:pointer;background:#21313d;border:1px solid #617984;color:#edc59e;width:100%;padding:9px;margin-top:7px}
@@ -47,6 +47,12 @@ footer a{color:#f1ba87}
 <p>This experimental renderer opens a mesh converted from your own L4D2 BSP. No map files or game assets are uploaded. Brush surfaces from your original game. Optional one- or multi-material texture previews using private PNGs + UV mesh. No props, enemies or complete Source engine yet.</p>
 <label for="file">SELECT A LOCAL .MESH.JSON FILE</label><input type="file" id="file" accept=".json,application/json">
 <div id="materialPanel">
+  <div style="padding-bottom:13px;margin-bottom:13px;border-bottom:1px solid #57717d">
+    <p>FINAL HOTEL TEXTURE SETUP · ONE FOLDER LOAD</p>
+    <label for="finishFolder">LOAD COMPLETE LOCAL TEXTURE FOLDER</label>
+    <input type="file" id="finishFolder" webkitdirectory directory multiple>
+    <div id="finishProgress" style="font:11px/1.6 Consolas,monospace;color:#b5cfb6;margin-top:9px;white-space:pre-wrap">First run py tools\finish_hotel_materials.py --run, then select research/local/hotel-complete here.</div>
+  </div>
   <p>OPTIONAL ORIGINAL TEXTURE PREVIEW · UV MESH ONLY</p>
   <select id="materialSelect" aria-label="Choose original map material"></select>
   <label for="textureFile">SELECT MATCHING LOCAL PNG</label>
@@ -55,7 +61,7 @@ footer a{color:#f1ba87}
   <div id="textureStatus">Load a PNG of this selected material. It stays on your computer.</div>
   <div style="margin-top:16px;padding-top:12px;border-top:1px solid #57717d">
     <p>MULTIPLE ORIGINAL MATERIALS · EXPERIMENTAL</p>
-    <label for="multiTextureFiles">ADD UP TO 16 PNGs · 48 TOTAL</label>
+    <label for="multiTextureFiles">ADD PNGs MANUALLY · UP TO 16 PER ROUND</label>
     <input type="file" id="multiTextureFiles" accept=".png,image/png" multiple>
     <button type="button" id="multiTextureToggle">MULTI-TEXTURES ON</button>
     <div id="multiTextureStatus" style="font:11px/1.55 Consolas,monospace;color:#b6c9cc;margin-top:8px;white-space:pre-wrap">Select several PNGs to texture multiple matched Source materials simultaneously.</div>
@@ -306,5 +312,6 @@ requestAnimationFrame(frame);
 <script src="multi-materials.js"></script>
 <script src="surface-inspector.js"></script>
 <script src="material-coverage.js"></script>
+<script src="finish-texture-folder.js"></script>
 </body>
 </html>
