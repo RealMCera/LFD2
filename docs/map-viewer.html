@@ -56,10 +56,11 @@ Your earlier mesh.json file still works in overview mode.</div>
   <select id="spawnSelect" aria-label="Select a map start point"><option value="">NO STARTS FOUND</option></select>
   <button type="button" id="toSpawn">START POSITION · 1</button>
   <button type="button" id="toOverview">OVERVIEW · 2</button>
+  <button type="button" id="edgesToggle">EDGES OFF · 3</button>
 </div>
 <div id="hint"></div>
 <div id="stats">NO MAP LOADED</div><div id="cross">+</div>
-<div id="help">1 START AT SELECTED PLAYER POSITION · 2 OVERVIEW · N NEXT SPAWN · CLICK TO AIM · WASD FLY · MOUSE / ARROWS LOOK · SPACE ASCEND · CTRL DESCEND · SHIFT SPEED BOOST · ESC RELEASE MOUSE · H HIDE HELP</div>
+<div id="help">1 START AT SELECTED PLAYER POSITION · 2 OVERVIEW · 3 TOGGLE BRUSH EDGES · N NEXT SPAWN · CLICK TO AIM · WASD FLY · MOUSE / ARROWS LOOK · SPACE ASCEND · CTRL DESCEND · SHIFT SPEED BOOST · ESC RELEASE MOUSE · H HIDE HELP</div>
 </main>
 <footer><span>Only local browser memory is used; no copyright assets hosted.</span><a href="WEB_PORT_PLAN.md">Port roadmap</a></footer>
 <script id="vs" type="x-shader/x-vertex">#version 300 es
@@ -83,8 +84,10 @@ void main(){
 <script id="fs" type="x-shader/x-fragment">#version 300 es
 precision highp float;
 in vec3 vWorld;
+uniform bool uWire;
 out vec4 outColor;
 void main(){
+ if(uWire){outColor=vec4(.93,.72,.46,1.0);return;}
  vec3 n=normalize(cross(dFdx(vWorld),dFdy(vWorld)));
  vec3 base=abs(n.z)>0.72?vec3(.33,.38,.36):vec3(.25,.32,.36);
  float light=.45+.5*abs(dot(n,normalize(vec3(.36,.47,.9))));
@@ -95,9 +98,9 @@ void main(){
 "use strict";
 const cvs=document.getElementById("canvas"),input=document.getElementById("file"),status=document.getElementById("status");
 const loader=document.getElementById("loader"),show=document.getElementById("show"),stats=document.getElementById("stats"),cross=document.getElementById("cross"),help=document.getElementById("help");
-const spawnSelect=document.getElementById("spawnSelect"),toSpawn=document.getElementById("toSpawn"),toOverview=document.getElementById("toOverview"),viewcontrols=document.getElementById("viewcontrols"),hint=document.getElementById("hint"),closeLoader=document.getElementById("closeLoader");
+const spawnSelect=document.getElementById("spawnSelect"),toSpawn=document.getElementById("toSpawn"),toOverview=document.getElementById("toOverview"),viewcontrols=document.getElementById("viewcontrols"),hint=document.getElementById("hint"),closeLoader=document.getElementById("closeLoader"),edgesToggle=document.getElementById("edgesToggle");
 const gl=cvs.getContext("webgl2",{alpha:false,antialias:true,depth:true});
-let program=null,positionBuffer=null,indexBuffer=null,indexCount=0,uniforms={},cam={x:0,y:0,z:300,yaw:0,pitch:-.65},mesh=null,keys=new Set(),cameraSpawns=[];
+let program=null,positionBuffer=null,indexBuffer=null,lineIndexBuffer=null,indexCount=0,lineCount=0,wireEnabled=false,uniforms={},cam={x:0,y:0,z:300,yaw:0,pitch:-.65},mesh=null,keys=new Set(),cameraSpawns=[];
 let last=performance.now();
 function message(s){status.textContent=s}
 function flashHint(text){hint.textContent=text;hint.style.display="block";}
@@ -143,7 +146,7 @@ function init(){
  program=gl.createProgram();gl.attachShader(program,vs);gl.attachShader(program,fs);gl.linkProgram(program);
  if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));
  gl.deleteShader(vs);gl.deleteShader(fs);gl.useProgram(program);
- positionBuffer=gl.createBuffer();indexBuffer=gl.createBuffer();
+ positionBuffer=gl.createBuffer();indexBuffer=gl.createBuffer();lineIndexBuffer=gl.createBuffer();
  gl.bindBuffer(gl.ARRAY_BUFFER,positionBuffer);
  let loc=gl.getAttribLocation(program,"aPos");gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,0);
  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indexBuffer);
@@ -151,6 +154,7 @@ function init(){
  uniforms.yaw=gl.getUniformLocation(program,"uYaw");
  uniforms.pitch=gl.getUniformLocation(program,"uPitch");
  uniforms.aspect=gl.getUniformLocation(program,"uAspect");
+ uniforms.wire=gl.getUniformLocation(program,"uWire");
  gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.depthFunc(gl.LEQUAL);gl.clearColor(.06,.1,.14,1);
 }
 if(!gl){message("WebGL2 unavailable; enable hardware acceleration in Chrome.");input.disabled=true}
@@ -174,6 +178,13 @@ input.addEventListener("change",async()=>{
   for(let k=0;k<positions.length;k++)if(!Number.isFinite(positions[k]))throw Error("Invalid world coordinate");
   gl.bindBuffer(gl.ARRAY_BUFFER,positionBuffer);gl.bufferData(gl.ARRAY_BUFFER,positions,gl.STATIC_DRAW);
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indexBuffer);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,indices,gl.STATIC_DRAW);
+  const edges=new Uint32Array(indices.length*2);
+  for(let i=0,j=0;i<indices.length;i+=3){
+   const a=indices[i],b=indices[i+1],c=indices[i+2];
+   edges[j++]=a;edges[j++]=b;edges[j++]=b;edges[j++]=c;edges[j++]=c;edges[j++]=a;
+  }
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,lineIndexBuffer);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,edges,gl.STATIC_DRAW);
+  lineCount=edges.length;gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indexBuffer);
   indexCount=indices.length;mesh={name:f.name,triangles:indices.length/3,bounds:data.bounds};
   cameraSpawns=safeSpawns(data);setSpawnList();
   if(cameraSpawns.length)atSpawn(0);else overview();
@@ -188,6 +199,12 @@ closeLoader.addEventListener("click",()=>{if(mesh)loader.style.display="none";})
 toSpawn.addEventListener("click",()=>atSpawn(spawnSelect.value));
 toOverview.addEventListener("click",overview);
 spawnSelect.addEventListener("change",()=>atSpawn(spawnSelect.value));
+function toggleEdges(){
+ wireEnabled=!wireEnabled;
+ edgesToggle.textContent=wireEnabled?"EDGES ON · 3":"EDGES OFF · 3";
+ flashHint(wireEnabled?"BRUSH EDGES SHOWN · TOGGLE WITH 3":"BRUSH EDGES HIDDEN");
+}
+edgesToggle.addEventListener("click",toggleEdges);
 cvs.addEventListener("click",()=>{if(indexCount&&cvs.requestPointerLock){const p=cvs.requestPointerLock();if(p&&p.catch)p.catch(()=>{})}});
 document.addEventListener("mousemove",e=>{
  if(document.pointerLockElement===cvs){cam.yaw+=(e.movementX||0)*.002;cam.pitch=Math.max(-1.5,Math.min(1.5,cam.pitch-(e.movementY||0)*.002))}
@@ -198,6 +215,7 @@ document.addEventListener("keydown",e=>{
  if(e.code==="KeyH"&&!e.repeat)help.style.display=help.style.display==="none"?"block":"none";
  if(e.code==="Digit1"&&!e.repeat)atSpawn(spawnSelect.value);
  if(e.code==="Digit2"&&!e.repeat)overview();
+ if(e.code==="Digit3"&&!e.repeat)toggleEdges();
  if(e.code==="KeyN"&&!e.repeat&&cameraSpawns.length){
   const next=(Number(spawnSelect.value)+1)%cameraSpawns.length;atSpawn(next);
  }
@@ -227,7 +245,16 @@ function frame(now){
    gl.useProgram(program);gl.uniform3f(uniforms.camera,cam.x,cam.y,cam.z);
    gl.uniform1f(uniforms.yaw,cam.yaw);gl.uniform1f(uniforms.pitch,cam.pitch);
    gl.uniform1f(uniforms.aspect,cvs.width/cvs.height);
+   gl.uniform1i(uniforms.wire,0);
+   if(wireEnabled){gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1,1);}
+   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indexBuffer);
    gl.drawElements(gl.TRIANGLES,indexCount,gl.UNSIGNED_INT,0);
+   if(wireEnabled){
+    gl.disable(gl.POLYGON_OFFSET_FILL);
+    gl.uniform1i(uniforms.wire,1);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,lineIndexBuffer);
+    gl.drawElements(gl.LINES,lineCount,gl.UNSIGNED_INT,0);
+   }
   }
  }
  if(mesh&&Math.floor(now/500)!==Math.floor((now-dt*1000)/500))
