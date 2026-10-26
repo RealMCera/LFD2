@@ -24,7 +24,29 @@ py -m unittest discover -s tests -v
 py tools\inspect_hotel_elements.py
 ```
 
-The inspector reports total entity classes and example coordinates, Source GAME_LUMP version/flags, static model dictionary and static prop count if safely recognized, and displacement metadata sizes. It does not write game data or perform unsafe model decoding. The owner has not yet run this new inspector on the actual Xbox hotel BSP.
+The inspector reports total entity classes and example coordinates, Source GAME_LUMP version/flags, static model dictionary and static prop count if safely recognized, and displacement metadata sizes. It does not write game data or perform unsafe model decoding. The owner **has now run it** successfully on the real Xbox BSP; 112 tests passed. The compressed sprp payload was not decoded by the first read-only version.
 
 Valve Source BSP source reference: https://github.com/ValveSoftware/source-sdk-2013/blob/master/src/public/bspfile.h
 Source static-prop version caution: https://srctools.readthedocs.io/en/stable/modules/bsp.html
+
+## Verified October 26 Xbox BSP results
+
+Original map `c1m1_hotel.360.bsp` contains **1,894 entity blocks**; **314 `prop_physics`**, **72 `prop_dynamic`**, **29 `prop_door_rotating` + 1 checkpoint variant**, **195 `func_brush`**, **8 `func_breakable`**, and **4 `func_movelinear`**. Other entities include weapons and survivor positions. Original model paths already include elevator buttons, elevator pulleys and metal doors.
+
+The Xbox game lump directory lists **`sprp` v9 with compression flag 1** and an **uncompressed `filelen` of 156,212 bytes**, plus `dprp` v4 and an empty terminator. Source's official `GAMELUMPFLAG_COMPRESSED` means the next file offset or a compression wrapper is needed to establish the actual on-disk size. Our new bounded LZMA probe now attempts a true Valve wrapper and validates the static model dictionary; if the wrapper is different, it reports the observed header magic instead of guessing.
+
+The original displacement data is **928 bytes of `DISPINFO` and 3,740 bytes of `DISPVERTS`**, which do not match the naive 176-byte info-record assumption. This must be decoded separately before reintroducing missing displacement surfaces.
+
+## Next real-model audit and placement manifest
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\inspect_hotel_elements.py
+py tools\inspect_hotel_model_assets.py --export
+```
+
+The new model audit scans only the **local Xbox `zip0.360.zip` central directory** to check which original `.mdl`, `.vvd`, `.vtx` and optional `.phy` companions exist, and probes 16-byte headers of one available model set. The optional export saves **`research/local/hotel-model-placements.json`**, containing only original entity model paths, world-space position/angle and class type, for future genuine asset rendering. It does **not** decode full model geometry or upload commercial data. The exported placements cover authored `prop_physics`, `prop_dynamic` and door models; static game-lump instances will be added only after their record layout has been verified.
+
+Our browser already handles the real map geometry and materials. **The next milestone is actual original model decoding and placement**, not another texture experiment.
