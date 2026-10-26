@@ -21,12 +21,14 @@ try:
     from .scan_xbox_zip_directory import scan_xbox_zip
     from .inspect_xbox_zip import XboxZipError
     from .inspect_hotel_elements import inspect_bsp
+    from .probe_xbox_texture_headers import inspect_local_header
 except ImportError:
     from bsp_to_browser_mesh import ROOT, MAP, BspError, read_directory, read_lump
     from add_bsp_spawns import ENTITY_PATTERN, PAIR_PATTERN
     from scan_xbox_zip_directory import scan_xbox_zip
     from inspect_xbox_zip import XboxZipError
     from inspect_hotel_elements import inspect_bsp
+    from probe_xbox_texture_headers import inspect_local_header
 
 PACK = ROOT/"game-extracted"/"left4dead2"/"zip0.360.zip"
 PRIVATE = (ROOT/"research"/"local").resolve()
@@ -121,6 +123,30 @@ def make_inventory(bsp: bytes, archive_names: list[str]) -> dict:
             "placements":placements}
 
 
+def probe_model_headers(stream, report: dict, model: str) -> list[dict]:
+    """Peek at most 16 payload bytes for one model's local MDL/VVD/VTX headers."""
+    index={item["name"].replace("\\","/").casefold():item
+           for item in report["entries"] if item["name"].lower().startswith("models/")}
+    results=[]
+    for kind in ("mdl","vvd","vtx"):
+        match=next((index[path] for path in model_files(model)[kind] if path in index),None)
+        if not match:
+            results.append({"type":kind,"status":"absent"})
+            continue
+        info=inspect_local_header(stream,stream.seek(0,2),
+                                  report["directory_offset"],match)
+        signature=info.get("candidate_magic_hex","")
+        magic=bytes.fromhex(signature) if signature else b""
+        # Source studio headers are sometimes byteswapped for Xbox 360.
+        known={b"IDST":"Source MDL",b"TSDI":"Xbox-swapped MDL",
+               b"IDSV":"Source VVD",b"VSDI":"Xbox-swapped VVD"}
+        results.append({"type":kind,"status":info["status"],
+                        "name_match":info.get("local_filename_matches",False),
+                        "header_hex":signature,
+                        "format_hint":known.get(magic[:4],"unverified; inspect format")})
+    return results
+
+
 def main() -> int:
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--bsp",type=Path,default=MAP)
@@ -149,13 +175,20 @@ def main() -> int:
             for feature in ("mdl","vvd","vtx","mesh_ready"):
                 print(f"  {feature:>10}: {sum(1 for row in group if row[feature]):,}/"
                       f"{len(group):,}")
-            for row in (r for r in group if not r["mesh_ready"]):
+            for row in [r for r in group if not r["mesh_ready"]][:8]:
                 print(f"    missing companion(s): {row['model']}")
-                if group.index(row)>=8:
-                    break
         print("Most frequent original placed models:")
         for name,count in inventory["top_entity_models"][:12]:
             print(f"  {count:>4} · {name}")
+        candidate=next((row["model"] for row in inventory["dynamic_availability"]
+                        if row["mesh_ready"]),None)
+        if candidate:
+            print(f"Read-only 16-byte local model header probe: {candidate}")
+            with pack.open("rb") as handle:
+                for item in probe_model_headers(handle,archive,candidate):
+                    print(f"  {item['type']}: {item['status']}; "
+                          f"magic={item.get('header_hex','none')}; "
+                          f"{item.get('format_hint','not found')}")
         if args.export:
             target=args.output.expanduser().resolve()
             if not target.is_relative_to(PRIVATE) or target==PRIVATE:
