@@ -14,7 +14,7 @@ main{height:calc(100vh - 95px);min-height:400px;position:relative}
 #loader h1 span{color:#f2b980}
 #loader p{color:#aebfc6;font-size:13px;line-height:1.65}
 #loader label{display:block;cursor:pointer;text-align:center;background:#e6a66f;color:#141e22;font-weight:900;padding:14px;letter-spacing:.09em;font-size:12px}
-#loader label:hover{background:#ffd09c}#file,#textureFile{display:none}
+#loader label:hover{background:#ffd09c}#file,#textureFile,#multiTextureFiles{display:none}
 #materialPanel{display:none;margin-top:16px;padding-top:13px;border-top:1px solid #57717d}
 #materialPanel select{display:block;width:100%;background:#22343e;color:#f5dbba;padding:8px;border:1px solid #607884;margin:8px 0 11px;font:12px Consolas,monospace}
 #materialPanel button{cursor:pointer;background:#21313d;border:1px solid #617984;color:#edc59e;width:100%;padding:9px;margin-top:7px}
@@ -44,7 +44,7 @@ footer a{color:#f1ba87}
 <button type="button" id="closeLoader" aria-label="Close map loader">×</button>
 <div style="color:#e5b585;font-size:11px;font-weight:bold;letter-spacing:.18em">XBOX 360 BSP · LOCAL FILES ONLY</div>
 <h1>Explore the <span>original map geometry.</span></h1>
-<p>This experimental renderer opens a mesh converted from your own L4D2 BSP. No map files or game assets are uploaded. Brush surfaces from your original game. Optional one-material texture preview using a private PNG + UV mesh. No props, enemies or complete Source engine yet.</p>
+<p>This experimental renderer opens a mesh converted from your own L4D2 BSP. No map files or game assets are uploaded. Brush surfaces from your original game. Optional one- or multi-material texture previews using private PNGs + UV mesh. No props, enemies or complete Source engine yet.</p>
 <label for="file">SELECT A LOCAL .MESH.JSON FILE</label><input type="file" id="file" accept=".json,application/json">
 <div id="materialPanel">
   <p>OPTIONAL ORIGINAL TEXTURE PREVIEW · UV MESH ONLY</p>
@@ -53,6 +53,13 @@ footer a{color:#f1ba87}
   <input type="file" id="textureFile" accept=".png,image/png">
   <button type="button" id="textureToggle">TEXTURE PREVIEW ON</button>
   <div id="textureStatus">Load a PNG of this selected material. It stays on your computer.</div>
+  <div style="margin-top:16px;padding-top:12px;border-top:1px solid #57717d">
+    <p>MULTIPLE ORIGINAL MATERIALS · EXPERIMENTAL</p>
+    <label for="multiTextureFiles">SELECT UP TO 16 LOCAL PNGs</label>
+    <input type="file" id="multiTextureFiles" accept=".png,image/png" multiple>
+    <button type="button" id="multiTextureToggle">MULTI-TEXTURES ON</button>
+    <div id="multiTextureStatus" style="font:11px/1.55 Consolas,monospace;color:#b6c9cc;margin-top:8px;white-space:pre-wrap">Select several PNGs to texture multiple matched Source materials simultaneously.</div>
+  </div>
 </div>
 <div id="status">For the new survivor-start view, run:
 
@@ -199,6 +206,7 @@ input.addEventListener("change",async()=>{
   lineCount=edges.length;gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indexBuffer);
   indexCount=indices.length;mesh={name:f.name,triangles:indices.length/3,bounds:data.bounds};
   if(typeof setUvData==="function")setUvData(data);
+  if(typeof setMultiUvData==="function")setMultiUvData(data);
   cameraSpawns=safeSpawns(data);setSpawnList();
   if(cameraSpawns.length)atSpawn(0);else overview();
   loader.style.display="none";show.style.display="block";cross.style.display="block";viewcontrols.style.display="flex";
@@ -263,6 +271,7 @@ function frame(now){
    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indexBuffer);
    gl.drawElements(gl.TRIANGLES,indexCount,gl.UNSIGNED_INT,0);
    if(typeof renderMaterialPreview==="function")renderMaterialPreview();
+   if(typeof renderMultiMaterials==="function")renderMultiMaterials();
    if(wireEnabled){
     gl.disable(gl.POLYGON_OFFSET_FILL);
     gl.uniform1i(uniforms.wire,1);
@@ -278,5 +287,6 @@ function frame(now){
 requestAnimationFrame(frame);
 </script>
 <script src="material-preview.js"></script>
+<script src="multi-materials.js"></script>
 </body>
 </html>
