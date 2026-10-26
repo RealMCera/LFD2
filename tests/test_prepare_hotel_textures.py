@@ -96,6 +96,36 @@ class HotelTextureBatchTests(unittest.TestCase):
         selected=choose_materials(source,report["entries"],8,focus="floor")
         self.assertEqual([row[0] for row in selected],["concrete/concrete_floor_10"])
 
+    def test_selection_offset_skips_prior_batch(self):
+        content=pack()
+        report=scan_directory(io.BytesIO(content),len(content))
+        source=Counter({"PLASTER/PLASTER_EXT_20":100,
+                        "TILE/TILE_CEILING_01":50})
+        first=choose_materials(source,report["entries"],1,start=0)
+        next_one=choose_materials(source,report["entries"],1,start=1)
+        self.assertEqual(first[0][0],"plaster/plaster_ext_20")
+        self.assertEqual(next_one[0][0],"tile/tile_ceiling_01")
+        self.assertEqual(choose_materials(source,report["entries"],8,start=10),[])
+
+    def test_refuse_ambiguous_flat_png_material_basename(self):
+        content=io.BytesIO()
+        with zipfile.ZipFile(content,"w",compression=zipfile.ZIP_STORED) as z:
+            z.writestr("materials/plaster/wall.360.vtf",vtfx())
+            z.writestr("materials/tile/wall.360.vtf",vtfx())
+        raw=content.getvalue()
+        entries=scan_directory(io.BytesIO(raw),len(raw))["entries"]
+        source=Counter({"plaster/wall":10,"tile/wall":5})
+        self.assertEqual(choose_materials(source,entries,8),[])
+        with self.assertRaisesRegex(ValueError,"basename is ambiguous"):
+            choose_materials(source,entries,1,material="plaster/wall")
+
+    def test_reject_invalid_start(self):
+        raw=pack()
+        entries=scan_directory(io.BytesIO(raw),len(raw))["entries"]
+        with self.assertRaisesRegex(ValueError,"offset outside"):
+            choose_materials(Counter({"plaster/plaster_ext_20":10}),
+                             entries,1,start=-1)
+
     def test_refuse_path_traversal(self):
         for name in ("../evil","plaster/../../evil","plaster/a.b","plaster/a b"):
             with self.assertRaises(ValueError):
