@@ -1,10 +1,13 @@
 """Synthetic-only model directory and entity placement availability tests."""
+import io
+import zipfile
 import unittest
 
 from tools.inspect_hotel_model_assets import (
-    vector3,list_model_placements,model_files,model_availability,make_inventory
+    vector3,list_model_placements,model_files,model_availability,make_inventory,probe_model_headers
 )
 from test_inspect_hotel_elements import make_bsp
+from tools.scan_xbox_zip_directory import scan_directory
 
 
 class ModelInventoryTests(unittest.TestCase):
@@ -40,6 +43,22 @@ class ModelInventoryTests(unittest.TestCase):
     def test_supported_vtx_alternative_suffixes(self):
         self.assertIn("models/props/hotel/chair.dx90.vtx",
                       model_files("models/props/hotel/chair.mdl")["vtx"])
+
+    def test_probe_only_local_synthetic_model_headers(self):
+        mem=io.BytesIO()
+        with zipfile.ZipFile(mem,"w",compression=zipfile.ZIP_STORED) as z:
+            z.writestr("models/props/hotel/chair.mdl",b"IDST"+b"\0"*40)
+            z.writestr("models/props/hotel/chair.vvd",b"IDSV"+b"\0"*40)
+            z.writestr("models/props/hotel/chair.360.vtx",b"\0\0\0\7"+b"\0"*40)
+        raw=mem.getvalue()
+        with io.BytesIO(raw) as stream:
+            report=scan_directory(stream,len(raw))
+            result=probe_model_headers(stream,report,"models/props/hotel/chair.mdl")
+        self.assertEqual(len(result),3)
+        self.assertTrue(all(x["status"]=="local_header_found" for x in result))
+        self.assertEqual(result[0]["format_hint"],"Source MDL")
+        self.assertEqual(result[1]["format_hint"],"Source VVD")
+        self.assertTrue(all(x["name_match"] for x in result))
 
     def test_synthetic_bsp_and_zip_names(self):
         paths=["models/props/hotel/door.mdl",
