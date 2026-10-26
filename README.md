@@ -304,6 +304,22 @@ Start-Process (Resolve-Path '.\docs\map-viewer.html').Path
 
 Reload the UV mesh, choose all local PNGs (up to 16 per round, keeping previous rounds loaded), then click **REFRESH MATERIAL COVERAGE** in the map loader. Read the remaining original material paths before deciding what to convert next. The original game runtime is not yet running in the browser.
 
+## Finish the original hotel texturing phase — one-time local build
+
+**You can stop manually converting PNGs in batches.** Screenshot-confirmed progress already reached 14 original materials on 13,696/27,374 hotel triangles (50.0%). The new [complete hotel texture builder](tools/finish_hotel_materials.py) resolves original VMT `$basetexture` dependencies across `zip1.360.zip` and the embedded hotel map Pak, reuses already converted private PNGs, and converts the remaining supported images to one ignored local folder. An accompanying [Chrome folder loader](docs/finish-texture-folder.js) reads its `texture-manifest.json` and all images in a single selection. Unsupported/tool materials are reported, not given incorrect textures.
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\finish_hotel_materials.py --run
+Start-Process (Resolve-Path '.\docs\map-viewer.html').Path
+```
+
+Load your existing private UV mesh, then select the entire `research\local\hotel-complete` directory in **LOAD COMPLETE LOCAL TEXTURE FOLDER**. The browser draws up to 256 material bindings within an 80-million-pixel GPU budget; you can also toggle nonvisual Source tools/debug brushes. Original textures and manifests remain ignored under `research/local/`. New synthetic tests and a CI workflow are committed; owner-specific full-run and final Chrome screenshots remain to be verified.
+
+**This completes the automated browser *brush-material* pipeline, not the entire original game.** Props, displacements, real lightmaps, animations, collision and L4D2 engine/gameplay still require further work. Exact finish instructions: [FINISH_HOTEL_TEXTURES.md](docs/FINISH_HOTEL_TEXTURES.md).
+
 ## Further research and options
 
 - [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
