@@ -356,6 +356,21 @@ py tools\inspect_hotel_model_assets.py --export
 
 Original model geometry is **not yet rendered in Chrome**. The modified scripts and their synthetic tests still need a run against the owner's private Xbox files; no original game model data is uploaded or committed.
 
+## 2,164 original hotel placements verified: static v9 decoded
+
+**Owner's latest real Xbox PowerShell output (October 26):** All **120 unit tests passed**. The Source v9 compressed `sprp` lump successfully decompressed and revealed **188 static model dictionary entries**, **1,748 placed static props**, and a **72-byte apparent record stride**, consistent with L4D2's known v9 format. The separate entity lump includes **416 physics/dynamic/door placements**, covering **52 distinct models**. The previous model scan was limited to `zip0.360.zip`, which contained none of the matching model filename candidates; this was *not* a complete search across the eight Xbox archives.
+
+**New local tool:** [tools/build_hotel_prop_manifest.py](tools/build_hotel_prop_manifest.py) validates every original static v9 model index, world-space origin/angles and leaf bounds, combines verified static records with the 416 entity placements, and searches **all extracted `.360.zip` model directories**, loose extracted models and the embedded map PAK. It reports `.mdl`/`.vvd`/`.vtx` companion availability and can save all placement metadata privately. Synthetic tests cover compressed data, invalid offsets/model IDs, true 72-byte stride and models split across packages. This new tool still needs to run on the owner's original files.
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\build_hotel_prop_manifest.py --export
+```
+
+The private output is `research/local/hotel-all-props.json`. Original commercial model meshes **are not extracted or uploaded**. If the complete archive scan still finds no model triplets, we will inspect Xbox packaging/naming variants rather than fabricating geometry.
+
 ## Further research and options
 
 - [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
