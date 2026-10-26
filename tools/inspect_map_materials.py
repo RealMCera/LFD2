@@ -16,8 +16,10 @@ import zipfile
 
 try:
     from .bsp_to_browser_mesh import ROOT, MAP, BspError, read_directory, read_lump
+    from .inspect_xbox_zip import inspect_xbox_zip, XboxZipError
 except ImportError:
     from bsp_to_browser_mesh import ROOT, MAP, BspError, read_directory, read_lump
+    from inspect_xbox_zip import inspect_xbox_zip, XboxZipError
 
 TEXDATA_LUMP = 2
 TEXINFO_LUMP = 6
@@ -145,9 +147,32 @@ def main()->int:
                     print(f"  {suffix or '(none)':<8} {count:>7,}")
                 print("Sample model/material filenames (if present):")
                 for name in listing["sample_assets"]:print("  "+name)
-            except (OSError,zipfile.BadZipFile,zipfile.LargeZipFile,NotImplementedError,ValueError) as error:
-                print(f"  Standard ZIP directory listing unavailable: {error}")
-                print("  Xbox XZIP may require a dedicated directory reader. No files extracted.")
+            except (zipfile.BadZipFile,zipfile.LargeZipFile,NotImplementedError,ValueError) as error:
+                print(f"  Standard ZIP reader rejected extra data: {error}")
+                print("  Trying the bounded Xbox ZIP directory reader...")
+                try:
+                    metadata=inspect_xbox_zip(pack)
+                    print(f"  Xbox directory entries: {metadata['count']:,}; "
+                          f"extra bytes skipped: {metadata['skipped_extra_bytes']:,}")
+                    for suffix,count in metadata["extension_counts"].most_common(15):
+                        print(f"    {suffix or '(none)':<9} {count:>7,}")
+                    filenames={name.replace('\\','/').casefold()
+                               for name in metadata["filenames"]}
+                    matches = [(name,faces) for name,faces in result["materials"].items()
+                               if ("materials/"+name.replace('\\','/').lower()+".vmt").casefold()
+                               in filenames]
+                    print(f"  BSP material VMT names matched in this ZIP: "
+                          f"{len(matches)}/{result['unique_materials']} "
+                          f"({sum(faces for _name,faces in matches):,} face references)")
+                    print("  Matching materials (up to 12):")
+                    for name,_faces in sorted(matches)[:12]:
+                        print("    "+name)
+                    print("  Sample asset paths:")
+                    for name in metadata["sample_assets"][:args.limit]:
+                        print("    "+name)
+                except (XboxZipError, OSError) as extra_error:
+                    print(f"  Xbox ZIP directory probe also stopped: {extra_error}")
+                    print("  Report this diagnostic; original archive remains untouched.")
         print("\nInspection complete. No commercial game data exported or uploaded.")
         return 0
     except (OSError,ValueError,BspError,struct.error) as error:
