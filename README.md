@@ -90,6 +90,21 @@ If the ZIP format requires additional Xbox-specific handling, capture the printe
 Read the [material pipeline](docs/MATERIAL_PIPELINE.md). The eventual Chrome texture renderer will require original mesh UV coordinates, local asset conversion and actual materials; the generic gray shader alone isn't enough.
 
 
+## Latest Xbox ZIP investigation (October 26)
+
+**46/47 of the owner's tests passed** before the fix to the Windows ISO path-test expectation. Material references remain confirmed: 189 distinct names, 10,840 mapped faces.
+
+The new bounded ZIP parser finds the archive's first central record but fails at entry 1, so skipping malformed internal extra fields alone is not enough. We have NOT confirmed the cause or successfully listed this Xbox package yet.
+
+The next command adds precise metadata-only central-directory alignment diagnostics. **Do not upload the game ZIP or attempt bulk extraction**:
+
+    cd C:\Users\FrontDesk\LFD2
+    git pull
+    py -m unittest discover -s tests -v
+    py tools\inspect_xbox_zip.py --diagnose
+
+The report prints the EOCD offset/size, the first record's fixed lengths, the predicted second-record position, and any nearby alternative header offset. It does not read or print texture/game payloads. Share that diagnostic output to distinguish Xbox alignment/padding from an incorrectly interpreted directory header.
+
 ## Further research and options
 
 - [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
