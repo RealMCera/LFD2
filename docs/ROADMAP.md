@@ -75,11 +75,14 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] Add a WebGL2 brush-geometry viewer, experimental private BSP converter, and synthetic tests.
 - [x] Validate BSP-to-mesh converter against actual hotel map: big-endian v20, LZMA-wrapped lumps, HDR face lump 58, 27,374 brush triangles in a local 777,248-byte file.
 - [x] Verify all 23 synthetic tests pass on the owner's PC.
-- [ ] Successfully load original locally supplied hotel-map geometry in WebGL2, then add displacements, textures, props, and collision.
+- [x] Load and render the original hotel's 27,374-triangle geometry in Chrome; screenshot confirmed an untextured aerial view.
+- [x] Build private Source entity spawn extraction and browser start-position controls (awaiting owner testing).
+- [ ] Confirm an eye-level hotel interior appears using an actual survivor/player start location.
+- [ ] Add displacements, original-material mapping, props, and collision.
 - [ ] Evaluate native portable reimplementation/recompiler feasibility and missing Xbox/Source engine services.
 - [ ] Build a limited original-game C++ subsystem as WebAssembly, then integrate gameplay, audio, asset loading, controls, and networking.
 - [ ] Assess scope of a complete buildable port; write independent research and tests.
 
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status: real Xbox hotel map converted successfully to a private geometry mesh; visual validation in the WebGL2 map viewer is next. The actual L4D2 game is not running in Chrome.**
+**Status: real Xbox hotel brush geometry renders in Chrome, currently mostly giant gray surfaces from an aerial camera. New private spawn-based camera navigation is the next validation step. The original game is not running in Chrome.**
