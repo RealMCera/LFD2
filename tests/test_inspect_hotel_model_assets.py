@@ -4,7 +4,7 @@ import unittest
 from tools.inspect_hotel_model_assets import (
     vector3,list_model_placements,model_files,model_availability,make_inventory
 )
-from tests.test_inspect_hotel_elements import make_bsp
+from test_inspect_hotel_elements import make_bsp
 
 
 class ModelInventoryTests(unittest.TestCase):
