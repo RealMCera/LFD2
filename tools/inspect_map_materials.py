@@ -154,6 +154,11 @@ def main()->int:
                     metadata=inspect_xbox_zip(pack)
                     print(f"  Xbox directory entries: {metadata['count']:,}; "
                           f"extra bytes skipped: {metadata['skipped_extra_bytes']:,}")
+                    print(f"  Nonstandard gaps recovered: "
+                          f"{metadata['recovered_entries']:,} entries / "
+                          f"{metadata['skipped_gap_bytes']:,} bytes, "
+                          f"largest {metadata['max_recovery_gap']} bytes")
+                    print(f"  Directory remainder: {metadata['trailing_directory_bytes']:,} bytes")
                     for suffix,count in metadata["extension_counts"].most_common(15):
                         print(f"    {suffix or '(none)':<9} {count:>7,}")
                     filenames={name.replace('\\','/').casefold()
