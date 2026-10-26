@@ -190,6 +190,28 @@ An existing community-supported [VTFX Reader](https://github.com/rob5300/vtfx_re
 
 Step-by-step guide: [VTFX_FIRST_TEXTURE.md](docs/VTFX_FIRST_TEXTURE.md).
 
+## Original plaster texture successfully extracted — next is PNG + Source UVs
+
+**Owner verified:** **73/73 Python tests passed**. \`plaster_int_14.360.vtf\` was copied successfully to \`research/local/vtfx/\`; its genuine original \`VTFX\` header reports **512×512, DXT1 (format 13)**, **174,844 bytes**, a 68-byte header and one resource. The original archives were not modified or uploaded.
+
+We've committed two new independent pieces of the genuine-texture pipeline:
+
+1. [tools/convert_local_vtfx.py](tools/convert_local_vtfx.py): a wrapper that invokes a separately installed [rob5300/vtfx_reader.exe](https://github.com/rob5300/vtfx_reader/releases/latest) for ONE privately extracted texture, refusing to overwrite existing output and checking PNG dimensions. It does **not** download or bundle the third-party executable.
+2. [tools/add_bsp_material_uvs.py](tools/add_bsp_material_uvs.py): maps the original BSP **texture vectors and material IDs to individual mesh-triangle corners**, preserving camera start positions and outputting a new gitignored \`.mesh.json\`. This supplies future WebGL texture sampling; it does **not** make the existing viewer render PNGs yet.
+
+On the owner's PC:
+
+    cd C:\Users\FrontDesk\LFD2
+    git pull
+    py -m unittest discover -s tests -v
+    py tools\add_bsp_material_uvs.py
+
+For the PNG step, download a trusted Windows \`vtfx_reader.exe\` release manually and place it in \`research/local/tools/\`, then run:
+
+    py tools\convert_local_vtfx.py
+
+PNG output is kept under \`research/local/vtfx/png/\` only; script refuses nonempty output folders. **Neither new tool nor the PNG decode has been validated on the owner's PC yet.** Full guide: [VTFX_FIRST_TEXTURE.md](docs/VTFX_FIRST_TEXTURE.md).
+
 ## Further research and options
 
 - [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
