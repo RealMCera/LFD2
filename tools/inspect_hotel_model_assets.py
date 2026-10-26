@@ -86,7 +86,7 @@ def model_files(model: str) -> dict[str,list[str]]:
 
 def model_availability(models: list[str], indexed: set[str]) -> list[dict]:
     report=[]
-    for model in sorted(set(models)):
+    for model in sorted({name.replace("\\","/").casefold() for name in models}):
         sides=model_files(model)
         present={ext:next((path for path in choices if path in indexed),None)
                  for ext,choices in sides.items()}
