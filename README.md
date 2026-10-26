@@ -105,6 +105,21 @@ The next command adds precise metadata-only central-directory alignment diagnost
 
 The report prints the EOCD offset/size, the first record's fixed lengths, the predicted second-record position, and any nearby alternative header offset. It does not read or print texture/game payloads. Share that diagnostic output to distinguish Xbox alignment/padding from an incorrectly interpreted directory header.
 
+## Xbox ZIP central-directory recovery (October 26)
+
+The latest header diagnostic confirmed that the Xbox archive's central-directory EOCD offset and size agree exactly, and its first central record parses. The predicted second header is all zeros, but the first plausible replacement starts **58 bytes later**.
+
+I've updated the read-only ZIP directory reader to recover only a **small forward gap (up to 128 bytes)** between otherwise valid central records, tracking each gap rather than assuming the entire archive is aligned that way. Synthetic tests cover 3-byte and 58-byte gaps and rejection of larger unknown offsets. **This reader has not yet been verified against the full Xbox archive.**
+
+Run:
+
+    cd C:\Users\FrontDesk\LFD2
+    git pull
+    py -m unittest discover -s tests -v
+    py tools\inspect_map_materials.py --pack
+
+If parsing succeeds, report the recovered-entry count, gap totals, material extension counts and VMT matches. If it stops at a later record, report the exact error; no game payload is touched.
+
 ## Further research and options
 
 - [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
