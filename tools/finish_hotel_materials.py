@@ -39,7 +39,7 @@ PRIVATE = (ROOT/"research"/"local").resolve()
 DEFAULT_MESH = PRIVATE/"c1m1_hotel_spawns_uv.mesh.json"
 DEFAULT_OUTPUT = PRIVATE/"hotel-complete"
 MATERIAL_LINE = re.compile(r'(?im)"?\$basetexture"?\s+"?([a-z0-9_./\\-]+)"?')
-SAFE_NAME = re.compile(r"^[a-z0-9_\-]+(?:/[a-z0-9_\-]+)*$")
+SAFE_NAME = re.compile(r"^[a-z0-9_.\-]+(?:/[a-z0-9_.\-]+)*$")
 MAX_VMT_BYTES = 262144
 MAX_TOTAL = 300
 SKIP_PREFIX = ("tools/", "dev/", "effects/", "sky/", "particle/")
@@ -52,7 +52,8 @@ def normalize_material(value: str) -> str:
     for ext in (".360.vtf", ".vtf", ".vmt", ".png"):
         if name.endswith(ext):
             name = name[:-len(ext)]
-    if not SAFE_NAME.fullmatch(name):
+    if (not SAFE_NAME.fullmatch(name) or
+            any(piece in (".","..") for piece in name.split("/"))):
         raise ValueError("Unsafe Source material path: "+repr(value))
     return name
 
@@ -107,7 +108,8 @@ def map_sources(zip_report: dict, pak_report: dict) -> dict:
                 kind="vtfx"; key=name[10:-8]
             else:
                 continue
-            if not key or not SAFE_NAME.fullmatch(key):
+            if (not key or not SAFE_NAME.fullmatch(key) or
+                    any(piece in (".","..") for piece in key.split("/"))):
                 continue
             tables.setdefault(kind, {}).setdefault(key, [])
             tables[kind][key].append((label,entry))
