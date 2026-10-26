@@ -120,9 +120,16 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] Add popularity-offset `--start` to safe local converter, filename collision protection, and synthetic tests (owner validation pending).
 - [ ] Diagnose high-count untextured tool/sky/brush materials versus missing prop/displacement geometry.
 
+- [x] Build one-command original VMT `$basetexture` resolver and local-only PNG conversion against zip1 + embedded BSP Pak (owner run pending).
+- [x] Add one-folder Chrome manifest loader for all resolved original Source brush material PNGs; safe memory bounds and duplicate path handling (owner visual validation pending).
+- [x] Add optional toggle for hiding original TOOLS/DEV/SKY/EFFECTS brushes from gray base pass without modifying mesh.
+- [x] Add Python/Node synthetic tests and GitHub Actions workflow.
+- [ ] Run the completed material builder against private Xbox archives, inspect unresolved report and load folder into Chrome.
+- [ ] Begin distinct phase: Source displacements, props, doors, lightmaps, then collision and actual engine/gameplay.
+
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status: owner screenshot verifies 14 Xbox-derived PNG materials on 13,696/27,374 original hotel brush triangles (50.0%), including floor and ceiling. New dynamic coverage diagnostics, higher memory-bounded multi-PNG capacity and next-batch conversion committed, awaiting real-PC validation. Original L4D2 gameplay is not running in Chrome.**
+**Status: screenshot proves 14 original textures on 13,696/27,374 hotel brush triangles. A complete one-command private VMT/texture pipeline and one-folder Chrome loader are committed, with synthetic tests; the final complete-archive run needs owner validation. BSP displacements, props, real Source lightmaps, collision and original L4D2 gameplay remain separate.**
 
 ### Full-disc ISO input (extraction confirmed; code analysis pending)
 
