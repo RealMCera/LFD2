@@ -21,7 +21,7 @@ The Xbox 360 **PowerPC XEX2** binaries cannot themselves be compiled by Emscript
 
 ## Full Xbox 360 ISO: local extraction and private decompilation
 
-The full-disc ISO is **7.84 GB** and has been identified by **Drive metadata only**. Follow [ISO_DECOMPILATION.md](docs/ISO_DECOMPILATION.md): use `tools/import_disc_iso.py` to inspect the local XDVDFS image and optionally unpack with the external xdvdfs CLI; `tools/ghidra/ExportPseudocode.py` can export a limited set of analyzed functions **privately**, never into this public repo. The disc contents and actual decompilation remain unverified.
+**Local ISO extraction verified (October 26, 2026):** the 7.84 GB image has a valid **XGD2/XDVDFS** volume descriptor and xdvdfs successfully extracted **default.xex**, candidate code modules, 24 BSP maps and Xbox resource packages to `game-iso-extracted/`. See [ISO_DECOMPILATION.md](docs/ISO_DECOMPILATION.md). The read-only `tools/compare_xex_modules.py` checks whether modules match the earlier archive extraction before we repeat analysis. `tools/ghidra/ExportPseudocode.py` can later export decompiled functions **privately**, not into this repo. **The ISO's code has not yet been decompiled and no genuine L4D2 browser game runs yet.**
 
 ## First Chrome preview: original L4D2 BSP geometry (experimental)
 
