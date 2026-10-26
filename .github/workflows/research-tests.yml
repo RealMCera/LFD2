@@ -1,0 +1,24 @@
+name: Python research tools tests
+on:
+  push:
+    paths:
+      - "tools/**"
+      - "tests/**"
+      - ".github/workflows/research-tests.yml"
+  pull_request:
+    paths:
+      - "tools/**"
+      - "tests/**"
+      - ".github/workflows/research-tests.yml"
+jobs:
+  synthetic-tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run non-proprietary synthetic tests
+        run: python -m unittest discover -s tests -v
