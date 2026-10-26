@@ -1,6 +1,6 @@
 # Left 4 Dead 2 — Xbox 360 reverse-engineering workspace
 
-**Status: server game-module executable decoded and PE verified; Ghidra disassembly/decompilation is next. No playable build or recovered C++ source exists.**
+**Status: Xbox 360 server executable decoded and PE verified, but not decompiled. A separate original browser survival demo is playable from docs/index.html; no original L4D2 port exists.**
 
 This repository contains original research utilities, documentation, and synthetic tests. Xbox binaries, extracted assets, keys, decoded basefiles, and Ghidra project files stay on your Windows PC.
 
@@ -14,6 +14,18 @@ This repository contains original research utilities, documentation, and synthet
 - PE inspector verified **PE32, PowerPC FP (`0x01F2`), 6 sections**, and an entry-point address matching the XEX.
 - The launcher PE `.text` is only **32,872 bytes**, but the project found **21 additional XEX2 DLL modules**. The gameplay-oriented `server_360.dll` was successfully decoded locally: **PE32, PowerPC FP, 7 sections, 5,740,436 bytes of .text code**. Its XEX/PE entry is **`0x89DED900`**, base **`0x89780000`**. Other DLL code sections remain to be examined.
 - All **13** synthetic unit tests passed; the server XEX/PE load address and entry-point comparisons both returned **MATCH**.
+
+## Play the Chrome browser prototype
+
+**New:** [After the Siren — playable first-person zombie survival demo](docs/index.html). This is a separate, original browser proof of concept. It is **not** an emulation or port of the commercial Left 4 Dead 2 game, and it does not bundle game assets.
+
+To play directly in Chrome on Windows:
+
+    cd C:\Users\FrontDesk\LFD2
+    git pull
+    & "$env:ProgramFiles\Google\Chrome\Application\chrome.exe" (Resolve-Path ".\docs\index.html").Path
+
+The one-file demo includes WASD movement, mouse-look, shooting, AI teammates, pickups and five waves. To make it playable at a shareable web address, see [Chrome play and GitHub Pages setup](docs/PLAY.md) (choose branch main and /docs in GitHub Settings → Pages).
 
 ## Next step: import server_360.dll in Ghidra
 
