@@ -17,12 +17,19 @@ main{height:calc(100vh - 95px);min-height:400px;position:relative}
 #loader label:hover{background:#ffd09c}#file{display:none}
 #status{white-space:pre-wrap;color:#b4c5ca;font:12px/1.6 Consolas,monospace;margin-top:14px}
 #show{position:absolute;top:15px;left:15px;display:none;z-index:2;background:#14232bcc;color:#f1ca9d;padding:9px 15px;border:1px solid #70909b;cursor:pointer}
+#closeLoader{position:absolute;right:10px;top:10px;border:1px solid #71818c;background:#22323b;color:#f1dfc6;padding:4px 9px;cursor:pointer}
+#viewcontrols{position:absolute;right:14px;top:42px;z-index:2;display:none;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:7px;max-width:540px}
+#viewcontrols button,#viewcontrols select{cursor:pointer;border:1px solid #728c91;background:#182934dc;color:#f3dbb4;padding:9px 12px;font:11px Consolas,monospace}
+#viewcontrols button:hover{background:#37525a}#viewcontrols button:disabled{opacity:.45;cursor:not-allowed}
+#viewcontrols select{max-width:180px;color:#e5e6df}
+#viewcontrols option{color:#e5e6df;background:#14232b}
+#hint{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);pointer-events:none;background:#0b1820c7;border:1px solid #8a9fa64c;color:#ecc79e;padding:9px 14px;font-size:12px;max-width:500px;text-align:center;display:none}
 #stats{position:absolute;right:14px;top:15px;text-align:right;font:12px Consolas,monospace;color:#ffd098;text-shadow:0 2px 8px #000;z-index:2}
 #cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#ffe1b5;font-size:22px;display:none;pointer-events:none}
 #help{position:absolute;bottom:16px;right:16px;max-width:390px;background:#09131acc;border:1px solid #43616b;color:#bdcad1;padding:13px 16px;font-size:11px;line-height:1.7}
 footer{height:41px;display:flex;justify-content:space-between;align-items:center;padding:0 22px;font-size:11px;color:#95a8af;border-top:1px solid #344a50}
 footer a{color:#f1ba87}
-@media(max-width:600px){header small{display:none}#loader{padding:13px}#loader h1{font-size:24px}#help{max-width:230px;padding:8px;font-size:10px}}
+@media(max-width:600px){header small{display:none}#loader{padding:13px}#loader h1{font-size:24px}#help{max-width:230px;padding:8px;font-size:10px}#viewcontrols{top:50px;right:8px;max-width:300px}#viewcontrols button,#viewcontrols select{padding:7px 8px;font-size:10px}#hint{bottom:8px}}
 </style>
 </head>
 <body>
@@ -30,20 +37,29 @@ footer a{color:#f1ba87}
 <main>
 <canvas id="canvas" tabindex="0" aria-label="Source BSP map geometry viewport"></canvas>
 <div id="loader">
+<button type="button" id="closeLoader" aria-label="Close map loader">×</button>
 <div style="color:#e5b585;font-size:11px;font-weight:bold;letter-spacing:.18em">XBOX 360 BSP · LOCAL FILES ONLY</div>
 <h1>Explore the <span>original map geometry.</span></h1>
 <p>This experimental renderer opens a mesh converted from your own L4D2 BSP. No map files or game assets are uploaded. Brush surfaces only for now: no textures, props, weapons, enemies or complete Source engine.</p>
 <label for="file">SELECT A LOCAL .MESH.JSON FILE</label><input type="file" id="file" accept=".json,application/json">
-<div id="status">Convert the original hotel BSP locally first:
+<div id="status">For the new survivor-start view, run:
 
-py tools\bsp_to_browser_mesh.py
+py tools\add_bsp_spawns.py
 
-Then select:
-research\local\c1m1_hotel.mesh.json</div>
+Then select the NEW private file:
+research\local\c1m1_hotel_spawns.mesh.json
+
+Your earlier mesh.json file still works in overview mode.</div>
 </div>
 <button id="show" type="button">OPEN MAP LOADER</button>
+<div id="viewcontrols">
+  <select id="spawnSelect" aria-label="Select a map start point"><option value="">NO STARTS FOUND</option></select>
+  <button type="button" id="toSpawn">START POSITION · 1</button>
+  <button type="button" id="toOverview">OVERVIEW · 2</button>
+</div>
+<div id="hint"></div>
 <div id="stats">NO MAP LOADED</div><div id="cross">+</div>
-<div id="help">CLICK VIEWPORT TO AIM · WASD FLY · MOUSE / ARROW KEYS LOOK · SPACE ASCEND · CTRL DESCEND · SHIFT SPEED BOOST · ESC RELEASE MOUSE · H HIDE HELP</div>
+<div id="help">1 START AT SELECTED PLAYER POSITION · 2 OVERVIEW · N NEXT SPAWN · CLICK TO AIM · WASD FLY · MOUSE / ARROWS LOOK · SPACE ASCEND · CTRL DESCEND · SHIFT SPEED BOOST · ESC RELEASE MOUSE · H HIDE HELP</div>
 </main>
 <footer><span>Only local browser memory is used; no copyright assets hosted.</span><a href="WEB_PORT_PLAN.md">Port roadmap</a></footer>
 <script id="vs" type="x-shader/x-vertex">#version 300 es
@@ -79,10 +95,47 @@ void main(){
 "use strict";
 const cvs=document.getElementById("canvas"),input=document.getElementById("file"),status=document.getElementById("status");
 const loader=document.getElementById("loader"),show=document.getElementById("show"),stats=document.getElementById("stats"),cross=document.getElementById("cross"),help=document.getElementById("help");
+const spawnSelect=document.getElementById("spawnSelect"),toSpawn=document.getElementById("toSpawn"),toOverview=document.getElementById("toOverview"),viewcontrols=document.getElementById("viewcontrols"),hint=document.getElementById("hint"),closeLoader=document.getElementById("closeLoader");
 const gl=cvs.getContext("webgl2",{alpha:false,antialias:true,depth:true});
-let program=null,positionBuffer=null,indexBuffer=null,indexCount=0,uniforms={},cam={x:0,y:0,z:300,yaw:0,pitch:-.65},mesh=null,keys=new Set();
+let program=null,positionBuffer=null,indexBuffer=null,indexCount=0,uniforms={},cam={x:0,y:0,z:300,yaw:0,pitch:-.65},mesh=null,keys=new Set(),cameraSpawns=[];
 let last=performance.now();
 function message(s){status.textContent=s}
+function flashHint(text){hint.textContent=text;hint.style.display="block";}
+function overview(){
+ if(!mesh)return;
+ const a=mesh.bounds[0],b=mesh.bounds[1],span=Math.max(b[0]-a[0],b[1]-a[1],b[2]-a[2]);
+ cam.x=(a[0]+b[0])/2;cam.y=(a[1]+b[1])/2;cam.z=b[2]+Math.max(350,span*.25);
+ cam.yaw=.3;cam.pitch=-1;
+ flashHint("OVERVIEW CAMERA · PRESS 1 FOR SURVIVOR START");
+}
+function atSpawn(index){
+ if(!cameraSpawns.length){flashHint("NO SPAWN METADATA · RUN py tools\\add_bsp_spawns.py");return;}
+ const i=Math.max(0,Math.min(cameraSpawns.length-1,Number(index)||0));
+ const p=cameraSpawns[i];
+ cam.x=p.position[0];cam.y=p.position[1];cam.z=p.position[2];
+ cam.yaw=p.yaw;cam.pitch=p.pitch;
+ spawnSelect.value=String(i);
+ flashHint("FIRST-PERSON · "+p.kind+" · WASD TO EXPLORE");
+}
+function safeSpawns(data){
+ if(!Array.isArray(data.camera_spawns))return [];
+ return data.camera_spawns.slice(0,64).filter(p=>
+  p && typeof p.kind==="string" && p.kind.length<90
+  && Array.isArray(p.position)&&p.position.length===3
+  && p.position.every(n=>typeof n==="number"&&Number.isFinite(n)&&Math.abs(n)<1e6)
+  && Number.isFinite(p.yaw)&&Number.isFinite(p.pitch));
+}
+function setSpawnList(){
+ spawnSelect.replaceChildren();
+ if(!cameraSpawns.length){
+  const o=document.createElement("option");o.textContent="NO START POINTS";o.value="";spawnSelect.appendChild(o);
+ }else for(let i=0;i<cameraSpawns.length;i++){
+  const p=cameraSpawns[i],o=document.createElement("option");
+  o.textContent=(i+1)+". "+p.kind;o.value=String(i);spawnSelect.appendChild(o);
+ }
+ const found=cameraSpawns.length>0;
+ spawnSelect.disabled=!found;toSpawn.disabled=!found;
+}
 function shader(kind,text){const s=gl.createShader(kind);gl.shaderSource(s,text);gl.compileShader(s);
  if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s}
 function init(){
@@ -121,15 +174,20 @@ input.addEventListener("change",async()=>{
   for(let k=0;k<positions.length;k++)if(!Number.isFinite(positions[k]))throw Error("Invalid world coordinate");
   gl.bindBuffer(gl.ARRAY_BUFFER,positionBuffer);gl.bufferData(gl.ARRAY_BUFFER,positions,gl.STATIC_DRAW);
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indexBuffer);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,indices,gl.STATIC_DRAW);
-  indexCount=indices.length;mesh={name:f.name,triangles:indices.length/3};
-  const a=data.bounds[0],b=data.bounds[1],span=Math.max(b[0]-a[0],b[1]-a[1],b[2]-a[2]);
-  cam.x=(a[0]+b[0])/2;cam.y=(a[1]+b[1])/2;cam.z=b[2]+Math.max(350,span*.25);
-  cam.yaw=.3;cam.pitch=-1;
-  loader.style.display="none";show.style.display="block";cross.style.display="block";
+  indexCount=indices.length;mesh={name:f.name,triangles:indices.length/3,bounds:data.bounds};
+  cameraSpawns=safeSpawns(data);setSpawnList();
+  if(cameraSpawns.length)atSpawn(0);else overview();
+  loader.style.display="none";show.style.display="block";cross.style.display="block";viewcontrols.style.display="flex";
   stats.textContent=count.toLocaleString()+" verts / "+mesh.triangles.toLocaleString()+" triangles";
+  message("Loaded "+f.name+". "+mesh.triangles.toLocaleString()+" triangles. "+
+    (cameraSpawns.length?cameraSpawns.length+" camera start(s) available.":"Older mesh: no spawn locations; use the new enrichment tool."));
  }catch(e){message("Unable to open mesh: "+e.message)}
 });
 show.addEventListener("click",()=>{loader.style.display=loader.style.display==="none"?"block":"none"});
+closeLoader.addEventListener("click",()=>{if(mesh)loader.style.display="none";});
+toSpawn.addEventListener("click",()=>atSpawn(spawnSelect.value));
+toOverview.addEventListener("click",overview);
+spawnSelect.addEventListener("change",()=>atSpawn(spawnSelect.value));
 cvs.addEventListener("click",()=>{if(indexCount&&cvs.requestPointerLock){const p=cvs.requestPointerLock();if(p&&p.catch)p.catch(()=>{})}});
 document.addEventListener("mousemove",e=>{
  if(document.pointerLockElement===cvs){cam.yaw+=(e.movementX||0)*.002;cam.pitch=Math.max(-1.5,Math.min(1.5,cam.pitch-(e.movementY||0)*.002))}
@@ -138,6 +196,11 @@ document.addEventListener("keydown",e=>{
  if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code))e.preventDefault();
  keys.add(e.code);
  if(e.code==="KeyH"&&!e.repeat)help.style.display=help.style.display==="none"?"block":"none";
+ if(e.code==="Digit1"&&!e.repeat)atSpawn(spawnSelect.value);
+ if(e.code==="Digit2"&&!e.repeat)overview();
+ if(e.code==="KeyN"&&!e.repeat&&cameraSpawns.length){
+  const next=(Number(spawnSelect.value)+1)%cameraSpawns.length;atSpawn(next);
+ }
 });
 document.addEventListener("keyup",e=>keys.delete(e.code));
 window.addEventListener("blur",()=>keys.clear());
