@@ -47,7 +47,7 @@ Full local setup: [MAP_VIEWER.md](docs/MAP_VIEWER.md).
 - Local `.zar` unpack: **96 files**, including **22 Xbox 360 XEX2 modules**, **24 BSP maps**, and **8 .360.zip packages**.
 - Extracted and inspected XEX2 loader and gameplay-related server module.
 - `left4dead2/bin/server_360.dll` local decoded PE32/PowerPC image: **5,740,436 bytes of .text**, base `0x89780000`, entry `0x89DED900`.
-- Verified original XEX/PE memory addresses and **23 synthetic tests** in the owner's latest report.
+- Verified original XEX/PE memory addresses and **32 synthetic tests** in the owner's latest report (before new Xbox ZIP tests).
 - **Successfully converted the original Dead Center hotel BSP to a local 777,248-byte JSON mesh** (27,374 triangles, HDR lump 58, 43 displacement surfaces skipped). The owner's screenshots confirm both an aerial view and a recognizable first-person hotel corridor rendered in Chrome. No engine source recovered; actual L4D2 is not playable in Chrome.
 
 ## Improve the real map viewpoint — player/survivor start
@@ -68,20 +68,27 @@ Open docs/map-viewer.html in Chrome (refresh an already-open tab). Select the **
 This is still a **geometry inspection tool, not a game**: the brush faces lack textures, static props, collision, lighting and gameplay. The survivor/player start locations are camera guides only; the owner's latest screenshot confirmed an eye-level corridor view.
 
 
-## Next milestone — original Source material paths and Xbox textures
+## Next milestone — locate the original Xbox texture files
 
-The October 26 Chrome screenshot confirms an eye-level hotel corridor with original brush geometry. Now the largest missing visual feature is **real Source material/texture mapping**, not more camera changes.
+**Confirmed on the owner's Windows PC:** 32 synthetic tests passed; the hotel BSP has **228 texture records**, **3,392 texinfos**, **189 referenced materials**, and **10,840 mapped faces**. Sample paths include `PLASTER/PLASTER_INT_14`, `TILE/TILE_CEILING_01`, and `CONCRETE/CONCRETE_FLOOR_10`.
 
-I've added [tools/inspect_map_materials.py](tools/inspect_map_materials.py) and synthetic tests to look up the original material names in the BSP, then attempt to list asset filenames in the user's local Xbox \`.360.zip\` (without unpacking or uploading files):
+The standard Python ZIP reader stopped on an unusually formatted internal extra field within the Xbox `zip0.360.zip` archive. That is not evidence of file corruption.
 
-    cd C:\Users\FrontDesk\LFD2
-    git pull
-    py -m unittest discover -s tests -v
-    py tools\inspect_map_materials.py --pack
+**New:** [tools/inspect_xbox_zip.py](tools/inspect_xbox_zip.py) reads the central directory without decoding these problematic extra fields. [tools/inspect_map_materials.py](tools/inspect_map_materials.py) now uses it as a fallback to compare `.vmt` archive names with the BSP's material references. The fallback is **not yet tested on the actual Xbox archive**.
 
-Share only the printed metadata. This will tell us which L4D2 wall/floor material references are actually used, and whether the Xbox package exposes a standard ZIP directory. The next engineering step is a local texture converter and UV/material mapping, not a fake texture overlay.
+In Windows PowerShell:
 
-[Material pipeline details](docs/MATERIAL_PIPELINE.md)
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\inspect_map_materials.py --pack
+```
+
+If the ZIP format requires additional Xbox-specific handling, capture the printed error and stop rather than trying to unpack the 1 GB archive. No game payloads are read, extracted or uploaded by the new inspector.
+
+Read the [material pipeline](docs/MATERIAL_PIPELINE.md). The eventual Chrome texture renderer will require original mesh UV coordinates, local asset conversion and actual materials; the generic gray shader alone isn't enough.
+
 
 ## Further research and options
 
