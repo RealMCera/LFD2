@@ -23,3 +23,6 @@ __pycache__/
 
 # Locally downloaded third-party executables
 tools/bin/
+
+# Locally extracted Xbox 360 ISO
+game-iso-extracted/

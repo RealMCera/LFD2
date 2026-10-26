@@ -89,3 +89,12 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
 **Status: real first-person hotel corridor is screenshot-confirmed in Chrome. Original Source material/texture discovery is the next step; actual L4D2 gameplay is not running in the browser.**
+
+### New full-disc ISO input (pending local verification)
+
+- [x] Add a read-only XDVDFS/XGD disc-layout probe and safe xdvdfs extraction wrapper, with nine synthetic tests.
+- [x] Add a private Ghidra pseudocode export helper with bounded function counts.
+- [ ] Inspect the actual 7.84 GB ISO on Windows, extract to ignored game-iso-extracted/, and compare module inventories with the prior archive.
+- [ ] Run Ghidra's Xbox loader on one verified ISO module and export sample functions to ignored research/local/ files.
+
+See [ISO_DECOMPILATION.md](ISO_DECOMPILATION.md). Neither a complete decompilation nor a playable browser port is done.

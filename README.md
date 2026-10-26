@@ -19,6 +19,10 @@ The Xbox 360 **PowerPC XEX2** binaries cannot themselves be compiled by Emscript
 
 **Full porting strategy and completion gates: [WEB_PORT_PLAN.md](docs/WEB_PORT_PLAN.md).**
 
+## Full Xbox 360 ISO: local extraction and private decompilation
+
+The full-disc ISO is **7.84 GB** and has been identified by **Drive metadata only**. Follow [ISO_DECOMPILATION.md](docs/ISO_DECOMPILATION.md): use `tools/import_disc_iso.py` to inspect the local XDVDFS image and optionally unpack with the external xdvdfs CLI; `tools/ghidra/ExportPseudocode.py` can export a limited set of analyzed functions **privately**, never into this public repo. The disc contents and actual decompilation remain unverified.
+
 ## First Chrome preview: original L4D2 BSP geometry (experimental)
 
 **New tools:** [local BSP-to-mesh converter](tools/bsp_to_browser_mesh.py), [HDR/compression lump diagnostics](tools/inspect_bsp_lumps.py), and the [WebGL2 local map viewer](docs/map-viewer.html). **The owner has converted the original Xbox hotel map successfully:** 27,374 triangles from 10,840 Source faces, and WebGL2 display is now screenshot-confirmed (untextured, distant overview). The converter is designed to fail with an explanation if another map variant needs further decoding.
