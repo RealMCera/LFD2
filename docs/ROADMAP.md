@@ -80,7 +80,9 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] Confirm a real first-person hotel corridor appears in Chrome from `info_player_start` (screenshot, October 26).
 - [x] Verify material mapping on owner's hotel BSP: 228 texdata, 3,392 texinfos, 189 unique referenced materials, zero unmapped faces.
 - [x] Document Python ZIP extra-field rejection and try a safe custom central-directory reader.
-- [ ] Diagnose real console ZIP second-entry alignment failure using header-only --diagnose mode; fix on evidence, not assumptions.
+- [x] Diagnose Xbox ZIP directory: first central record valid; next candidate +58 bytes beyond predicted offset.
+- [x] Implement bounded 128-byte recovery for unexpected central-directory gaps and synthetic 3/58-byte tests (awaiting run on owner's archive).
+- [ ] Verify complete console ZIP directory parsing, original VMT material-file matches, and console texture format.
 - [x] Correct Windows 8.3 short-path vs resolved long-path ISO unit-test expectation (re-run tests pending).
 - [ ] Identify original material paths, console texture payload format, and valid Xbox archive directory structure.
 - [ ] Add mesh UVs and material indices, convert original textures locally, then render them in WebGL2.
