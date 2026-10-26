@@ -21,7 +21,7 @@ The Xbox 360 **PowerPC XEX2** binaries cannot themselves be compiled by Emscript
 
 ## First Chrome preview: original L4D2 BSP geometry (experimental)
 
-**New tools:** [local BSP-to-mesh converter](tools/bsp_to_browser_mesh.py), [HDR/compression lump diagnostics](tools/inspect_bsp_lumps.py), and the [WebGL2 local map viewer](docs/map-viewer.html). **The owner has now converted the original Xbox hotel map successfully:** 27,374 triangles from 10,840 Source faces; WebGL2 display has not yet been confirmed. The converter is designed to fail with an explanation if another map variant needs further decoding.
+**New tools:** [local BSP-to-mesh converter](tools/bsp_to_browser_mesh.py), [HDR/compression lump diagnostics](tools/inspect_bsp_lumps.py), and the [WebGL2 local map viewer](docs/map-viewer.html). **The owner has converted the original Xbox hotel map successfully:** 27,374 triangles from 10,840 Source faces, and WebGL2 display is now screenshot-confirmed (untextured, distant overview). The converter is designed to fail with an explanation if another map variant needs further decoding.
 
 From Windows PowerShell:
 
@@ -44,13 +44,25 @@ Full local setup: [MAP_VIEWER.md](docs/MAP_VIEWER.md).
 - Extracted and inspected XEX2 loader and gameplay-related server module.
 - `left4dead2/bin/server_360.dll` local decoded PE32/PowerPC image: **5,740,436 bytes of .text**, base `0x89780000`, entry `0x89DED900`.
 - Verified original XEX/PE memory addresses and **23 synthetic tests** in the owner's latest report.
-- **Successfully converted the original Dead Center hotel BSP to a local 777,248-byte JSON mesh** (27,374 triangles, HDR lump 58, 43 displacement surfaces skipped). Browser rendering has not yet been confirmed. No engine source recovered; actual L4D2 is not playable in Chrome.
+- **Successfully converted the original Dead Center hotel BSP to a local 777,248-byte JSON mesh** (27,374 triangles, HDR lump 58, 43 displacement surfaces skipped). The owner's screenshot confirmed basic WebGL2 geometry rendering, but not an eye-level recognizable interior yet. No engine source recovered; actual L4D2 is not playable in Chrome.
 
-## Next action: load the actual converted geometry in Chrome
+## Improve the real map viewpoint — player/survivor start
 
-Open `docs/map-viewer.html` in Chrome and choose your existing private mesh from `C:\Users\FrontDesk\LFD2\research\local\c1m1_hotel.mesh.json`. If the browser renders only the background or shows a WebGL error, capture the screenshot/console error; this is the next validation gate.
+The owner's screenshot **confirmed successful Chrome/WebGL2 rendering of the 27,374-triangle hotel brush mesh**. The giant gray faces were viewed from the automated camera high above the whole level, not from a character's position.
 
-**Do not commit the converted mesh or original BSP data to GitHub.**
+A **new** local helper reads the *original BSP entity lump* and adds survivor/player start locations to a **new private mesh file**, preserving the original successful output:
+
+    cd C:\Users\FrontDesk\LFD2
+    git pull
+    py -m unittest discover -s tests -v
+    py tools\add_bsp_spawns.py
+
+Private output: research\local\c1m1_hotel_spawns.mesh.json
+
+Open docs/map-viewer.html in Chrome (refresh an already-open tab). Select the **new** mesh. The updated viewer starts near a player/survivor start when one is available and adds **1: START POSITION**, **2: OVERVIEW**, **N: NEXT START**, a dropdown, and a close button for the loader. Only local browser memory is used.
+
+This is still a **geometry inspection tool, not a game**: the brush faces lack textures, static props, collision, lighting and gameplay. The survivor/player positions are used as a camera guide only and haven't yet been checked visually.
+
 
 ## Further research and options
 
