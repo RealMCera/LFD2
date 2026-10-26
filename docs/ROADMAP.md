@@ -1,5 +1,10 @@
 # Xbox 360 Left 4 Dead 2 reverse-engineering roadmap
 
+> **Chrome target clarified (October 26, 2026):** The project goal is a genuine game port modeled technically on the BO1 Zombies browser effort, **not** an improved raycasting mini-game. See [WEB_PORT_PLAN.md](WEB_PORT_PLAN.md).
+>
+> The original game does **not** yet run in Chrome. The current HTML demo is unrelated placeholder technology.
+
+
 ## Verified local results — 2026-10-23
 
 The following results were reported by the project owner's Windows tools:
@@ -64,8 +69,14 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [ ] Import `left4dead2/bin/server_360.dll` with the Xbox-aware loader.
 - [ ] Validate loader memory map, PowerPC function boundaries, and import tables.
 - [ ] Identify server DLL entry function and gameplay-related function boundaries, then study dependencies.
-- [ ] Assess scope of a possible buildable decompilation; write independent research and tests.
+- [x] Document a real C++ → WASM, local game-data, browser-graphics architecture.
+- [x] Add a read-only BSP/.360.zip header-probing script and synthetic tests.
+- [ ] Inspect the original Source BSP/ZIP signatures on the owner's computer.
+- [ ] Render an original locally supplied L4D2 BSP map in WebGL2.
+- [ ] Evaluate native portable reimplementation/recompiler feasibility and missing Xbox/Source engine services.
+- [ ] Build a limited original-game C++ subsystem as WebAssembly, then integrate gameplay, audio, asset loading, controls, and networking.
+- [ ] Assess scope of a complete buildable port; write independent research and tests.
 
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status: server game module executable code extracted and PE verified; Ghidra function analysis is next.**
+**Status: game modules verified and a browser-port plan established; original map format investigation is next. Genuine L4D2 gameplay is not running in Chrome.**
