@@ -5,6 +5,15 @@
 > The original game does **not** yet run in Chrome. The current HTML demo is unrelated placeholder technology.
 
 
+## October 26 milestone: hotel visual pipeline complete
+
+- Original first-person hotel brush geometry: **27,374 triangles**
+- Authenticated Xbox VTFX materials automatically resolved and rendered: **53**
+- Textured brush geometry: **20,198 triangles (73.8%)**
+- Untextured triangles: **7,176**; not necessarily drawable wall textures
+- Multi-image folder loader successful, **0 unavailable**
+- Next phase: inventory of Source game-lump static props, dynamic model entities, doors, displacement data (not yet rendered)
+
 ## Verified local results — 2026-10-23
 
 The following results were reported by the project owner's Windows tools:
@@ -124,12 +133,14 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] Add one-folder Chrome manifest loader for all resolved original Source brush material PNGs; safe memory bounds and duplicate path handling (owner visual validation pending).
 - [x] Add optional toggle for hiding original TOOLS/DEV/SKY/EFFECTS brushes from gray base pass without modifying mesh.
 - [x] Add Python/Node synthetic tests and GitHub Actions workflow.
-- [ ] Run the completed material builder against private Xbox archives, inspect unresolved report and load folder into Chrome.
+- [x] Owner screenshot confirms final folder loader displays **53 original materials on 20,198/27,374 triangles (73.8%)**, zero unavailable in the loader.
+- [x] Close automated original brush + material phase at supported-material coverage; nonvisual and unsupported surfaces are tracked separately.
+- [x] Add bounded read-only original hotel BSP entity and static-prop game-lump inspector with synthetic tests (owner first inventory pending).
 - [ ] Begin distinct phase: Source displacements, props, doors, lightmaps, then collision and actual engine/gameplay.
 
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status: screenshot proves 14 original textures on 13,696/27,374 hotel brush triangles. A complete one-command private VMT/texture pipeline and one-folder Chrome loader are committed, with synthetic tests; the final complete-archive run needs owner validation. BSP displacements, props, real Source lightmaps, collision and original L4D2 gameplay remain separate.**
+**Status (October 26, 2026): Original hotel brush material pipeline COMPLETE and owner screenshot-confirmed: 53 authentic Xbox-derived materials loaded in one private Chrome folder operation; 20,198/27,374 triangle textures active (73.8%), 0 unavailable. Next: original static/dynamic props, door entities, BSP displacements. The native L4D2 gameplay engine is NOT running in Chrome.**
 
 ### Full-disc ISO input (extraction confirmed; code analysis pending)
 
