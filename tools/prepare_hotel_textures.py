@@ -44,7 +44,8 @@ FLOOR_WORDS=("floor","carpet","ground","concrete","asphalt",
 
 def choose_materials(faces: Counter, entries: list[dict], count: int,
                      focus: str = "all",
-                     material: str | None = None) -> list[tuple[str,int,dict]]:
+                     material: str | None = None,
+                     start: int = 0) -> list[tuple[str,int,dict]]:
     """Select visible Source materials with exact-name Xbox VTFX files.
 
     A chosen BSP material's true VMT basetexture might have another name.
@@ -68,19 +69,25 @@ def choose_materials(faces: Counter, entries: list[dict], count: int,
             raise ValueError(f"Tool/sky/debug material is not a regular surface texture: {material}")
         if key in duplicates:
             raise ValueError(f"Duplicate exact-name VTFX entries for material: {material}")
+        if sum(name.split("/")[-1]==key.split("/")[-1] for name in source)>1:
+            raise ValueError(f"Material basename is ambiguous in the original BSP: {material}")
         if key not in by_name:
             raise ValueError(f"No direct-name .360.vtf in zip1 for {material}; "
                              "its VMT may reference another basetexture")
         return [(key,source[key],by_name[key])]
     if focus not in ("all","floor"):
         raise ValueError(f"Unknown material selection focus: {focus}")
+    if start < 0 or start > 10000:
+        raise ValueError("Selection offset outside safe range")
     choices=[]
+    all_eligible=[]
+    basename_count=Counter(key.split("/")[-1] for key in source)
     for key,faces_count in sorted(source.items(),key=lambda x:(-x[1],x[0])):
         if key.startswith(SKIP_PREFIXES) or key in duplicates:continue
+        if basename_count[key.split("/")[-1]]>1:continue
         if focus=="floor" and not any(word in key for word in FLOOR_WORDS):continue
-        if key in by_name:choices.append((key,faces_count,by_name[key]))
-        if len(choices)>=count:break
-    return choices
+        if key in by_name:all_eligible.append((key,faces_count,by_name[key]))
+    return all_eligible[start:start+count]
 
 
 def asset_paths(key: str, root: Path) -> tuple[Path,Path,Path]:
@@ -151,6 +158,8 @@ def main() -> int:
     p.add_argument("--material",type=str,
                    help="Use one exact material ID from the crosshair surface inspector")
     p.add_argument("--count",type=int,default=8,help="Number of visual materials (1..16)")
+    p.add_argument("--start",type=int,default=0,
+                   help="Skip N eligible material names already processed in earlier batches")
     p.add_argument("--bsp",type=Path,default=MAP)
     p.add_argument("--zip",type=Path,default=ZIP1)
     p.add_argument("--converter",type=Path,default=DEFAULT_CONVERTER)
@@ -162,8 +171,9 @@ def main() -> int:
         archive=args.zip.expanduser().resolve()
         report=scan_xbox_zip(archive)
         choices=choose_materials(faces,report["entries"],args.count,
-                                 focus=args.focus,material=args.material)
-        print(f"Selection: {args.material or args.focus}")
+                                 focus=args.focus,material=args.material,start=args.start)
+        print(f"Selection: {args.material or args.focus}; "
+              f"offset={args.start}, count={args.count}")
         print(f"Hotel materials: {len(faces)}; selected images: {len(choices)} "
               f"from {archive.name} (no BSP game files uploaded)")
         for key,count,_entry in choices:print(f"  {count:>5} faces · {key}")
