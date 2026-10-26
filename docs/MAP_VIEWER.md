@@ -1,6 +1,6 @@
 # First real L4D2 level → Chrome WebGL2 preview
 
-**EXPERIMENTAL / not validated on the owner's actual map yet.** This is the first local BSP geometry experiment, not playable Left 4 Dead 2. It reads the user's legitimately obtained Xbox BSP, attempts to reconstruct brush-face triangles, and opens them as an untextured fly-through in a standalone WebGL2 viewer. No Valve binaries, maps, models, textures or game data are uploaded to GitHub.
+**EXPERIMENTAL / the owner's original hotel map was successfully converted on October 26, 2026, but the Chrome rendering still needs visual verification.** This is the first local BSP geometry experiment, not playable Left 4 Dead 2. It reads the user's legitimately obtained Xbox BSP, attempts to reconstruct brush-face triangles, and opens them as an untextured fly-through in a standalone WebGL2 viewer. No Valve binaries, maps, models, textures or game data are uploaded to GitHub.
 
 ## Step 1 — Confirm Xbox header details
 
@@ -27,7 +27,9 @@ Output (Git-ignored, local only):
 
 The converter chooses the BSP header layout by bounds checks, tries lump 58 first, then 7 or 27, and recognizes the **Valve LZMA** compression wrapper when present. It validates vertex structure sizes and triangulates ordinary Source brush faces. The default triangle cap is 600,000 as a safety check; it refuses to overwrite an existing mesh.
 
-**If conversion stops, read the error and share the text output only.** Do not upload the map. Xbox variants may use different compression, face layouts, or nonstandard geometry that need explicit support; do not assume conversion will succeed.
+**Hotel map conversion already succeeded on the owner's PC** with 10,840 Source faces, 27,374 rendered brush triangles, and a private 777,248-byte mesh. If the file already exists, the converter intentionally refuses to overwrite it; **do not run conversion again unless intentionally selecting a new output filename**.
+
+**If conversion stops for another map, read the error and share the text output only.** Do not upload the map. Xbox variants may use different compression, face layouts, or nonstandard geometry that need explicit support; do not assume conversion will succeed.
 
 ## Step 3 — View in Chrome using local files
 
@@ -48,6 +50,15 @@ Click the scene to lock the pointer; WASD to fly, mouse/arrow keys to look, Spac
 - Browser's GPU and the converter's JSON memory usage may limit map size; Chrome on Windows with WebGL2 needed
 - The default camera begins above the level looking down; users can fly into the geometry, not walk with collision
 - This does not use or execute the PowerPC modules; a real Chrome game port requires extensive engine reimplementation/recompilation
+
+## Confirmed local conversion results
+
+- Source file: `c1m1_hotel.360.bsp` (PSBV big-endian BSP v20)
+- Required geometry lumps are LZMA-wrapped, with HDR faces in lump **58**; standard faces lump **7** is empty.
+- Decoded **10,840** HDR faces into **27,374** triangles, skipping 43 displacement faces and 2,012 degenerate triangles.
+- Bounds: `[-2284.8, -748, -1616]` to `[11616, 16320, 3584]`.
+- Private output: `research/local/c1m1_hotel.mesh.json` (**777,248 bytes**).
+- All **23 synthetic Python tests passed**. The geometry has not yet been visually validated in Chrome.
 
 ## After the first successful geometry preview
 
