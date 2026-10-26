@@ -93,6 +93,9 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] Confirm 66/66 tests; 189/189 unique material IDs and 10,840/10,840 face references covered with zero cross-pack duplicates.
 - [x] Verify 10 local ZIP texture headers and Xbox VTFX signatures from zip1 and BSP PAK.
 - [x] Add bounded VTFX metadata parser and opt-in single-file local extraction tool, synthetic tests and converter docs (awaiting owner validation).
+- [x] Confirm 73/73 synthetic tests pass; extract original 512×512 DXT1 plaster_int_14 VTFX (174,844 bytes) locally.
+- [x] Add separately installed VTFX Reader → PNG wrapper with local-only output validation and synthetic tests (awaiting owner use).
+- [x] Add Source BSP UV/material-ID mesh enrichment and synthetic tests (awaiting owner use and WebGL rendering).
 - [ ] Decode first original VTFX wall texture into a private PNG and visually verify orientation/color.
 - [ ] Locate original Xbox material/texture files, especially in zip1.360.zip, and validate any actual texture decoder.
 - [ ] Verify complete console ZIP directory parsing, original VMT material-file matches, and console texture format.
@@ -106,7 +109,7 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status: original hotel geometry, all 189 material paths, and ten genuine VTFX texture signatures verified on the owner's PC. A private single-file VTFX metadata/copy tool is ready for testing. No original image is yet decoded/rendered in Chrome and the actual L4D2 game is not running.**
+**Status: original first-person hotel BSP geometry, 189 material paths, and original 512×512 DXT1 plaster VTFX extraction verified. UV/material mesh enrichment and optional local PNG conversion tools added, not yet owner-tested. No original texture yet renders in Chrome and original L4D2 gameplay is not running.**
 
 ### New full-disc ISO input (pending local verification)
 
