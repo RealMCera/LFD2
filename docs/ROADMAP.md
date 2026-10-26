@@ -86,3 +86,12 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
 **Status: real Xbox hotel brush geometry renders in Chrome, currently mostly giant gray surfaces from an aerial camera. New private spawn-based camera navigation is the next validation step. The original game is not running in Chrome.**
+
+### New full-disc ISO input (pending local verification)
+
+- [x] Add a read-only XDVDFS/XGD disc-layout probe and safe xdvdfs extraction wrapper, with nine synthetic tests.
+- [x] Add a private Ghidra pseudocode export helper with bounded function counts.
+- [ ] Inspect the actual 7.84 GB Drive ISO on Windows, extract to the separate ignored game-iso-extracted/ directory, and compare module inventories with the earlier ZArchive.
+- [ ] Run Ghidra's Xbox loader on one verified ISO module and export a small sample of functions to ignored research/local/ files.
+
+See [ISO_DECOMPILATION.md](ISO_DECOMPILATION.md). Neither ISO decompilation nor a complete port is finished.
