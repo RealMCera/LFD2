@@ -4,7 +4,7 @@
 
 ## Improved start position after the first screenshot
 
-The owner's October 26 screenshot confirms the **27,374-triangle hotel map renders in Chrome**. However, the initial camera was above the entire map, so only giant flat gray surfaces were visible. This is not a geometry conversion failure. The existing untextured mesh remains valid.
+The owner's October 26 screenshots confirm **27,374 triangles render in Chrome**, including a recognizable eye-level hotel corridor from `info_player_start`. The earlier camera was above the entire map, so only giant flat gray surfaces were visible. This is not a geometry conversion failure. The existing untextured mesh remains valid.
 
 To generate a NEW enriched private mesh using spawn points from the compressed original BSP entity lump, without overwriting the already successful mesh:
 
@@ -87,6 +87,10 @@ Click the scene to lock the pointer; WASD to fly, mouse/arrow keys to look, Spac
 - Bounds: `[-2284.8, -748, -1616]` to `[11616, 16320, 3584]`.
 - Private output: `research/local/c1m1_hotel.mesh.json` (**777,248 bytes**).
 - All **23 earlier synthetic Python tests passed**; new spawn helper tests still need to run on the owner's PC. The old distant untextured geometry has now been visually confirmed in Chrome.
+
+## Current milestone
+
+The owner's latest screenshot confirms a real eye-level hotel hallway built from the Xbox Source brush geometry. The next step is finding original materials and texture data: see [MATERIAL_PIPELINE.md](MATERIAL_PIPELINE.md) and run `py tools\inspect_map_materials.py --pack` after pulling the latest changes.
 
 ## After the first successful geometry preview
 

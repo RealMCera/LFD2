@@ -21,7 +21,7 @@ The Xbox 360 **PowerPC XEX2** binaries cannot themselves be compiled by Emscript
 
 ## Full Xbox 360 ISO: local extraction and private decompilation
 
-The new full-disc ISO is **7.84 GB** and has so far been identified by **Drive metadata only**. Use [ISO_DECOMPILATION.md](docs/ISO_DECOMPILATION.md) and `tools/import_disc_iso.py` to identify the local XDVDFS game partition and optionally unpack with an installed xdvdfs CLI. `tools/ghidra/ExportPseudocode.py` can then export Ghidra pseudocode **privately**, not into this public repo. The new ISO's contents and actual decompilation have not yet been tested; **this is not a functioning browser game**.
+The full-disc ISO is **7.84 GB** and has been identified by **Drive metadata only**. Follow [ISO_DECOMPILATION.md](docs/ISO_DECOMPILATION.md): use `tools/import_disc_iso.py` to inspect the local XDVDFS image and optionally unpack with the external xdvdfs CLI; `tools/ghidra/ExportPseudocode.py` can export a limited set of analyzed functions **privately**, never into this public repo. The disc contents and actual decompilation remain unverified.
 
 ## First Chrome preview: original L4D2 BSP geometry (experimental)
 
@@ -48,7 +48,7 @@ Full local setup: [MAP_VIEWER.md](docs/MAP_VIEWER.md).
 - Extracted and inspected XEX2 loader and gameplay-related server module.
 - `left4dead2/bin/server_360.dll` local decoded PE32/PowerPC image: **5,740,436 bytes of .text**, base `0x89780000`, entry `0x89DED900`.
 - Verified original XEX/PE memory addresses and **23 synthetic tests** in the owner's latest report.
-- **Successfully converted the original Dead Center hotel BSP to a local 777,248-byte JSON mesh** (27,374 triangles, HDR lump 58, 43 displacement surfaces skipped). The owner's screenshot confirmed basic WebGL2 geometry rendering, but not an eye-level recognizable interior yet. No engine source recovered; actual L4D2 is not playable in Chrome.
+- **Successfully converted the original Dead Center hotel BSP to a local 777,248-byte JSON mesh** (27,374 triangles, HDR lump 58, 43 displacement surfaces skipped). The owner's screenshots confirm both an aerial view and a recognizable first-person hotel corridor rendered in Chrome. No engine source recovered; actual L4D2 is not playable in Chrome.
 
 ## Improve the real map viewpoint — player/survivor start
 
@@ -65,8 +65,23 @@ Private output: research\local\c1m1_hotel_spawns.mesh.json
 
 Open docs/map-viewer.html in Chrome (refresh an already-open tab). Select the **new** mesh. The updated viewer starts near a player/survivor start when one is available and adds **1: START POSITION**, **2: OVERVIEW**, **N: NEXT START**, a dropdown, and a close button for the loader. Only local browser memory is used.
 
-This is still a **geometry inspection tool, not a game**: the brush faces lack textures, static props, collision, lighting and gameplay. The survivor/player positions are used as a camera guide only and haven't yet been checked visually.
+This is still a **geometry inspection tool, not a game**: the brush faces lack textures, static props, collision, lighting and gameplay. The survivor/player start locations are camera guides only; the owner's latest screenshot confirmed an eye-level corridor view.
 
+
+## Next milestone — original Source material paths and Xbox textures
+
+The October 26 Chrome screenshot confirms an eye-level hotel corridor with original brush geometry. Now the largest missing visual feature is **real Source material/texture mapping**, not more camera changes.
+
+I've added [tools/inspect_map_materials.py](tools/inspect_map_materials.py) and synthetic tests to look up the original material names in the BSP, then attempt to list asset filenames in the user's local Xbox \`.360.zip\` (without unpacking or uploading files):
+
+    cd C:\Users\FrontDesk\LFD2
+    git pull
+    py -m unittest discover -s tests -v
+    py tools\inspect_map_materials.py --pack
+
+Share only the printed metadata. This will tell us which L4D2 wall/floor material references are actually used, and whether the Xbox package exposes a standard ZIP directory. The next engineering step is a local texture converter and UV/material mapping, not a fake texture overlay.
+
+[Material pipeline details](docs/MATERIAL_PIPELINE.md)
 
 ## Further research and options
 
