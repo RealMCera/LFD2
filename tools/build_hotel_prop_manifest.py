@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter,defaultdict
+import io
 import json
 import math
 from pathlib import Path
@@ -23,7 +24,7 @@ try:
         parse_static_dictionary
     )
     from .inspect_hotel_model_assets import list_model_placements,model_files,model_availability
-    from .scan_xbox_zip_directory import scan_xbox_zip
+    from .scan_xbox_zip_directory import scan_xbox_zip,scan_directory
     from .inspect_xbox_zip import XboxZipError
 except ImportError:
     from bsp_to_browser_mesh import ROOT,MAP,BspError,read_directory,read_lump,decode_valve_lzma
@@ -32,7 +33,7 @@ except ImportError:
         parse_static_dictionary
     )
     from inspect_hotel_model_assets import list_model_placements,model_files,model_availability
-    from scan_xbox_zip_directory import scan_xbox_zip
+    from scan_xbox_zip_directory import scan_xbox_zip,scan_directory
     from inspect_xbox_zip import XboxZipError
 
 PACK_ROOT=ROOT/"game-extracted"
@@ -128,7 +129,7 @@ def normalize_archive_path(name: str) -> str:
     return x
 
 
-def scan_model_archive_directories(root: Path) -> tuple[dict,dict,list[str]]:
+def scan_model_archive_directories(root: Path, bsp: bytes | None = None) -> tuple[dict,dict,list[str]]:
     packs=sorted(root.rglob("*.360.zip"))
     if not packs or len(packs)>32:
         raise ValueError("Expected 1..32 extracted Xbox 360 ZIP packages")
@@ -164,6 +165,26 @@ def scan_model_archive_directories(root: Path) -> tuple[dict,dict,list[str]]:
                 loose+=1
             if loose>200000:raise ValueError("Excessive loose model filenames")
     per_pack["loose_files"]={"candidates":loose,"models":loose,"extensions":{}}
+    if bsp is not None:
+        try:
+            endian,directory,_=read_directory(bsp)
+            pak=read_lump(bsp,directory[40],endian)
+            if pak and len(pak)<=64*1024*1024:
+                embedded=scan_directory(io.BytesIO(pak),len(pak))
+                n=0
+                counts=Counter()
+                for name in embedded["filenames"]:
+                    canonical=normalize_archive_path(name)
+                    if canonical.startswith("models/") and canonical.endswith(
+                            (".mdl",".vvd",".vtx",".phy")):
+                        n+=1
+                        counts[canonical.rsplit(".",1)[-1]]+=1
+                        sources[canonical].append("hotel_BSP_embedded_pak")
+                per_pack["hotel_BSP_embedded_pak"]={
+                    "candidates":embedded["candidate_headers"],"models":n,
+                    "extensions":dict(counts)}
+        except (BspError,OSError,XboxZipError,ValueError) as err:
+            problems.append(f"hotel BSP PAK: {err}")
     return dict(sources),per_pack,problems
 
 
@@ -205,10 +226,10 @@ def main()->int:
     try:
         root=args.root.expanduser().resolve()
         bsp=args.bsp.expanduser().resolve().read_bytes()
-        sources,packs,problems=scan_model_archive_directories(root)
+        sources,packs,problems=scan_model_archive_directories(root,bsp=bsp)
         record=build_inventory(bsp,sources)
         print("HOTEL ORIGINAL MODEL PACKAGES + STATIC V9 PLACEMENTS")
-        print(f"Archive directories scanned: {len(packs)-1}; failed: {len(problems)}")
+        print(f"Archive/model sources scanned: {len(packs)}; failed: {len(problems)}")
         for pack,stats in packs.items():
             print(f"  {pack}: model filenames={stats['models']:,}; "
                   f"extensions={stats['extensions']}")
