@@ -50,3 +50,18 @@ py tools\inspect_hotel_model_assets.py --export
 The new model audit scans only the **local Xbox `zip0.360.zip` central directory** to check which original `.mdl`, `.vvd`, `.vtx` and optional `.phy` companions exist, and probes 16-byte headers of one available model set. The optional export saves **`research/local/hotel-model-placements.json`**, containing only original entity model paths, world-space position/angle and class type, for future genuine asset rendering. It does **not** decode full model geometry or upload commercial data. The exported placements cover authored `prop_physics`, `prop_dynamic` and door models; static game-lump instances will be added only after their record layout has been verified.
 
 Our browser already handles the real map geometry and materials. **The next milestone is actual original model decoding and placement**, not another texture experiment.
+
+## Verified compressed static props — October 26, 2026
+
+Owner's local run passed **120/120 tests**. The actual Xbox v9 `sprp` decompressed from the GAME_LUMP relative offset and yielded **188 dictionary entries, 1,748 instances and an apparent 72-byte per-instance stride**. Source format documentation independently identifies Left 4 Dead 2 v9 as **72 bytes** ([srctools](https://srctools.readthedocs.io/en/stable/modules/bsp.html)). An entity inventory separately confirmed **416 placed MDL models**: 314 physics, 72 dynamic and 30 rotating doors. The exported private entity-only manifest is `research/local/hotel-model-placements.json`.
+
+**Important:** the previous 0/52 dynamic and 0/185 static model availability result was **only against `left4dead2/zip0.360.zip`**. It is too early to claim the game assets are missing. The new cross-package inventory examines all eight `.360.zip` archive directories, loose extracted files and the BSP embedded PAK. It also validates **all 1,748** records instead of relying on average stride alone.
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\build_hotel_prop_manifest.py --export
+```
+
+The new JSON `research/local/hotel-all-props.json` contains original static and entity placements, each with Source model path, position, orientation and class. Original commercial model geometry is not copied. If any record fails validation, the decoder aborts rather than exporting guessed positions. The first full-PC run is pending.
