@@ -82,10 +82,41 @@ class XboxZipTests(unittest.TestCase):
         eocd=data.rfind(b"PK\x05\x06")
         original_size=struct.unpack_from("<I",data,eocd+12)[0]
         struct.pack_into("<I",data,eocd+12,original_size+3)
-        with self.assertRaisesRegex(XboxZipError,"Invalid central header"):
-            parse_directory(io.BytesIO(data),len(data))
+        recovered=parse_directory(io.BytesIO(data),len(data))
+        self.assertEqual(recovered["count"],3)
+        self.assertEqual(recovered["recovered_entries"],1)
+        self.assertEqual(recovered["skipped_gap_bytes"],3)
+        self.assertEqual(recovered["max_recovery_gap"],3)
         lines=diagnose_alignment(io.BytesIO(data),len(data))
         self.assertTrue(any("First candidate delta from expected: +3" in line for line in lines))
+
+    def test_recover_58_byte_padding(self):
+        data=bytearray(make_zip())
+        first=data.find(b"PK\x01\x02")
+        name_len=struct.unpack_from("<H",data,first+28)[0]
+        extra_len=struct.unpack_from("<H",data,first+30)[0]
+        comment_len=struct.unpack_from("<H",data,first+32)[0]
+        after_first=first+46+name_len+extra_len+comment_len
+        data[after_first:after_first]=b"\x00"*58
+        end=data.rfind(b"PK\x05\x06")
+        size=struct.unpack_from("<I",data,end+12)[0]
+        struct.pack_into("<I",data,end+12,size+58)
+        actual=parse_directory(io.BytesIO(data),len(data))
+        self.assertEqual(actual["count"],3)
+        self.assertEqual(actual["recovered_entries"],1)
+        self.assertEqual(actual["skipped_gap_bytes"],58)
+
+    def test_refuse_large_unknown_padding(self):
+        data=bytearray(make_zip())
+        first=data.find(b"PK\x01\x02")
+        n,e,c=struct.unpack_from("<3H",data,first+28)
+        after_first=first+46+n+e+c
+        data[after_first:after_first]=b"\x00"*129
+        end=data.rfind(b"PK\x05\x06")
+        size=struct.unpack_from("<I",data,end+12)[0]
+        struct.pack_into("<I",data,end+12,size+129)
+        with self.assertRaisesRegex(XboxZipError,"searched next 128 bytes"):
+            parse_directory(io.BytesIO(data),len(data))
 
     def test_bad_central_entry_length(self):
         data=bytearray(make_zip())
