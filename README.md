@@ -320,6 +320,23 @@ Load your existing private UV mesh, then select the entire `research\local\hotel
 
 **This completes the automated browser *brush-material* pipeline, not the entire original game.** Props, displacements, real lightmaps, animations, collision and L4D2 engine/gameplay still require further work. Exact finish instructions: [FINISH_HOTEL_TEXTURES.md](docs/FINISH_HOTEL_TEXTURES.md).
 
+## First phase COMPLETE: original hotel BSP brush mesh + automatic material loading
+
+**Final owner Chrome screenshot (October 26, 2026):** The original Dead Center hotel loads **53 genuine Xbox-derived materials**, with **20,198 of 27,374 brush triangles textured (73.8%)**. The player-start camera and genuine UV alignment work, including carpet, floor edging, plaster and ceiling tiles. **Zero images were unavailable** in the successful full-folder load.
+
+**This completes the automated original brush geometry + supported material setup milestone.** The remaining **7,176 triangles (26.2%)** include nonvisual Source tool/debug brushes and surfaces without a currently loaded image; this fraction does not measure missing game content or scenery. We should not pursue 100% blanket texture coverage, because triggers/skybox/fog/debug surfaces are not normal solid walls. Unsupported shaders and map-specific cases are documented exceptions, not promises that they are rendered.
+
+**Next original-game phase:** inspect static model/prop metadata, dynamic entity models and door entities, and displacement surface lumps, then implement genuine rendering using local original model assets. The read-only [hotel element inspector](tools/inspect_hotel_elements.py) reports this data from the user's locally extracted BSP without exporting models:
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\inspect_hotel_elements.py
+```
+
+Source tool/brush inspection and the real-game research are separate: no zombies, weapons, collision, gameplay or original engine code run in Chrome yet. **Do not upload original models, textures or executables into the public repository.**
+
 ## Further research and options
 
 - [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
