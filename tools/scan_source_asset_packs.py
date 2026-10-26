@@ -116,6 +116,29 @@ def summarize_report(label: str, report: dict, materials: Counter, samples: int)
         print("    (none found; another pack may contain textures)")
 
 
+def aggregate_coverage(materials: Counter, name_sets: dict[str, set[str]]) -> dict:
+    """Calculate actual union rather than assuming per-archive counts add up."""
+    source = {name.replace("\\", "/").casefold(): count
+              for name,count in materials.items()}
+    by_material = {}
+    for pack, found in name_sets.items():
+        for name in found:
+            if name in source:
+                by_material.setdefault(name, []).append(pack)
+    missing = sorted(set(source)-set(by_material))
+    duplicated = sorted(name for name,packs in by_material.items() if len(packs)>1)
+    return {
+        "source_count":len(source),
+        "matched_names":len(by_material),
+        "matched_faces":sum(source[name] for name in by_material),
+        "source_faces":sum(source.values()),
+        "duplicate_count":len(duplicated),
+        "unmatched_names":missing,
+        "unmatched_faces":sum(source[name] for name in missing),
+        "example_duplicate_names":duplicated[:5],
+    }
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--root", type=Path, default=DEFAULT_ROOT,
@@ -145,22 +168,42 @@ def main() -> int:
         print(f"Local console packs found: {len(packs)}")
         print("Only bounded ZIP central directories are scanned; no archive member data is read.")
         successes = 0
+        coverage_sources = {}
         for pack in packs:
             try:
                 rel = pack.relative_to(root).as_posix()
                 report = scan_xbox_zip(pack)
                 summarize_report(rel, report, source, args.samples)
+                coverage_sources[rel] = set(
+                    match_material_names(report["filenames"], source)["matches"])
                 successes += 1
             except (XboxZipError, OSError, ValueError) as err:
                 print(f"\n{pack.name}: directory metadata not recognized: {err}")
         if args.include_map_pak:
             try:
                 report = scan_local_pak(bsp)
-                summarize_report(f"{bsp_path.name} embedded PAKFILE (BSP lump 40)",
-                                 report, source, args.samples)
+                label = f"{bsp_path.name} embedded PAKFILE (BSP lump 40)"
+                summarize_report(label, report, source, args.samples)
+                coverage_sources[label] = set(
+                    match_material_names(report["filenames"], source)["matches"])
                 successes += 1
             except (XboxZipError, OSError, ValueError, BspError) as err:
                 print(f"\nEmbedded BSP PAKFILE: unavailable: {err}")
+        coverage = aggregate_coverage(source, coverage_sources)
+        print("\nOVERALL HOTEL MATERIAL FILENAME COVERAGE")
+        print(f"  Unique hotel material IDs found: "
+              f"{coverage['matched_names']:,}/{coverage['source_count']:,}")
+        print(f"  Face references covered: "
+              f"{coverage['matched_faces']:,}/{coverage['source_faces']:,}")
+        print(f"  Duplicate material IDs in multiple packs: "
+              f"{coverage['duplicate_count']:,}")
+        print(f"  Unmatched material IDs: "
+              f"{len(coverage['unmatched_names']):,}; "
+              f"unmatched face references: {coverage['unmatched_faces']:,}")
+        for key in coverage["unmatched_names"][:8]:
+            print(f"    unmatched: {key}")
+        for key in coverage["example_duplicate_names"]:
+            print(f"    multi-pack: {key}")
         print(f"\nFinished: {successes} supported directory scans. "
               "Candidate filenames only; no textures decoded or files exported.")
         return 0 if successes else 1
