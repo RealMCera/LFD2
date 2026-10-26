@@ -110,9 +110,14 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [ ] Build a limited original-game C++ subsystem as WebAssembly, then integrate gameplay, audio, asset loading, controls, and networking.
 - [ ] Assess scope of a complete buildable port; write independent research and tests.
 
+- [x] Screenshot confirms original first-person hotel multi-material rendering: 8 PNGs, 11,872 textured triangles, 0 skipped.
+- [x] Add read-only crosshair BSP material raycast inspector and UI shortcut I (synthetic mock-ray test passed; owner floor identification pending).
+- [x] Add --focus floor and --material exact selection to opt-in local Xbox texture conversion with synthetic tests (owner run pending).
+- [ ] Identify actual gray floor material using inspector; convert matching real texture, or investigate VMT basetexture/tool-material dependency.
+
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status: screenshot confirms real Xbox plaster texture mapped onto 1,404 original hotel triangles in Chrome; full 27,374 triangle viewer still working. New multi-material preview and opt-in local texture set preparation are committed, pending owner validation. Original L4D2 gameplay is not running in Chrome.**
+**Status: owner screenshot verifies 8 original Xbox textures applied to 11,872/27,374 Source hotel brush triangles (43.4%) with 0 skipped PNGs. Floor remains gray; crosshair Source-material inspection and floor-targeted private conversion are committed and pending real-PC validation. Original L4D2 gameplay is not running in Chrome.**
 
 ### Full-disc ISO input (extraction confirmed; code analysis pending)
 
