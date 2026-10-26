@@ -212,6 +212,26 @@ For the PNG step, download a trusted Windows \`vtfx_reader.exe\` release manuall
 
 PNG output is kept under \`research/local/vtfx/png/\` only; script refuses nonempty output folders. **Neither new tool nor the PNG decode has been validated on the owner's PC yet.** Full guide: [VTFX_FIRST_TEXTURE.md](docs/VTFX_FIRST_TEXTURE.md).
 
+## Chrome material preview is ready for the first private PNG
+
+**Owner confirmed 82/82 tests passed**, and `tools/add_bsp_material_uvs.py` successfully generated the private `research/local/c1m1_hotel_spawns_uv.mesh.json`: **27,374 triangles, 187 material IDs used by rendered triangles, and 82,122 UV pairs**. The older 189 count includes two BSP material names with no triangles in this converted brush mesh.
+
+The optional **[local WebGL2 material preview](docs/map-viewer.html)** now supports choosing ONE Source material ID and a matching locally selected PNG. [docs/material-preview.js](docs/material-preview.js) adds the texture shader, per-corner UV draw buffer, local PNG picker, and on/off control without modifying the original gray geometry path. Syntax and a mocked WebGL/DOM data-flow check passed, but a real Chrome screenshot of texture rendering is still pending.
+
+**Current blocker:** `py tools/convert_local_vtfx.py` reported the separately distributed `vtfx_reader.exe` was not installed. It has **not** produced a PNG. Download the [official VTFX Reader Windows release](https://github.com/rob5300/vtfx_reader/releases/latest), extract it and place `vtfx_reader.exe` into ignored `research/local/tools/` (or supply `--converter <path>`). Then run:
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\convert_local_vtfx.py
+Start-Process (Resolve-Path ".\docs\map-viewer.html").Path
+```
+
+Select `research/local/c1m1_hotel_spawns_uv.mesh.json` in Chrome. Reopen the map loader, use `PLASTER/PLASTER_INT_14` and select the privately converted PNG. This is **only a one-material preview**; other surfaces remain gray. The original game is not yet playable.
+
+Setup and preview details: [CHROME_TEXTURE_PREVIEW.md](docs/CHROME_TEXTURE_PREVIEW.md).
+
 ## Further research and options
 
 - [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
