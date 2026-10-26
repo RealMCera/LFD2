@@ -60,6 +60,12 @@ footer a{color:#f1ba87}
     <button type="button" id="multiTextureToggle">MULTI-TEXTURES ON</button>
     <div id="multiTextureStatus" style="font:11px/1.55 Consolas,monospace;color:#b6c9cc;margin-top:8px;white-space:pre-wrap">Select several PNGs to texture multiple matched Source materials simultaneously.</div>
   </div>
+  <div style="margin-top:14px;padding-top:12px;border-top:1px solid #57717d">
+    <p>SURFACE INSPECTOR · AIM AT FLOOR / WALL · PRESS I</p>
+    <button type="button" id="inspectSurfaceButton">IDENTIFY MATERIAL AT CROSSHAIR · I</button>
+    <div id="inspectSurfaceStatus" style="font:11px/1.55 Consolas,monospace;color:#b6c9cc;margin-top:8px;overflow-wrap:anywhere">No surface inspected yet.</div>
+    <button type="button" id="inspectUseMaterial">SELECT INSPECTED MATERIAL</button>
+  </div>
 </div>
 <div id="status">For the new survivor-start view, run:
 
@@ -79,7 +85,7 @@ Use research\\local\\c1m1_hotel_spawns_uv.mesh.json for texture previews. Older 
 </div>
 <div id="hint"></div>
 <div id="stats">NO MAP LOADED</div><div id="cross">+</div>
-<div id="help">1 START AT SELECTED PLAYER POSITION · 2 OVERVIEW · 3 TOGGLE BRUSH EDGES · N NEXT SPAWN · OPEN MAP LOADER FOR TEXTURE PREVIEW · CLICK TO AIM · WASD FLY · MOUSE / ARROWS LOOK · SPACE ASCEND · CTRL DESCEND · SHIFT SPEED BOOST · ESC RELEASE MOUSE · H HIDE HELP</div>
+<div id="help">1 START AT SELECTED PLAYER POSITION · 2 OVERVIEW · 3 TOGGLE BRUSH EDGES · N NEXT SPAWN · I IDENTIFY SURFACE · OPEN MAP LOADER FOR TEXTURE PREVIEW · CLICK TO AIM · WASD FLY · MOUSE / ARROWS LOOK · SPACE ASCEND · CTRL DESCEND · SHIFT SPEED BOOST · ESC RELEASE MOUSE · H HIDE HELP</div>
 </main>
 <footer><span>Only local browser memory is used; no copyright assets hosted.</span><a href="WEB_PORT_PLAN.md">Port roadmap</a></footer>
 <script id="vs" type="x-shader/x-vertex">#version 300 es
@@ -288,5 +294,6 @@ requestAnimationFrame(frame);
 </script>
 <script src="material-preview.js"></script>
 <script src="multi-materials.js"></script>
+<script src="surface-inspector.js"></script>
 </body>
 </html>
