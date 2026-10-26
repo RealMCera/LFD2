@@ -1,5 +1,6 @@
 """Synthetic original Source BSP element inventory tests; no game assets."""
 import struct
+import lzma
 import unittest
 
 from tools.bsp_to_browser_mesh import BspError
@@ -64,6 +65,39 @@ class HotelElementTests(unittest.TestCase):
         self.assertEqual(item["prop_record_bytes_apparent"],56)
         with self.assertRaises(BspError):
             parse_static_dictionary(payload[:100],">")
+
+    def test_compressed_sprp_model_dictionary_using_actual_lzma_wrapper(self):
+        bsp=bytearray(make_bsp())
+        static=(struct.pack(">I",1)+
+                b"models/props/hotel/chair.mdl".ljust(128,b"\0")+
+                struct.pack(">I",0)+struct.pack(">I",1)+b"\0"*56)
+        properties=bytes([93])+struct.pack("<I",65536)
+        raw=lzma.compress(static,format=lzma.FORMAT_RAW,
+            filters=[{"id":lzma.FILTER_LZMA1,"dict_size":65536,
+                      "lc":3,"lp":0,"pb":2}])
+        wrapped=b"LZMA"+struct.pack(">2I",len(static),len(raw))+properties+raw
+        game=struct.pack(">I",1)+b"prps"+struct.pack(">HHII",1,9,20,len(static))+wrapped
+        at=len(bsp)
+        bsp.extend(game)
+        struct.pack_into(">4I",bsp,8+35*16,at,len(game),0,0)
+        result=inspect_bsp(bytes(bsp))
+        self.assertEqual(len(result["static_prop_headers"]),1)
+        header=result["static_prop_headers"][0]
+        self.assertEqual(header["model_dictionary_entries"],1)
+        self.assertEqual(header["prop_count"],1)
+        self.assertEqual(header["source"],"game_lump_relative")
+        self.assertEqual(header["version"],9)
+        self.assertTrue(header["compressed"])
+
+    def test_compressed_flag_is_not_proof_of_decodable_lzma(self):
+        bsp=bytearray(make_bsp())
+        game=struct.pack(">I",1)+b"prps"+struct.pack(">HHII",1,9,20,156212)+b"NOTLZMA"
+        at=len(bsp)
+        bsp.extend(game)
+        struct.pack_into(">4I",bsp,8+35*16,at,len(game),0,0)
+        result=inspect_bsp(bytes(bsp))
+        self.assertEqual(result["static_prop_headers"],[])
+        self.assertTrue(any("no validated" in x for x in result["game_lump_notes"]))
 
     def test_end_to_end_synthetic_psbv(self):
         result=inspect_bsp(make_bsp())
