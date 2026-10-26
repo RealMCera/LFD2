@@ -26,6 +26,27 @@ The output should give counts for Source texinfo/texdata, the 14 most-referenced
 
 If Python reports \`BadZipFile\`, that does **not** mean your Xbox archive is corrupt: Xbox XZIP can differ from the standard ZIP directory format. We will need a specific local archive-directory reader.
 
+## October 26 material and Xbox archive findings
+
+The owner's latest PowerShell report confirms:
+
+- All **32** existing synthetic tests pass.
+- `c1m1_hotel.360.bsp` has **228 texdata records**, **3,392 texinfos**, **10,840 HDR faces**, and **189 referenced original material names**.
+- **0 unmapped faces** in the material-name lookup.
+- Top visual surface references include plaster, ceiling tile, and concrete; there are also engine/tool materials such as `TOOLS/TOOLSTRIGGER`, `TOOLS/FOGVOLUME`, and `TOOLS/TOOLSSKYBOX` that should not be mistaken for normal wall textures.
+- Python's ordinary `zipfile` reports `Corrupt extra field 0e00 (size=24781)` for the local `zip0.360.zip`. This does **not** prove the archive is corrupt.
+
+**New tool:** `tools/inspect_xbox_zip.py`. This reads ZIP end-of-central-directory and fixed central-directory records, skips per-entry extra field bytes without decoding them, and never reads or extracts entry payloads. `tools/inspect_map_materials.py --pack` automatically tries it if the standard ZIP library refuses the archive.
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\inspect_map_materials.py --pack
+```
+
+The new inspector is supported by synthetic ZIP tests but **has not yet been tried on the user's console archive**. Matching `.vmt` names in a ZIP still does not validate the VTFX image payload format or mean texture rendering works.
+
 ## Next engineering milestones
 
 1. Verify Source texture-name paths and matching material files in the console archives or BSP pakfile.
