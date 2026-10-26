@@ -90,6 +90,10 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] Confirm all 59 synthetic tests passed; find 4,640 VMT / 3,922 VTF file candidates in zip1.360.zip and 217 VMT / 85 VTF in hotel embedded PAK.
 - [x] Match reported 69 hotel material IDs (10,315 face references) from zip1 and 120 IDs (525 faces) from embedded map PAK; totals suggest complete filename coverage.
 - [x] Add exact union/overlap report and bounded ZIP local-header/VTFX magic probe with synthetic tests; actual owner results pending.
+- [x] Confirm 66/66 tests; 189/189 unique material IDs and 10,840/10,840 face references covered with zero cross-pack duplicates.
+- [x] Verify 10 local ZIP texture headers and Xbox VTFX signatures from zip1 and BSP PAK.
+- [x] Add bounded VTFX metadata parser and opt-in single-file local extraction tool, synthetic tests and converter docs (awaiting owner validation).
+- [ ] Decode first original VTFX wall texture into a private PNG and visually verify orientation/color.
 - [ ] Locate original Xbox material/texture files, especially in zip1.360.zip, and validate any actual texture decoder.
 - [ ] Verify complete console ZIP directory parsing, original VMT material-file matches, and console texture format.
 - [x] Correct Windows 8.3 short-path vs resolved long-path ISO unit-test expectation (re-run tests pending).
@@ -102,7 +106,7 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status: original hotel geometry and 189 material names confirmed; real original material filenames located in zip1.360.zip and map PAKFILE. Next verify their local texture headers and image formats. Textures and actual game are not yet running in Chrome.**
+**Status: original hotel geometry, all 189 material paths, and ten genuine VTFX texture signatures verified on the owner's PC. A private single-file VTFX metadata/copy tool is ready for testing. No original image is yet decoded/rendered in Chrome and the actual L4D2 game is not running.**
 
 ### New full-disc ISO input (pending local verification)
 
