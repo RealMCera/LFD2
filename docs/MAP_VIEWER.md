@@ -1,6 +1,33 @@
 # First real L4D2 level → Chrome WebGL2 preview
 
-**EXPERIMENTAL / the owner's original hotel map was successfully converted on October 26, 2026, but the Chrome rendering still needs visual verification.** This is the first local BSP geometry experiment, not playable Left 4 Dead 2. It reads the user's legitimately obtained Xbox BSP, attempts to reconstruct brush-face triangles, and opens them as an untextured fly-through in a standalone WebGL2 viewer. No Valve binaries, maps, models, textures or game data are uploaded to GitHub.
+**EXPERIMENTAL / the owner's original hotel map conversion and basic WebGL2 rendering are now screenshot-confirmed on October 26, 2026.** The next milestone is a useful eye-level viewpoint. This is the first local BSP geometry experiment, not playable Left 4 Dead 2. It reads the user's legitimately obtained Xbox BSP, attempts to reconstruct brush-face triangles, and opens them as an untextured fly-through in a standalone WebGL2 viewer. No Valve binaries, maps, models, textures or game data are uploaded to GitHub.
+
+## Improved start position after the first screenshot
+
+The owner's October 26 screenshot confirms the **27,374-triangle hotel map renders in Chrome**. However, the initial camera was above the entire map, so only giant flat gray surfaces were visible. This is not a geometry conversion failure. The existing untextured mesh remains valid.
+
+To generate a NEW enriched private mesh using spawn points from the compressed original BSP entity lump, without overwriting the already successful mesh:
+
+    cd C:\Users\FrontDesk\LFD2
+    git pull
+    py -m unittest discover -s tests -v
+    py tools\add_bsp_spawns.py
+
+Expected new output:
+
+    C:\Users\FrontDesk\LFD2\research\local\c1m1_hotel_spawns.mesh.json
+
+If the tool reports no survivor or player starts, keep using **Overview** and share the console counts; no coordinates should be invented.
+
+Reload `docs/map-viewer.html` in Chrome and choose the **new** file. The viewer automatically starts at the first available camera start when supplied, and offers:
+
+- **1:** camera to selected start (if extracted)
+- **2:** high-level overview
+- **N:** cycle to next spawn
+- **WASD / mouse:** free-flight inspection, with Space/Ctrl vertical movement
+- **OPEN MAP LOADER:** reselect local mesh; the panel now has an × close button.
+
+The earlier `c1m1_hotel.mesh.json` still works but contains **no spawn metadata**, so the viewer will begin in overview mode. Neither file should be committed to public GitHub.
 
 ## Step 1 — Confirm Xbox header details
 
@@ -48,7 +75,7 @@ Click the scene to lock the pointer; WASD to fly, mouse/arrow keys to look, Spac
 - No textures, props, static models, NPCs, campaign scripting, physics, ground collision or true L4D2 play yet
 - Displacements currently skipped, so terrain may have holes; brush faces may have gaps or incorrect orientation
 - Browser's GPU and the converter's JSON memory usage may limit map size; Chrome on Windows with WebGL2 needed
-- The default camera begins above the level looking down; users can fly into the geometry, not walk with collision
+- The original mesh starts above the level; the enriched mesh uses Source player/survivor start metadata as a camera guide. Users fly without collision in either mode
 - This does not use or execute the PowerPC modules; a real Chrome game port requires extensive engine reimplementation/recompilation
 
 ## Confirmed local conversion results
@@ -58,7 +85,7 @@ Click the scene to lock the pointer; WASD to fly, mouse/arrow keys to look, Spac
 - Decoded **10,840** HDR faces into **27,374** triangles, skipping 43 displacement faces and 2,012 degenerate triangles.
 - Bounds: `[-2284.8, -748, -1616]` to `[11616, 16320, 3584]`.
 - Private output: `research/local/c1m1_hotel.mesh.json` (**777,248 bytes**).
-- All **23 synthetic Python tests passed**. The geometry has not yet been visually validated in Chrome.
+- All **23 earlier synthetic Python tests passed**; new spawn helper tests still need to run on the owner's PC. The old distant untextured geometry has now been visually confirmed in Chrome.
 
 ## After the first successful geometry preview
 
