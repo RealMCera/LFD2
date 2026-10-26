@@ -75,3 +75,19 @@ The first tool now computes **exact unique coverage and overlap across all packa
 
 The current Chrome renderer still lacks original image decoding, per-triangle UV/material attributes, and correct draw batching. We must implement all of those before the walls can display original textures. The player's local original game assets must remain untracked and never be committed to the public repo.
 
+
+## First genuine VTFX signatures (owner validated)
+
+The next PowerShell run passed **66 tests** and reported **189/189 unique material filename matches, 10,840/10,840 faces, 0 duplicated IDs and 0 missing IDs** across the Xbox archives and the hotel's PAKFILE.
+
+All **10 sampled original texture files** reported a matching local ZIP filename and an authentic \`VTFX\` signature (\`56 54 46 58 00 00 03 60\`). Selected examples from \`left4dead2/zip1.360.zip\`:
+
+- \`materials/plaster/plaster_ext_20.360.vtf\`, 174,844 bytes
+- \`materials/tile/tile_ceiling_01.360.vtf\`, 174,844 bytes
+- \`materials/plaster/plaster_int_14.360.vtf\`, 174,844 bytes
+- \`materials/plaster/plaster_int_15.360.vtf\`, 174,844 bytes
+
+The embedded PAK also had VTFX signatures for 5 map-specific \`materials/maps/c1m1_hotel/*.hdr.360.vtf\` files.
+
+**Next:** inspect the actual big-endian VTFX dimensions/format and safely copy **one** original file into ignored \`research/local/vtfx/\` via \`tools/extract_single_vtfx.py\`. See [VTFX_FIRST_TEXTURE.md](VTFX_FIRST_TEXTURE.md). For image conversion, see [rob5300/vtfx_reader](https://github.com/rob5300/vtfx_reader), which documents Xbox image endianness repair and several compatible formats.
+
