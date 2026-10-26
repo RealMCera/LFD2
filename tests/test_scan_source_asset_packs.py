@@ -6,7 +6,7 @@ import unittest
 import zipfile
 
 from tools.scan_source_asset_packs import (
-    material_key, match_material_names, scan_local_pak, summarize_report,
+    material_key, match_material_names, scan_local_pak, summarize_report, aggregate_coverage,
 )
 from tools.scan_xbox_zip_directory import scan_directory
 
@@ -55,6 +55,25 @@ class PackScanTests(unittest.TestCase):
         self.assertEqual(report["candidate_headers"],3)
         self.assertEqual(r["matched_materials"],1)
         self.assertEqual(r["material_extensions"][".360"],1)
+
+    def test_disjoint_archive_coverage_sums_exactly(self):
+        materials=Counter({"plaster/a":5,"tile/b":3,"maps/map/c":2})
+        found={"zip1":{"plaster/a","tile/b"},"bsp pak":{"maps/map/c"}}
+        result=aggregate_coverage(materials,found)
+        self.assertEqual(result["matched_names"],3)
+        self.assertEqual(result["matched_faces"],10)
+        self.assertEqual(result["duplicate_count"],0)
+        self.assertEqual(result["unmatched_names"],[])
+
+    def test_archive_overlap_does_not_double_count(self):
+        materials=Counter({"plaster/a":5,"tile/b":3,"maps/map/c":2})
+        found={"zip1":{"plaster/a","tile/b"},"bsp pak":{"plaster/a"}}
+        result=aggregate_coverage(materials,found)
+        self.assertEqual(result["matched_names"],2)
+        self.assertEqual(result["matched_faces"],8)
+        self.assertEqual(result["duplicate_count"],1)
+        self.assertEqual(result["unmatched_names"],["maps/map/c"])
+        self.assertEqual(result["unmatched_faces"],2)
 
     def test_embedded_bsp_pak_directory(self):
         pack=zip_bytes()
