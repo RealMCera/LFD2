@@ -1,0 +1,22 @@
+name: Synthetic hotel pipeline checks
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Python synthetic unit tests (no game data)
+        run: python -m unittest discover -s tests -v
+      - name: JavaScript syntax validation
+        run: |
+          for file in docs/*.js; do
+            node --check "$file"
+          done
+      - name: Hotel texture folder manifest tests
+        run: node tests/js/finish_texture_folder.test.js
