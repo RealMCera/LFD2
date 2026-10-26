@@ -48,3 +48,30 @@ For each pack it prints:
 Once we've confirmed the relevant archive, implement *local-only* file-body extraction and validate the first texture's file signature / format. We should not assume any entry can be safely decompressed merely because its name and central directory look valid.
 
 The Source BSP face \`texinfo\` and \`texdata\` tables must next be converted to **per-vertex UV coordinates and per-face material IDs**. The existing browser mesh contains only 3D positions and triangle indices, so attaching image files without those changes would not render real textures correctly. No proprietary textures or game data should be committed to public GitHub.
+
+## Owner-confirmed discovery and subsequent header probe
+
+The latest all-pack scan (59/59 synthetic tests passed) located the hotel's **real material filenames** in two archives:
+
+| Local archive | Total central candidates | VMT | VTF | Candidate matching hotel material IDs | Corresponding face references |
+|---|---:|---:|---:|---:|---:|
+| \`left4dead2/zip1.360.zip\` | 8,565 | 4,640 | 3,922 | 69 | 10,315 |
+| Hotel BSP lump 40 embedded PAKFILE | 1,628 | 217 | 85 | 120 | 525 |
+| Combined reported matches | — | — | — | **189** | **10,840** |
+
+All eight external archive directories plus the embedded map PAK directory were scanned successfully. The console packs include names like \`materials/ads/burger.360.vtf\`, while the BSP PAK includes per-map materials such as \`materials/maps/c1m1_hotel/buildings/... .vmt\`. Multiple archives contain nonstandard ZIP extra-length fields; directory candidate counts can differ slightly from EOCD counts. These are read-only filename candidates, **not yet proof of valid extractable texture bodies**.
+
+**New tools for the next local validation:**
+
+\`\`\`powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\scan_source_asset_packs.py --include-map-pak
+py tools\probe_xbox_texture_headers.py --include-map-pak
+\`\`\`
+
+The first tool now computes **exact unique coverage and overlap across all packages**, so it can verify whether the 69+120 equals 189 without duplication. The second reads only the central metadata, local ZIP headers and a 16-byte candidate payload signature per selected texture. A \`VTFX\` signature would be strong evidence about the Xbox texture format. A missing \`PK 03 04\` local header would mean the archive requires extra Xbox-specific offset decoding; it should not be blindly extracted.
+
+The current Chrome renderer still lacks original image decoding, per-triangle UV/material attributes, and correct draw batching. We must implement all of those before the walls can display original textures. The player's local original game assets must remain untracked and never be committed to the public repo.
+
