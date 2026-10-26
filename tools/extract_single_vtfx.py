@@ -70,15 +70,17 @@ def select_entry(entries: list[dict], material: str) -> dict:
 
 
 def validate_texture(stream, filesize: int, central_offset: int, entry: dict) -> dict:
+    if entry["method"]!=0:
+        raise XboxZipError("Compressed ZIP member unsupported for safe single-file copy")
     meta=inspect_local_header(stream,filesize,central_offset,entry)
+    if meta.get("local_method") not in (None,0):
+        raise XboxZipError("Compressed ZIP member unsupported for safe single-file copy")
     if (meta["status"]!="local_header_found" or
             meta.get("texture_magic")!="VTFX" or
             not meta.get("local_filename_matches",False)):
         raise XboxZipError(f"Local entry failed VTFX header checks: {meta['status']}, "
                            f"magic={meta.get('texture_magic')}, "
                            f"matching_name={meta.get('local_filename_matches')}")
-    if entry["method"]!=0 or meta["local_method"]!=0:
-        raise XboxZipError("Compressed ZIP member unsupported for safe single-file copy")
     if entry["flags"] & 1 or meta["local_flags"] & 1:
         raise XboxZipError("Encrypted ZIP member unsupported")
     length=entry["compressed_size"]
