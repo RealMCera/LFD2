@@ -103,3 +103,9 @@ py tools\add_bsp_material_uvs.py
 
 New private mesh: \`research/local/c1m1_hotel_spawns_uv.mesh.json\`. It preserves the earlier mesh and spawn positions. This is metadata groundwork: **the current Chrome viewer cannot sample that PNG using the new UVs until the WebGL shader/texture file picker is updated**.
 
+
+## Owner's 82-test confirmation and optional Chrome preview
+
+On October 26 the owner passed **82/82 tests** and successfully created `research/local/c1m1_hotel_spawns_uv.mesh.json` (27,374 triangles; 187 material names in emitted triangles; 82,122 UV pairs). `py tools/convert_local_vtfx.py` could not run because the third-party `vtfx_reader.exe` was not present at its expected path. The extracted Xbox original VTFX is preserved.
+
+The browser viewer now includes an **optional private PNG material preview** using the UV-enriched mesh and selected `PLASTER/PLASTER_INT_14`. Real Chrome rendering is unverified until the executable is installed and the first PNG produced. See [CHROME_TEXTURE_PREVIEW.md](CHROME_TEXTURE_PREVIEW.md).
