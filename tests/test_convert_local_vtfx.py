@@ -51,8 +51,8 @@ class ConvertVtfxTests(unittest.TestCase):
             rows=run_converter(self.input,self.output,self.executable)
         self.assertEqual(len(rows),1)
         self.assertEqual(rows[0][1:],(512,512))
-        runner.assert_called_once_with([str(self.executable),"-i",str(self.input),
-                                         "-o",str(self.output)],check=True,timeout=180)
+        runner.assert_called_once_with([str(self.executable.resolve()),"-i",str(self.input.resolve()),
+                                         "-o",str(self.output.resolve())],check=True,timeout=180)
 
     def test_refuses_existing_output(self):
         self.output.mkdir()
