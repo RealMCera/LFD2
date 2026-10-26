@@ -138,9 +138,15 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] Add bounded read-only original hotel BSP entity and static-prop game-lump inspector with synthetic tests (owner first inventory pending).
 - [ ] Begin distinct phase: Source displacements, props, doors, lightmaps, then collision and actual engine/gameplay.
 
+- [x] Owner verified 112/112 Python tests and inspected 1,894 entities in real c1m1_hotel.360.bsp (314 physics props, 72 dynamic props, 30 rotating doors).
+- [x] Confirm original game lump `sprp` v9 with compression flag 1 and uncompressed length 156,212 bytes; 928B/3,740B displacement metadata.
+- [x] Add bounded Valve LZMA compressed game lump dictionary probe and synthetic compression tests (owner validation pending).
+- [x] Add original `.mdl`/`.vvd`/`.vtx` directory cross-check, up-to-16-byte model signature probe, and optional private entity placement JSON (owner validation pending).
+- [ ] Confirm real static prop record stride/placement transforms; decode original model mesh assets and render in Chrome.
+
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status (October 26, 2026): Original hotel brush material pipeline COMPLETE and owner screenshot-confirmed: 53 authentic Xbox-derived materials loaded in one private Chrome folder operation; 20,198/27,374 triangle textures active (73.8%), 0 unavailable. Next: original static/dynamic props, door entities, BSP displacements. The native L4D2 gameplay engine is NOT running in Chrome.**
+**Status (October 26, 2026): Phase 1 screenshot-verified — 53 original textures on 20,198/27,374 hotel brush triangles (73.8%). Phase 2 inspection on the owner's actual BSP passed 112 tests; 1,894 entities include 314 physics props, 72 dynamic props and 30 rotating doors. New compressed sprp v9 probe and model/placement index are committed and await local validation. Original game models and gameplay are NOT running in Chrome.**
 
 ### Full-disc ISO input (extraction confirmed; code analysis pending)
 
