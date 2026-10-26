@@ -14,7 +14,11 @@ main{height:calc(100vh - 95px);min-height:400px;position:relative}
 #loader h1 span{color:#f2b980}
 #loader p{color:#aebfc6;font-size:13px;line-height:1.65}
 #loader label{display:block;cursor:pointer;text-align:center;background:#e6a66f;color:#141e22;font-weight:900;padding:14px;letter-spacing:.09em;font-size:12px}
-#loader label:hover{background:#ffd09c}#file{display:none}
+#loader label:hover{background:#ffd09c}#file,#textureFile{display:none}
+#materialPanel{display:none;margin-top:16px;padding-top:13px;border-top:1px solid #57717d}
+#materialPanel select{display:block;width:100%;background:#22343e;color:#f5dbba;padding:8px;border:1px solid #607884;margin:8px 0 11px;font:12px Consolas,monospace}
+#materialPanel button{cursor:pointer;background:#21313d;border:1px solid #617984;color:#edc59e;width:100%;padding:9px;margin-top:7px}
+#textureStatus{font:11px/1.6 Consolas,monospace;color:#b6c9cc;padding-top:8px}
 #status{white-space:pre-wrap;color:#b4c5ca;font:12px/1.6 Consolas,monospace;margin-top:14px}
 #show{position:absolute;top:15px;left:15px;display:none;z-index:2;background:#14232bcc;color:#f1ca9d;padding:9px 15px;border:1px solid #70909b;cursor:pointer}
 #closeLoader{position:absolute;right:10px;top:10px;border:1px solid #71818c;background:#22323b;color:#f1dfc6;padding:4px 9px;cursor:pointer}
@@ -40,8 +44,16 @@ footer a{color:#f1ba87}
 <button type="button" id="closeLoader" aria-label="Close map loader">×</button>
 <div style="color:#e5b585;font-size:11px;font-weight:bold;letter-spacing:.18em">XBOX 360 BSP · LOCAL FILES ONLY</div>
 <h1>Explore the <span>original map geometry.</span></h1>
-<p>This experimental renderer opens a mesh converted from your own L4D2 BSP. No map files or game assets are uploaded. Brush surfaces only for now: no textures, props, weapons, enemies or complete Source engine.</p>
+<p>This experimental renderer opens a mesh converted from your own L4D2 BSP. No map files or game assets are uploaded. Brush surfaces from your original game. Optional one-material texture preview using a private PNG + UV mesh. No props, enemies or complete Source engine yet.</p>
 <label for="file">SELECT A LOCAL .MESH.JSON FILE</label><input type="file" id="file" accept=".json,application/json">
+<div id="materialPanel">
+  <p>OPTIONAL ORIGINAL TEXTURE PREVIEW · UV MESH ONLY</p>
+  <select id="materialSelect" aria-label="Choose original map material"></select>
+  <label for="textureFile">SELECT MATCHING LOCAL PNG</label>
+  <input type="file" id="textureFile" accept=".png,image/png">
+  <button type="button" id="textureToggle">TEXTURE PREVIEW ON</button>
+  <div id="textureStatus">Load a PNG of this selected material. It stays on your computer.</div>
+</div>
 <div id="status">For the new survivor-start view, run:
 
 py tools\add_bsp_spawns.py
@@ -49,7 +61,7 @@ py tools\add_bsp_spawns.py
 Then select the NEW private file:
 research\local\c1m1_hotel_spawns.mesh.json
 
-Your earlier mesh.json file still works in overview mode.</div>
+Use research\\local\\c1m1_hotel_spawns_uv.mesh.json for texture previews. Older meshes still work in gray geometry mode.</div>
 </div>
 <button id="show" type="button">OPEN MAP LOADER</button>
 <div id="viewcontrols">
@@ -60,7 +72,7 @@ Your earlier mesh.json file still works in overview mode.</div>
 </div>
 <div id="hint"></div>
 <div id="stats">NO MAP LOADED</div><div id="cross">+</div>
-<div id="help">1 START AT SELECTED PLAYER POSITION · 2 OVERVIEW · 3 TOGGLE BRUSH EDGES · N NEXT SPAWN · CLICK TO AIM · WASD FLY · MOUSE / ARROWS LOOK · SPACE ASCEND · CTRL DESCEND · SHIFT SPEED BOOST · ESC RELEASE MOUSE · H HIDE HELP</div>
+<div id="help">1 START AT SELECTED PLAYER POSITION · 2 OVERVIEW · 3 TOGGLE BRUSH EDGES · N NEXT SPAWN · OPEN MAP LOADER FOR TEXTURE PREVIEW · CLICK TO AIM · WASD FLY · MOUSE / ARROWS LOOK · SPACE ASCEND · CTRL DESCEND · SHIFT SPEED BOOST · ESC RELEASE MOUSE · H HIDE HELP</div>
 </main>
 <footer><span>Only local browser memory is used; no copyright assets hosted.</span><a href="WEB_PORT_PLAN.md">Port roadmap</a></footer>
 <script id="vs" type="x-shader/x-vertex">#version 300 es
@@ -186,6 +198,7 @@ input.addEventListener("change",async()=>{
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,lineIndexBuffer);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,edges,gl.STATIC_DRAW);
   lineCount=edges.length;gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indexBuffer);
   indexCount=indices.length;mesh={name:f.name,triangles:indices.length/3,bounds:data.bounds};
+  setUvData(data);
   cameraSpawns=safeSpawns(data);setSpawnList();
   if(cameraSpawns.length)atSpawn(0);else overview();
   loader.style.display="none";show.style.display="block";cross.style.display="block";viewcontrols.style.display="flex";
@@ -249,6 +262,7 @@ function frame(now){
    if(wireEnabled){gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1,1);}
    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indexBuffer);
    gl.drawElements(gl.TRIANGLES,indexCount,gl.UNSIGNED_INT,0);
+   renderMaterialPreview();
    if(wireEnabled){
     gl.disable(gl.POLYGON_OFFSET_FILL);
     gl.uniform1i(uniforms.wire,1);
@@ -263,5 +277,6 @@ function frame(now){
 }
 requestAnimationFrame(frame);
 </script>
+<script src="material-preview.js"></script>
 </body>
 </html>
