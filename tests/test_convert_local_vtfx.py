@@ -27,6 +27,7 @@ def png_header(width=512,height=512):
 
 class ConvertVtfxTests(unittest.TestCase):
     def setUp(self):
+        PRIVATE_ROOT.mkdir(parents=True,exist_ok=True)
         self.tmp=tempfile.TemporaryDirectory(dir=PRIVATE_ROOT)
         self.addCleanup(self.tmp.cleanup)
         self.root=Path(self.tmp.name)
