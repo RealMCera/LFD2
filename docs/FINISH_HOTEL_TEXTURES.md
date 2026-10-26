@@ -1,5 +1,13 @@
 # Finish the Dead Center hotel texture stage
 
+## Final verified result — October 26, 2026
+
+The owner provided a screenshot of the **completed local folder-loading workflow** running in Chrome. It rendered **53 original materials on 20,198 of the original 27,374 hotel brush triangles (73.8%)**, with **0 unavailable files reported**. Wallpaper, carpet, floor borders and ceiling tiles are in place. This validates the one-command/original material manifest and one-folder Chrome loader end-to-end.
+
+We are **closing the brush geometry + supported original material phase** here. The remaining 7,176 triangles are not necessarily 7,176 missing normal textures; some represent Source special/tool/debug surfaces. That remainder also does not measure separately missing model props, BSP displacements, lighting or gameplay.
+
+Next practical action: `py tools\inspect_hotel_elements.py` to inspect static prop model dictionaries, dynamic prop/door entity class counts, and displacement metadata from the original local BSP. All original models/game data remain private.
+
 ## What is complete
 
 Your screenshot has already verified real Xbox-derived textures on the original browser hotel: **14 texture materials and 13,696 of 27,374 brush triangles**. This was a manually selected preview. The new finalization tool and browser folder loader eliminate most repetitive one-by-one conversion and file picking.
