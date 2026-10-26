@@ -133,6 +133,23 @@ Instead of widening the 128-byte gap allowance, we've added [tools/scan_xbox_zip
 
 Share only the printed metadata report. Candidate filenames are a diagnostic, not proof of successful archive decoding.
 
+## Confirmed: all 24,435 Xbox ZIP index entries and the real texture-pack lead
+
+The owner's latest PowerShell run passed **55/55 tests**, and a read-only independent scan of \`left4dead2/zip0.360.zip\` found **24,435 plausible central-directory headers**, exactly matching its declared **24,435 entries**. No candidates were rejected. Its dominant extensions are audio and model types (\`.wav\`, \`.mdl\`, \`.vvd\`, \`.vtx\`, \`.phy\`); no apparent \`.vmt\` filenames were reported.
+
+**Correction to earlier hypotheses:** the old "58-byte ZIP gap" was a consequence of interpreting unusual Xbox extra-length values as normal ZIP sizes and skipping valid records. It was not evidence of a real 58-byte gap. We should no longer build on that explanation. The actual compressed file contents and local offsets have not been validated.
+
+Xbox L4D2 modding documentation specifically points to \`zip1.360.zip\` for console textures. We've added [tools/scan_source_asset_packs.py](tools/scan_source_asset_packs.py) and synthetic tests to inspect **all eight local Xbox archives**, optionally including the hotel's internal BSP PAKFILE ZIP. Only ZIP *directory metadata* is read. Its results are pending.
+
+\`\`\`powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\scan_source_asset_packs.py --include-map-pak
+\`\`\`
+
+Full details: [Xbox pack discovery](docs/XBOX_PACK_DISCOVERY.md). This is still filename discovery, not texture extraction or a playable browser game.
+
 ## Further research and options
 
 - [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
