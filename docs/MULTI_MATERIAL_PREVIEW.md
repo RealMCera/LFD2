@@ -56,3 +56,40 @@ The existing **single-material mode remains available** and both overlays may be
 ## Larger next milestones
 
 Resolve VMT `$basetexture` mappings instead of relying on equivalent filenames; exclude tool/skybox surfaces correctly; support map-specific BSP PAK resources, displacements and props; add lightmaps, collision and eventual gameplay code. Textured brush geometry alone is not a playable L4D2 port.
+
+## October 26: eight original textures confirmed; inspect remaining gray floor
+
+The latest owner screenshot shows **8 original Xbox-derived PNGs on 11,872/27,374 brush triangles**, with **0 skipped images**. The material coverage is **43.4% of triangles**, *not* a prediction of total visual quality. Walls and ceiling are textured; the gray floor is still unverified. We must find its actual Source material rather than assuming it is `CONCRETE/CONCRETE_FLOOR_10`.
+
+### Inspect a surface directly in Chrome
+
+1. `git pull`, then refresh the Chrome local viewer with **Ctrl+Shift+R**.
+2. Load `research/local/c1m1_hotel_spawns_uv.mesh.json` again.
+3. Look down at the gray floor and press **I**, or reopen the map loader and click **IDENTIFY MATERIAL AT CROSSHAIR**.
+4. The lower status and map loader display the Source material ID, triangle number and distance (from a CPU raycast over your original BSP triangle geometry).
+5. If useful, click **SELECT INSPECTED MATERIAL**, then pick its matching PNG for single-material preview.
+
+The raycast is diagnostic only: it does not create collisions, edit the game, or prove gameplay is functional. Some gray areas may be tool brushes or absent meshes, which won't resolve by applying arbitrary PNGs.
+
+### Safely prepare floor materials
+
+Read-only candidate list:
+
+```powershell
+py tools\prepare_hotel_textures.py --focus floor
+```
+
+Opt-in conversion of up to eight floor/ground filename candidates:
+
+```powershell
+py tools\prepare_hotel_textures.py --focus floor --run
+```
+
+Or convert one precise BSP material (substitute the inspector's exact name):
+
+```powershell
+py tools\prepare_hotel_textures.py --material 'CONCRETE/CONCRETE_FLOOR_10'
+py tools\prepare_hotel_textures.py --material 'CONCRETE/CONCRETE_FLOOR_10' --run
+```
+
+The tool checks whether the selected material is actually referenced by the original hotel and has an exact-name `.360.vtf` in the owner's `zip1.360.zip`. If not, it stops with an informative error; the material's VMT may reference a differently named basetexture, and that dependency will need separate parsing. Previous private PNGs aren't overwritten. Chrome still supports up to 16 simultaneous original materials.
