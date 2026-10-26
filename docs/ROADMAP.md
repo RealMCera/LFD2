@@ -77,12 +77,15 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] Verify all 23 synthetic tests pass on the owner's PC.
 - [x] Load and render the original hotel's 27,374-triangle geometry in Chrome; screenshot confirmed an untextured aerial view.
 - [x] Build private Source entity spawn extraction and browser start-position controls (awaiting owner testing).
-- [ ] Confirm an eye-level hotel interior appears using an actual survivor/player start location.
-- [ ] Add displacements, original-material mapping, props, and collision.
+- [x] Confirm a real first-person hotel corridor appears in Chrome from `info_player_start` (screenshot, October 26).
+- [x] Add read-only Source BSP texdata/texinfo/string-table material mapper plus Xbox ZIP filename inspector (awaiting owner's metadata output).
+- [ ] Identify original material paths, console texture payload format, and valid Xbox archive directory structure.
+- [ ] Add mesh UVs and material indices, convert original textures locally, then render them in WebGL2.
+- [ ] Add displacements, props, collision, and navigation.
 - [ ] Evaluate native portable reimplementation/recompiler feasibility and missing Xbox/Source engine services.
 - [ ] Build a limited original-game C++ subsystem as WebAssembly, then integrate gameplay, audio, asset loading, controls, and networking.
 - [ ] Assess scope of a complete buildable port; write independent research and tests.
 
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status: real Xbox hotel brush geometry renders in Chrome, currently mostly giant gray surfaces from an aerial camera. New private spawn-based camera navigation is the next validation step. The original game is not running in Chrome.**
+**Status: real first-person hotel corridor is screenshot-confirmed in Chrome. Original Source material/texture discovery is the next step; actual L4D2 gameplay is not running in the browser.**
