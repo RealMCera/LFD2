@@ -1,0 +1,43 @@
+# Xbox 360 L4D2 map materials — first inspection
+
+## Confirmed so far
+
+The original Dead Center hotel's big-endian \`PSBV\` BSP v20 converted to **27,374 brush triangles**. The browser first-person view is screenshot-confirmed from an \`info_player_start\` point. This exposes the correct corridor/room shape but every surface has generic material shading.
+
+To move toward the *original* game appearance, we need to find the per-face Source texture references and determine how their corresponding Xbox material/texture assets are stored.
+
+Valve's published Source BSP structures identify:
+- Lump **2** \`TEXDATA\`: 32-byte records pointing into texture-name string table IDs.
+- Lump **6** \`TEXINFO\`: 72-byte records linking geometry UV transforms to texdata IDs.
+- Lump **43** \`TEXDATA_STRING_DATA\`: zero-terminated material/texture paths.
+- Lump **44** \`TEXDATA_STRING_TABLE\`: 4-byte byte offsets into lump 43.
+- Lump **58** \`FACES_HDR\`: 56-byte faces on this Xbox map, using texinfo IDs.
+
+The new read-only inspector connects these references and counts the original materials on the rendered faces. It also optionally asks Python's ZIP reader to list filenames (without extraction) from the local \`zip0.360.zip\` archive.
+
+## Run on the owner's PC
+
+    cd C:\Users\FrontDesk\LFD2
+    git pull
+    py -m unittest discover -s tests -v
+    py tools\inspect_map_materials.py --pack
+
+The output should give counts for Source texinfo/texdata, the 14 most-referenced real material paths, and—if the Xbox package has a readable ZIP central directory—an extension summary and a few asset names. **The inspector does not export textures, maps, or model files.**
+
+If Python reports \`BadZipFile\`, that does **not** mean your Xbox archive is corrupt: Xbox XZIP can differ from the standard ZIP directory format. We will need a specific local archive-directory reader.
+
+## Next engineering milestones
+
+1. Verify Source texture-name paths and matching material files in the console archives or BSP pakfile.
+2. Determine whether textures use ordinary PC VTF, console VTFX, or some other payload format. Do not assume \`.vtf\` is PC-compatible on Xbox.
+3. Write a **local** texture/metadata converter for formats actually encountered. It must use only locally owned inputs and keep decoded output under \`research/local/\`.
+4. Export mesh UV coordinates and per-face material IDs. The current simple mesh deduplicates positions and does not yet contain texture coordinates, so adding JPG/PNG files alone will not texture the walls properly.
+5. Update WebGL2 to bind original material textures/atlases, then add static props, displacements and collision.
+
+**No third-party game assets or decompiled code belong in the public repository.** Copyrights and license restrictions must be respected. Even successfully rendered original textures would still be only a level viewer, not a full browser game engine.
+
+## References
+
+- [Valve Source SDK 2013 — bspfile.h](https://github.com/ValveSoftware/source-sdk-2013/blob/master/src/public/bspfile.h) (BSP lump IDs/structures)
+- [ValveBSP lump reference](https://pysourcesdk.github.io/ValveBSP/api/lumps.html)
+- [Community research on Xbox 360 VTFX and 360.zip formats](https://open-source-modding.github.io/docs/left4dead/left4dead-formats/) (background only; variants must be validated locally)
