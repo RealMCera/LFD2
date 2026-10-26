@@ -17,6 +17,7 @@ import argparse
 from collections import Counter
 from pathlib import Path
 import shutil
+import subprocess
 import sys
 
 try:
@@ -151,7 +152,8 @@ def main() -> int:
                     state,path=process_one(stream,filesize,
                         report["directory_offset"],entry,key,root,converter)
                     print(f"  {state}: {path.name}");done+=1
-                except (OSError,ValueError,XboxZipError,ConversionError) as error:
+                except (OSError,ValueError,XboxZipError,ConversionError,
+                        subprocess.CalledProcessError,subprocess.TimeoutExpired) as error:
                     print(f"  skipped {key}: {error}");failed+=1
         print(f"Private PNGs available: {done}; unresolved: {failed}")
         print(f"Chrome multi-PNG folder: {root/'png'}")
