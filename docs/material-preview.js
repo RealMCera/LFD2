@@ -113,6 +113,7 @@ function setUvData(data){
 }
 mpSelect.addEventListener("change",()=>{
  mpTextureLoaded=false;mpTextureName="";mpFile.value="";mpBuildPreview();
+ if(typeof updateMaterialCoverage==="function")updateMaterialCoverage();
 });
 mpFile.addEventListener("change",async()=>{
  const file=mpFile.files&&mpFile.files[0];
@@ -133,12 +134,14 @@ mpFile.addEventListener("change",async()=>{
   gl.generateMipmap(gl.TEXTURE_2D);
   bmp.close();mpTextureLoaded=true;mpVisible=true;mpTextureName=file.name;
   mpToggle.textContent="TEXTURE PREVIEW ON";mpBuildPreview();
+  if(typeof updateMaterialCoverage==="function")updateMaterialCoverage();
   flashHint("REAL TEXTURE PREVIEW · OPEN MAP LOADER TO SWITCH MATERIAL OR PNG");
  }catch(error){mpTextureLoaded=false;mpStatus.textContent="Cannot load PNG: "+error.message;}
 });
 mpToggle.addEventListener("click",()=>{
  mpVisible=!mpVisible;
  mpToggle.textContent=mpVisible?"TEXTURE PREVIEW ON":"TEXTURE PREVIEW OFF";
+ if(typeof updateMaterialCoverage==="function")updateMaterialCoverage();
 });
 function renderMaterialPreview(){
  if(!mpTextureLoaded||!mpVisible||!mpVertexCount||!mpProgram)return;
