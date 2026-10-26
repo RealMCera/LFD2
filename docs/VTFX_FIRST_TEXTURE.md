@@ -63,3 +63,43 @@ A valid VTFX signature or header is **not** a converted image, and a rendered ho
 
 - [Valve Source SDK 2013 vtf.h, VTFFileHeaderX360_t](https://github.com/ValveSoftware/source-sdk-2013/blob/master/src/public/vtf/vtf.h)
 - [rob5300/vtfx_reader](https://github.com/rob5300/vtfx_reader)
+
+## October 26: original plaster wall texture extracted successfully
+
+The owner confirmed **73/73 tests passed** and extracted a genuine \`plaster_int_14.360.vtf\` at \`research/local/vtfx/\`. Its validated VTFX header has:
+
+- Xbox version **864.8**
+- Dimensions **512×512**
+- **DXT1** (Source format ID **13**)
+- Header **68 bytes**, one resource, original file **174,844 bytes**
+- Reported compressed resource field **0** (this by itself does not establish how the image-resource bytes are laid out)
+
+The ZIP remains untouched. The local original texture is ready for PNG conversion but is not itself browser-displayable.
+
+### Updated single-image conversion using our wrapper
+
+The community VTFX reader's documented CLI is \`vtfx_reader.exe -i <input> -o <output-directory>\`. Our new wrapper checks the original VTFX input, runs only the **explicitly installed** executable without a shell, and checks the resulting PNG signature/dimensions.
+
+1. Download [VTFX Reader's latest Windows release](https://github.com/rob5300/vtfx_reader/releases/latest) and inspect the release before using any downloaded executable.
+2. Put the actual \`vtfx_reader.exe\` file at \`C:\Users\FrontDesk\LFD2\research\local\tools\vtfx_reader.exe\`. You can create the \`tools\` subfolder manually; it is inside ignored \`research/local/\`.
+3. Run the following:
+
+\`\`\`powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\convert_local_vtfx.py
+\`\`\`
+
+The wrapper uses the previously extracted file and writes PNGs privately under \`research/local/vtfx/png/\`. The output folder must be empty to prevent overwriting existing images. Open the resulting PNG and visually check whether the plaster surface is correctly colored and oriented.
+
+### Source-engine UV and material metadata
+
+The new \`tools/add_bsp_material_uvs.py\` enriches the previously created \`c1m1_hotel_spawns.mesh.json\` with original BSP texinfo texture vectors, image-space UV coordinates and a material index for **each triangle**. Shared 3D positions intentionally have *per-triangle-corner* UVs because adjacent faces can use different original materials. It checks that original face triangulation matches the private preexisting mesh before proceeding.
+
+\`\`\`powershell
+py tools\add_bsp_material_uvs.py
+\`\`\`
+
+New private mesh: \`research/local/c1m1_hotel_spawns_uv.mesh.json\`. It preserves the earlier mesh and spawn positions. This is metadata groundwork: **the current Chrome viewer cannot sample that PNG using the new UVs until the WebGL shader/texture file picker is updated**.
+
