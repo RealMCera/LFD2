@@ -96,6 +96,9 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] Confirm 73/73 synthetic tests pass; extract original 512×512 DXT1 plaster_int_14 VTFX (174,844 bytes) locally.
 - [x] Add separately installed VTFX Reader → PNG wrapper with local-only output validation and synthetic tests (awaiting owner use).
 - [x] Add Source BSP UV/material-ID mesh enrichment and synthetic tests (awaiting owner use and WebGL rendering).
+- [x] Owner confirmed 82/82 tests, UV-enriched 27,374-triangle hotel private mesh with 187 rendered material IDs and 82,122 UV pairs.
+- [x] Add opt-in local PNG + material ID textured overlay to existing Chrome WebGL2 viewer (syntax and mock-data-flow checks pass; real Chrome validation pending).
+- [ ] Install third-party VTFX Reader Windows EXE privately; current `convert_local_vtfx.py` output stopped because executable was absent.
 - [ ] Decode first original VTFX wall texture into a private PNG and visually verify orientation/color.
 - [ ] Locate original Xbox material/texture files, especially in zip1.360.zip, and validate any actual texture decoder.
 - [ ] Verify complete console ZIP directory parsing, original VMT material-file matches, and console texture format.
@@ -109,7 +112,7 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status: original first-person hotel BSP geometry, 189 material paths, and original 512×512 DXT1 plaster VTFX extraction verified. UV/material mesh enrichment and optional local PNG conversion tools added, not yet owner-tested. No original texture yet renders in Chrome and original L4D2 gameplay is not running.**
+**Status: private UV-enriched mesh (27,374 triangles; 187 rendered material IDs) owner-verified, Chrome single-material texture preview committed and syntax checked. VTFX Reader EXE missing; no PNG decoded or textured Chrome screenshot confirmed yet. Original L4D2 gameplay is not running.**
 
 ### New full-disc ISO input (pending local verification)
 
