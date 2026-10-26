@@ -82,6 +82,8 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] Document Python ZIP extra-field rejection and try a safe custom central-directory reader.
 - [x] Diagnose Xbox ZIP directory: first central record valid; next candidate +58 bytes beyond predicted offset.
 - [x] Implement bounded 128-byte recovery for unexpected central-directory gaps and synthetic 3/58-byte tests (awaiting run on owner's archive).
+- [x] Confirm 51/51 synthetic tests passed. Bounded sequential ZIP parser reaches record 1,470 before directory exhaustion.
+- [x] Add independent EOCD-bounded central signature scanner and synthetic tests; waiting for real archive report.
 - [ ] Verify complete console ZIP directory parsing, original VMT material-file matches, and console texture format.
 - [x] Correct Windows 8.3 short-path vs resolved long-path ISO unit-test expectation (re-run tests pending).
 - [ ] Identify original material paths, console texture payload format, and valid Xbox archive directory structure.
