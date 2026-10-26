@@ -337,6 +337,25 @@ py tools\inspect_hotel_elements.py
 
 Source tool/brush inspection and the real-game research are separate: no zombies, weapons, collision, gameplay or original engine code run in Chrome yet. **Do not upload original models, textures or executables into the public repository.**
 
+## Real Xbox hotel entity inventory verified — original models next
+
+The owner's **October 26 local run passed 112/112 tests** and read **1,894 original hotel map entities**: **314 `prop_physics`**, **72 `prop_dynamic`**, **29 `prop_door_rotating`**, **1 `prop_door_rotating_checkpoint`**, **195 `func_brush`**, **8 `func_breakable`**, **4 `func_movelinear`**, plus weapons and survivor positions. Entity metadata already reveals original model paths for elevator controls, pulleys and metal doors. The game's `sprp` game lump is **version 9, flags 1 (compressed), reported uncompressed length 156,212 bytes**. BSP displacement lumps are **928 and 3,740 bytes**; actual displacement layout is not yet identified.
+
+**New Phase 2 tools:**
+
+- [inspect_hotel_elements.py](tools/inspect_hotel_elements.py) now safely tests the compressed static prop's Valve LZMA wrapper, instead of interpreting its uncompressed size as an on-disk byte length. If successful, it prints the real static prop dictionary and implied v9 record size. It never guesses model transforms.
+- [inspect_hotel_model_assets.py](tools/inspect_hotel_model_assets.py) checks the local Xbox `zip0.360.zip` directory for each referenced `.mdl`, `.vvd`, `.vtx` and optional `.phy`, displays frequently referenced original models, and probes **at most 16 bytes each** from one model triplet. `--export` writes a private model/placement manifest for use in the next original-asset renderer.
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\inspect_hotel_elements.py
+py tools\inspect_hotel_model_assets.py --export
+```
+
+Original model geometry is **not yet rendered in Chrome**. The modified scripts and their synthetic tests still need a run against the owner's private Xbox files; no original game model data is uploaded or committed.
+
 ## Further research and options
 
 - [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
