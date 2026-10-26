@@ -114,11 +114,13 @@ See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler out
 
 **Status: private UV-enriched mesh (27,374 triangles; 187 rendered material IDs) owner-verified, Chrome single-material texture preview committed and syntax checked. VTFX Reader EXE missing; no PNG decoded or textured Chrome screenshot confirmed yet. Original L4D2 gameplay is not running.**
 
-### New full-disc ISO input (pending local verification)
+### Full-disc ISO input (extraction confirmed; code analysis pending)
 
 - [x] Add a read-only XDVDFS/XGD disc-layout probe and safe xdvdfs extraction wrapper, with nine synthetic tests.
 - [x] Add a private Ghidra pseudocode export helper with bounded function counts.
-- [ ] Inspect the actual 7.84 GB ISO on Windows, extract to ignored game-iso-extracted/, and compare module inventories with the prior archive.
+- [x] Inspect actual 7.84 GB ISO as XGD2/XDVDFS; xdvdfs extraction completed with default.xex, 21 DLL-named candidate modules, 24 BSP maps and eight .360.zip packages.
+- [x] Add read-only SHA-256 XEX2 comparison against the previous archive extraction, with nine synthetic tests.
+- [ ] Run both module catalogs and byte-identity comparison on Windows to verify XEX2 modules and detect build differences.
 - [ ] Run Ghidra's Xbox loader on one verified ISO module and export sample functions to ignored research/local/ files.
 
 See [ISO_DECOMPILATION.md](ISO_DECOMPILATION.md). Neither a complete decompilation nor a playable browser port is done.
