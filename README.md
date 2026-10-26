@@ -2,7 +2,7 @@
 
 **Target: a genuine Left 4 Dead 2 browser port using original game behavior and the user's locally owned game files, closer in architecture to the BO1 Zombies browser project at vel.gg/bsz. This does NOT run in Chrome yet.**
 
-The current [After the Siren demo](docs/index.html) is a **separate, basic JavaScript raycasting experiment**. It is NOT the original game, does not use Source, and is **not the target implementation**. We will stop treating improvements to the demo's graphics as progress toward running actual L4D2.
+The archived [After the Siren demo](docs/legacy-demo.html) is a **separate, basic JavaScript raycasting experiment**. It is NOT the original game, does not use Source, and is **not the target implementation**. We will stop treating improvements to the demo's graphics as progress toward running actual L4D2.
 
 ## The browser-port architecture
 
@@ -21,7 +21,7 @@ The Xbox 360 **PowerPC XEX2** binaries cannot themselves be compiled by Emscript
 
 ## First Chrome preview: original L4D2 BSP geometry (experimental)
 
-**New tools:** [local BSP-to-mesh converter](tools/bsp_to_browser_mesh.py), [HDR/compression lump diagnostics](tools/inspect_bsp_lumps.py), and the [WebGL2 local map viewer](docs/map-viewer.html). These are **not yet validated on the actual Xbox map**; the converter is designed to fail with an explanation if this map variant needs further decoding.
+**New tools:** [local BSP-to-mesh converter](tools/bsp_to_browser_mesh.py), [HDR/compression lump diagnostics](tools/inspect_bsp_lumps.py), and the [WebGL2 local map viewer](docs/map-viewer.html). **The owner has now converted the original Xbox hotel map successfully:** 27,374 triangles from 10,840 Source faces; WebGL2 display has not yet been confirmed. The converter is designed to fail with an explanation if another map variant needs further decoding.
 
 From Windows PowerShell:
 
@@ -29,13 +29,12 @@ From Windows PowerShell:
     git pull
     py -m unittest discover -s tests -v
     py tools\inspect_bsp_lumps.py
-    py tools\bsp_to_browser_mesh.py
 
-If conversion succeeds, open the local viewer:
+The hotel mesh **already exists** locally. Do not re-run conversion unless intentionally using a different output filename. Open the local viewer:
 
     Start-Process (Resolve-Path ".\docs\map-viewer.html").Path
 
-Select the output mesh from research\local\c1m1_hotel.mesh.json through the viewer's file picker. The entire process stays local. **No actual Left 4 Dead 2 game runtime, AI, collision or Source engine is running in Chrome yet.**
+Choose **SELECT A LOCAL .MESH.JSON FILE** and select the existing private output: research\local\c1m1_hotel.mesh.json. The entire process stays local. **No actual Left 4 Dead 2 game runtime, AI, collision or Source engine is running in Chrome yet.**
 
 Full local setup: [MAP_VIEWER.md](docs/MAP_VIEWER.md).
 
@@ -44,21 +43,14 @@ Full local setup: [MAP_VIEWER.md](docs/MAP_VIEWER.md).
 - Local `.zar` unpack: **96 files**, including **22 Xbox 360 XEX2 modules**, **24 BSP maps**, and **8 .360.zip packages**.
 - Extracted and inspected XEX2 loader and gameplay-related server module.
 - `left4dead2/bin/server_360.dll` local decoded PE32/PowerPC image: **5,740,436 bytes of .text**, base `0x89780000`, entry `0x89DED900`.
-- Verified original XEX/PE memory addresses and all **13** synthetic tests in the owner's last report.
-- **No engine source recovered**, and a true L4D2 game is not playable in the browser. The untextured WebGL2 map preview has been built but needs testing on the owner's local BSP.
+- Verified original XEX/PE memory addresses and **23 synthetic tests** in the owner's latest report.
+- **Successfully converted the original Dead Center hotel BSP to a local 777,248-byte JSON mesh** (27,374 triangles, HDR lump 58, 43 displacement surfaces skipped). Browser rendering has not yet been confirmed. No engine source recovered; actual L4D2 is not playable in Chrome.
 
-## Next research command (Windows PowerShell)
+## Next action: load the actual converted geometry in Chrome
 
-```powershell
-cd C:\Users\FrontDesk\LFD2
-git pull
-py -m unittest discover -s tests -v
-py tools\probe_source_assets.py
-```
+Open `docs/map-viewer.html` in Chrome and choose your existing private mesh from `C:\Users\FrontDesk\LFD2\research\local\c1m1_hotel.mesh.json`. If the browser renders only the background or shows a WebGL error, capture the screenshot/console error; this is the next validation gate.
 
-This probes the **headers only** of a few original BSP maps and Xbox ZIP packages. The console summary tells us which byte order and archive layout we must support to load the real environments into Chrome. It does not export or upload game resources.
-
-The source file is [tools/probe_source_assets.py](tools/probe_source_assets.py).
+**Do not commit the converted mesh or original BSP data to GitHub.**
 
 ## Further research and options
 
