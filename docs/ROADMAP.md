@@ -142,11 +142,14 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] Confirm original game lump `sprp` v9 with compression flag 1 and uncompressed length 156,212 bytes; 928B/3,740B displacement metadata.
 - [x] Add bounded Valve LZMA compressed game lump dictionary probe and synthetic compression tests (owner validation pending).
 - [x] Add original `.mdl`/`.vvd`/`.vtx` directory cross-check, up-to-16-byte model signature probe, and optional private entity placement JSON (owner validation pending).
-- [ ] Confirm real static prop record stride/placement transforms; decode original model mesh assets and render in Chrome.
+- [x] Owner verified 120 passing tests, original compressed sprp v9 dictionary with 188 entries and 1,748 records with apparent 72-byte stride; entity placement manifest has 416 authored objects.
+- [x] Add complete Source v9/72-byte static placement decoder with per-record validation and all-Xbox-pack + loose files + BSP Pak model discovery (synthetic tests committed, owner run pending).
+- [ ] Confirm 1,748 static v9 placements against the real Xbox file with the new full-record validation and export private combined 2,164-placement manifest.
+- [ ] Locate and decode original .mdl/.vvd/.vtx triplet files before rendering genuine furniture and doors in Chrome.
 
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status (October 26, 2026): Phase 1 screenshot-verified — 53 original textures on 20,198/27,374 hotel brush triangles (73.8%). Phase 2 inspection on the owner's actual BSP passed 112 tests; 1,894 entities include 314 physics props, 72 dynamic props and 30 rotating doors. New compressed sprp v9 probe and model/placement index are committed and await local validation. Original game models and gameplay are NOT running in Chrome.**
+**Status (October 26, 2026): Phase 1 verified — 53 original textures on 20,198/27,374 hotel brush triangles (73.8%). Phase 2 owner verified all 120 tests, 1,748 compressed static prop records (188 model dictionary entries, apparent 72-byte v9 stride) and 416 dynamic/physics/door placements; zip0-only model search found no model filenames. New full-record static v9 decoder and all-pack asset discovery committed, awaiting actual-PC run. Original props/characters/gameplay still do NOT render in Chrome.**
 
 ### Full-disc ISO input (extraction confirmed; code analysis pending)
 
