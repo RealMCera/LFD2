@@ -73,7 +73,8 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] Add a read-only BSP/.360.zip header-probing script and synthetic tests.
 - [x] Inspect actual BSP/ZIP signatures: PSBV big-endian v20; asset packs begin PK ZIP headers.
 - [x] Add a WebGL2 brush-geometry viewer, experimental private BSP converter, and synthetic tests.
-- [ ] Validate the BSP-to-mesh converter against the actual hotel map; verify HDR face lump 58 and compression.
+- [x] Validate BSP-to-mesh converter against actual hotel map: big-endian v20, LZMA-wrapped lumps, HDR face lump 58, 27,374 brush triangles in a local 777,248-byte file.
+- [x] Verify all 23 synthetic tests pass on the owner's PC.
 - [ ] Successfully load original locally supplied hotel-map geometry in WebGL2, then add displacements, textures, props, and collision.
 - [ ] Evaluate native portable reimplementation/recompiler feasibility and missing Xbox/Source engine services.
 - [ ] Build a limited original-game C++ subsystem as WebAssembly, then integrate gameplay, audio, asset loading, controls, and networking.
@@ -81,4 +82,4 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status: actual PSBV v20 map and ZIP signatures confirmed; experimental local geometry converter and WebGL2 viewer created, awaiting validation. Genuine L4D2 gameplay is not running in Chrome.**
+**Status: real Xbox hotel map converted successfully to a private geometry mesh; visual validation in the WebGL2 map viewer is next. The actual L4D2 game is not running in Chrome.**
