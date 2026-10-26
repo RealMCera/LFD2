@@ -24,6 +24,7 @@ Reload `docs/map-viewer.html` in Chrome and choose the **new** file. The viewer 
 - **1:** camera to selected start (if extracted)
 - **2:** high-level overview
 - **N:** cycle to next spawn
+- **3:** toggle highlighted brush edges to make the untextured rooms/corridors more legible
 - **WASD / mouse:** free-flight inspection, with Space/Ctrl vertical movement
 - **OPEN MAP LOADER:** reselect local mesh; the panel now has an × close button.
 
