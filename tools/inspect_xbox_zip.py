@@ -122,15 +122,106 @@ def inspect_xbox_zip(path: Path) -> dict:
         return parse_directory(stream, filesize)
 
 
+def diagnose_alignment(stream, filesize: int, max_records: int = 4) -> list[str]:
+    """Explain an Xbox central directory mismatch using header metadata only.
+
+    Never reads entry contents. At most 8192 bytes are searched after a lost
+    central-directory record; any candidate is only diagnostic, not accepted.
+    """
+    eocd = _eocd(stream, filesize)
+    declared = eocd["offset"]
+    computed = eocd["eocd_pos"] - eocd["size"]
+    results = [
+        f"EOCD central offset={declared:,}, size={eocd['size']:,}, "
+        f"entry count={eocd['count']:,}",
+        f"Directory position computed from EOCD={computed:,} "
+        f"(difference={computed-declared:+,})",
+    ]
+    positions = []
+    for pos in (declared, computed):
+        if 0 <= pos <= filesize-4 and pos not in positions:
+            positions.append(pos)
+    for pos in positions:
+        stream.seek(pos)
+        results.append(f"At offset {pos:,}: signature={stream.read(4).hex(' ')}")
+    offset = next((pos for pos in positions
+                   if _sig_at(stream, pos, filesize) == CENTRAL_MAGIC), None)
+    if offset is None:
+        results.append("No fixed central-directory signature at either candidate start.")
+        return results
+    limit = min(filesize, eocd["eocd_pos"])
+    for index in range(min(max_records, eocd["count"])):
+        if offset + 46 > limit:
+            results.append(f"Entry {index}: header exceeds directory bounds.")
+            break
+        stream.seek(offset)
+        header = stream.read(46)
+        if header[:4] != CENTRAL_MAGIC:
+            results.append(f"Entry {index}: expected central header at {offset:,}; "
+                           f"found {header[:8].hex(' ')}")
+            # Search nearby metadata *only*, not archive payloads.
+            n = min(8192, max(0, limit-offset))
+            stream.seek(offset)
+            preview = stream.read(n)
+            possible = []
+            start = 0
+            while len(possible)<4:
+                at = preview.find(CENTRAL_MAGIC, start)
+                if at < 0: break
+                candidate = offset+at
+                if candidate + 46 <= limit:
+                    stream.seek(candidate)
+                    c = stream.read(46)
+                    nums = struct.unpack("<I6H3I5H2I",c)
+                    name, extra, comment=nums[10],nums[11],nums[12]
+                    if 0 < name <= MAX_NAME and candidate+46+name+extra+comment<=limit:
+                        possible.append(candidate)
+                start=at+4
+            results.append(f"Nearby plausible central-header offsets: "
+                           + (", ".join(str(p) for p in possible) if possible else "(none in 8192 bytes)"))
+            if possible:
+                results.append(f"First candidate delta from expected: "
+                               f"{possible[0]-offset:+,} bytes")
+            break
+        fields = struct.unpack("<I6H3I5H2I", header)
+        nlen, elen, clen=fields[10],fields[11],fields[12]
+        method,flags=fields[4],fields[3]
+        following=offset+46+nlen+elen+clen
+        results.append(f"Entry {index}: at={offset:,}, flags=0x{flags:04X}, method={method}, "
+                       f"filename_bytes={nlen}, extra_bytes={elen}, comment_bytes={clen}, "
+                       f"predicted_next={following:,}")
+        if nlen > MAX_NAME or following > limit:
+            results.append("Entry lengths exceed safe bounds; stop.")
+            break
+        offset = following
+    return results
+
+
+def _sig_at(stream, offset: int, filesize: int) -> bytes:
+    if offset < 0 or offset+4>filesize:
+        return b""
+    stream.seek(offset)
+    return stream.read(4)
+
+
 def main() -> int:
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("path",nargs="?",type=Path,default=DEFAULT)
     parser.add_argument("--limit",type=int,default=20)
+    parser.add_argument("--diagnose",action="store_true",
+                        help="Show header offsets for first few entries (never archive contents)")
     args=parser.parse_args()
     if not 1<=args.limit<=40:
         parser.error("--limit must be 1..40")
     try:
         path=args.path.expanduser().resolve()
+        if args.diagnose:
+            with path.open("rb") as stream:
+                print(f"Xbox ZIP header alignment diagnosis: {path.name}")
+                for line in diagnose_alignment(stream, path.stat().st_size):
+                    print("  "+line)
+            print("Header metadata only; no game assets were read or extracted.")
+            return 0
         record=inspect_xbox_zip(path)
         print(f"Xbox ZIP directory probe: {path.name} ({path.stat().st_size:,} bytes)")
         print(f"Directory offset: {record['directory_offset']:,}; "
