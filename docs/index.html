@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#090e12">
+<title>After the Siren — Browser Survival Prototype</title>
+<style>
+:root{font-family:Inter,"Segoe UI",Arial,sans-serif;color:#e7ebeb;background:#070b0e;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;overflow:hidden;background:radial-gradient(ellipse at top,#253039 0%,#080d10 55%,#050708 100%);display:flex;align-items:center;justify-content:center}
+button{font:inherit;cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid #ffb054;outline-offset:4px}
+#shell{width:min(100vw,1550px);height:min(100vh,950px);position:relative;display:flex;flex-direction:column;min-height:470px;padding:18px 24px 20px;gap:12px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:35px}
+.brand{font-weight:1000;letter-spacing:.22em;font-size:14px;color:#faf5eb}.brand span{color:#f2a44e}.headright{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#8499a4;display:flex;gap:20px;align-items:center}
+.pill{border:1px solid #415b60;border-radius:30px;padding:7px 12px;color:#aad3c2;font-weight:700;white-space:nowrap}
+#frame{position:relative;border:1px solid #48575b;overflow:hidden;flex:1;min-height:320px;background:#11191b;box-shadow:0 24px 80px #000b}
+#game{display:block;width:100%;height:100%;image-rendering:auto;cursor:crosshair;outline:0}
+#grain{pointer-events:none;position:absolute;inset:0;opacity:.09;background:repeating-linear-gradient(0deg,transparent 0px,transparent 3px,#000 4px,#000 5px)}
+#vignette{pointer-events:none;position:absolute;inset:0;box-shadow:inset 0 0 150px 40px #03060699}
+#danger{pointer-events:none;position:absolute;inset:0;background:#c11e26;opacity:0;mix-blend-mode:screen}
+#hud{pointer-events:none;position:absolute;inset:0;padding:24px;display:none}
+#hud.topview{display:block}
+#hud .top{display:flex;justify-content:space-between;align-items:flex-start}
+.overline{letter-spacing:.22em;text-transform:uppercase;font-size:10px;font-weight:800;color:#a3b8b9}
+#waveText{font-size:31px;font-weight:1000;letter-spacing:.08em;text-shadow:0 2px 5px #000}
+#zombieText{font-size:12px;color:#edc0a3;letter-spacing:.1em}
+#minimap{width:130px;height:130px;border:1px solid #98aaa255;background:#030909a3;image-rendering:pixelated;box-shadow:0 10px 25px #0007}
+#crosshair{position:absolute;top:50%;left:50%;width:18px;height:18px;transform:translate(-50%,-50%);opacity:.9}
+#crosshair:before,#crosshair:after{content:"";position:absolute;background:#f5e2bd;box-shadow:0 0 4px #111}
+#crosshair:before{width:2px;height:18px;left:8px;top:0}#crosshair:after{height:2px;width:18px;left:0;top:8px}
+#hitmark{position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);font-size:28px;font-weight:900;color:#f8b263;opacity:0}
+#prompt{position:absolute;left:50%;top:65%;transform:translateX(-50%);font-weight:900;letter-spacing:.11em;color:#fff3d7;text-shadow:0 2px 9px #000;text-align:center;font-size:13px}
+#toasts{position:absolute;top:125px;left:24px;font-size:13px;color:#ffbe76;font-weight:800;text-shadow:0 2px 8px #000;letter-spacing:.08em}
+#bottomHud{display:flex;position:absolute;bottom:24px;left:24px;right:24px;justify-content:space-between;align-items:flex-end;gap:16px}
+#players{display:flex;gap:8px;align-items:end}
+.survivor{min-width:117px;padding:10px 12px;background:#071014b5;border:1px solid #67838752;backdrop-filter:blur(4px)}
+.survivor .id{font-size:10px;font-weight:800;letter-spacing:.16em;color:#d6e9e2}
+.survivor .meter{height:4px;background:#42505b;margin-top:9px}.survivor .meter div{height:100%;background:#72cba8;width:100%;transition:width .15s}
+#you{border-bottom:3px solid #f5ae5c}#you .id{color:#ffca89}#you .meter div{background:#f5ae5c}
+#ammo{display:flex;align-items:baseline;justify-content:flex-end;gap:8px;text-shadow:0 2px 8px #000}
+#ammoCurrent{font-size:57px;font-weight:1000;line-height:.85;font-variant-numeric:tabular-nums}
+#ammoReserve{font-size:25px;color:#bdc6c8;font-weight:700}#weapon{color:#e9b778;text-align:right;font-size:10px;font-weight:900;letter-spacing:.18em;margin-top:13px}
+#topBanner{position:absolute;top:27%;left:0;right:0;font-size:26px;text-align:center;font-weight:1000;letter-spacing:.2em;color:#ffd6a0;text-shadow:0 4px 20px #000;opacity:0;pointer-events:none}
+#overlay{position:absolute;inset:0;background:linear-gradient(100deg,#081013f2 1%,#11191bd9 56%,#121f2073 100%);display:flex;align-items:center;padding:7%;z-index:10}
+#overlay[hidden]{display:none}
+#panel{max-width:670px}
+#eyebrow{font-size:12px;font-weight:900;letter-spacing:.28em;color:#d89d5a;text-transform:uppercase;margin:0 0 15px}
+h1{font-size:clamp(52px,7vw,105px);line-height:.93;margin:0 0 21px;letter-spacing:-.068em;font-weight:1000;color:#f1efdf;text-shadow:0 6px 30px #0007}
+h1 span{color:#e99e57}
+#description{line-height:1.7;font-size:15px;max-width:525px;color:#b8c9ca;margin:0 0 27px}
+.controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:550px;margin:0 0 31px}
+.controls>div{border-top:1px solid #637579;padding-top:10px;color:#c7d6d6;font-size:11px;line-height:1.65}
+.controls b{color:#ffe0b0;display:block;font-size:12px;letter-spacing:.07em}
+#play{border:0;padding:17px 35px;background:#eea65f;color:#131b1e;font-size:13px;letter-spacing:.15em;font-weight:1000;text-transform:uppercase;box-shadow:5px 5px 0 #806044}
+#play:hover{background:#ffd08b;transform:translateY(-1px)}
+#message{margin-left:14px;color:#b3c6c8;font-size:11px;letter-spacing:.08em}
+footer{display:flex;align-items:center;justify-content:space-between;gap:18px;font-size:11px;color:#829397;letter-spacing:.08em}
+footer strong{color:#dfbd8f}footer button{border:1px solid #4a5c61;background:#162026;color:#a7bcb8;padding:6px 12px;font-size:10px;letter-spacing:.12em}
+footer button:hover{background:#273c40}
+@media(max-width:750px){#shell{padding:8px;gap:6px;min-height:400px}header{padding:0 6px}.brand{font-size:11px;letter-spacing:.12em}.headright{font-size:9px;gap:8px}#overlay{padding:7%}h1{font-size:clamp(42px,11vw,70px)}.controls{grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:18px}#description{font-size:12px;line-height:1.5}#hud{padding:11px}#bottomHud{left:10px;right:10px;bottom:10px}#players{gap:3px}.survivor{min-width:78px;padding:7px 5px}.survivor .id{font-size:8px}#ammoCurrent{font-size:39px}#ammoReserve{font-size:16px}#minimap{width:95px;height:95px}footer{font-size:9px;letter-spacing:0}}
+</style>
+</head>
+<body>
+<div id="shell">
+  <header><div class="brand">AFTER <span>THE</span> SIREN <span>/</span> BROWSER BUILD 01</div><div class="headright"><span>INDEPENDENT WEB PROTOTYPE</span><span class="pill">CHROME · NO INSTALL</span></div></header>
+  <main id="frame">
+    <canvas id="game" width="960" height="540" tabindex="0" aria-label="First person zombie survival game"></canvas>
+    <div id="grain"></div><div id="vignette"></div><div id="danger"></div>
+    <div id="hud">
+      <div class="top"><div><div class="overline">NIGHT SHIFT / OUTBREAK ZONE</div><div id="waveText">WAVE 01 / 05</div><div id="zombieText">INCOMING: 0</div></div><canvas id="minimap" width="156" height="156" aria-label="Minimap"></canvas></div>
+      <div id="topBanner"></div><div id="crosshair"></div><div id="hitmark">×</div><div id="prompt"></div><div id="toasts"></div>
+      <div id="bottomHud"><div id="players">
+        <div id="you" class="survivor"><div class="id">YOU <span id="hpValue">100</span> HP</div><div class="meter"><div id="hpBar"></div></div></div>
+        <div class="survivor"><div class="id">ROOK <span id="rookHp">100</span></div><div class="meter"><div id="rookBar"></div></div></div>
+        <div class="survivor"><div class="id">NOVA <span id="novaHp">100</span></div><div class="meter"><div id="novaBar"></div></div></div>
+      </div><div><div id="ammo"><span id="ammoCurrent">24</span><span id="ammoReserve">/ 168</span></div><div id="weapon">9MM SERVICE PISTOL · R RELOAD · F MEDKIT</div></div></div>
+    </div>
+    <div id="overlay">
+      <div id="panel"><p id="eyebrow">SINGLE-FILE FPS · ORIGINAL PROTOTYPE</p><h1 id="headline">AFTER <span>THE</span><br>SIREN.</h1>
+        <p id="description">The city went quiet. The streets didn't. Survive five escalating waves with two AI teammates. Keep moving, conserve ammunition, and scavenge supplies. This is a browser-native proof of concept, not the commercial Left 4 Dead 2 game.</p>
+        <div class="controls"><div><b>MOVE</b>W A S D · SHIFT sprint</div><div><b>AIM / FIRE</b>Mouse · Left click / SPACE</div><div><b>SURVIVE</b>R reload · F medkit · ESC pause</div></div>
+        <button id="play" type="button">ENTER THE CITY</button><span id="message">SURVIVE FIVE WAVES</span>
+      </div>
+    </div>
+  </main>
+  <footer><span><strong>AFTER THE SIREN</strong> · ORIGINAL ART & GAMEPLAY PROTOTYPE · NO VALVE ASSETS</span><span><button id="mute" type="button">SOUND ON</button> &nbsp; <button id="mapToggle" type="button">MAP ON</button> &nbsp; ESC TO PAUSE</span></footer>
+</div>
+<script>
+(function(){
+"use strict";
+const canvas=document.getElementById("game"),ctx=canvas.getContext("2d",{alpha:false});
+const minimap=document.getElementById("minimap"),mc=minimap.getContext("2d");
+const el=id=>document.getElementById(id);
+const W=960,H=540,TAU=Math.PI*2,FOV=Math.PI/2.8,PROJ=(W/2)/Math.tan(FOV/2);
+const GW=26,GH=24,grid=Array.from({length:GH},(_,y)=>Array.from({length:GW},(_,x)=>(x===0||y===0||x===GW-1||y===GH-1)?1:0));
+function wallH(y,a,b,gaps){for(let x=a;x<=b;x++)if(!gaps.includes(x))grid[y][x]=1}
+function wallV(x,a,b,gaps){for(let y=a;y<=b;y++)if(!gaps.includes(y))grid[y][x]=2}
+wallH(5,1,11,[4,9]);wallH(5,15,24,[19]);wallH(11,2,9,[6]);wallH(11,14,24,[17,22]);
+wallH(18,1,11,[3,8]);wallH(18,15,24,[20]);wallV(12,1,10,[3,8]);wallV(12,13,22,[16,21]);
+wallV(20,6,16,[8,13]);wallV(6,13,22,[15,20]);wallV(17,1,5,[3]);
+grid[3][3]=0;grid[3][4]=0;grid[4][3]=0;
+const isSolid=(x,y)=>x<0||y<0||x>=GW||y>=GH||!!grid[y|0][x|0];
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const wrapAngle=x=>Math.atan2(Math.sin(x),Math.cos(x));
+let player,zombies,allies,pickups,wave,state="menu",last=performance.now(),keys={},shooting=false,
+spawnCount=0,spawnTimer=0,between=0,flash=0,hitFlash=0,bannerTime=0,bannerLabel="",mapVisible=true,
+muted=false,audio=null,soundReady=false,frameTime=0,routeTimer=0,distField=[],toastTime=0,toastText="",clock=0,best=0;
+try{best=Number(localStorage.getItem("after_siren_best")||0)}catch(_){}
+function sound(freq,dur,kind,volume){
+ if(muted)return;
+ try{
+  if(!audio)audio=new (window.AudioContext||window.webkitAudioContext)();
+  if(audio.state==="suspended")audio.resume();
+  const o=audio.createOscillator(),g=audio.createGain(),now=audio.currentTime;
+  o.type=kind||"sawtooth";o.frequency.setValueAtTime(freq,now);
+  o.frequency.exponentialRampToValueAtTime(Math.max(30,freq*.35),now+dur);
+  g.gain.setValueAtTime(volume||.035,now);g.gain.exponentialRampToValueAtTime(.001,now+dur);
+  o.connect(g);g.connect(audio.destination);o.start(now);o.stop(now+dur+.01);
+ }catch(_){}
+}
+function showToast(msg,sec=2){toastText=msg;toastTime=sec;el("toasts").textContent=msg}
+function banner(msg,sec=2.2){bannerLabel=msg;bannerTime=sec;el("topBanner").textContent=msg}
+function overlay(head,desc,button,eyebrow,message){
+ state=state==="dead"?"dead":state;
+ el("headline").innerHTML=head;el("description").textContent=desc;
+ el("play").textContent=button;el("eyebrow").textContent=eyebrow;
+ el("message").textContent=message||"";
+ el("overlay").hidden=false;if(document.pointerLockElement===canvas)document.exitPointerLock();
+}
+function reset(){
+ player={x:3.6,y:3.4,a:.14,hp:100,ammo:24,reserve:168,medkits:2,kills:0,shots:0,reload:0,fireTimer:0,walk:0,bleed:0};
+ allies=[{x:3,y:4.1,hp:100,name:"ROOK",color:"#87d5b8",cool:0,slot:-1},
+         {x:4,y:3.9,hp:100,name:"NOVA",color:"#d3bce4",cool:0,slot:1}];
+ zombies=[];pickups=[{x:8.5,y:3.5,type:"ammo"},{x:21.5,y:3.5,type:"health"},
+ {x:4.5,y:15.5,type:"medkit"},{x:22.5,y:19.5,type:"ammo"},{x:10.5,y:21.5,type:"health"},
+ {x:16.5,y:9.5,type:"medkit"}];
+ wave=0;clock=0;spawnCount=0;spawnTimer=0;between=0;hitFlash=0;flash=0;routeTimer=0;distField=[];
+ nextWave();
+ updateHud();
+}
+function nextWave(){
+ wave++;
+ if(wave>5){state="win";sound(780,.5,"sine",.06);
+  if(player.kills>best){best=player.kills;try{localStorage.setItem("after_siren_best",best)}catch(_){}}
+  overlay("DAWN <span>IS</span><br>YOURS.","All five waves survived. Your crew made it through the night. This is only the first browser prototype—more maps, combat systems, and missions could come next.","PLAY AGAIN","MISSION COMPLETE","TOTAL ELIMINATIONS: "+player.kills);
+  return;
+ }
+ spawnCount=4+wave*4;spawnTimer=1.3;between=0;
+ banner("WAVE "+String(wave).padStart(2,"0")+" — HOLD THE LINE",3);showToast("WATCH YOUR FLANKS",2.5);sound(225,.7,"triangle",.04);
+ if(wave>1){player.reserve+=25;for(const ally of allies)ally.hp=clamp(ally.hp+18,0,100);}
+ updateHud();
+}
+function spawnZombie(){
+ for(let n=0;n<90;n++){
+  const x=1.5+Math.floor(Math.random()*(GW-3)),y=1.5+Math.floor(Math.random()*(GH-3));
+  if(isSolid(x,y)||Math.hypot(x-player.x,y-player.y)<6)continue;
+  if(allies.some(a=>Math.hypot(x-a.x,y-a.y)<3))continue;
+  const runner=Math.random()<Math.min(.48,.13+wave*.07);
+  zombies.push({x,y,hp:runner?42:65,maxHp:runner?42:65,speed:runner?.98: .52+rnd(0,.14),attack:rnd(0,.6),
+    attackRate:runner?.78:1.12,type:runner?"runner":"shambler",phase:rnd(0,TAU),stun:0,blink:0});
+  return;
+ }
+}
+function move(obj,dx,dy,r=.23){
+ if(!isSolid(obj.x+dx+Math.sign(dx)*r,obj.y-r)&&!isSolid(obj.x+dx+Math.sign(dx)*r,obj.y+r))obj.x+=dx;
+ if(!isSolid(obj.x-r,obj.y+dy+Math.sign(dy)*r)&&!isSolid(obj.x+r,obj.y+dy+Math.sign(dy)*r))obj.y+=dy;
+}
+function lineClear(x,y,tx,ty){
+ const dist=Math.hypot(tx-x,ty-y),steps=Math.ceil(dist/.15);
+ for(let i=1;i<steps;i++){let t=i/steps;if(isSolid(x+(tx-x)*t,y+(ty-y)*t))return false;}
+ return true;
+}
+function calcDistanceField(){
+ const values=Array.from({length:GH},()=>Array(GW).fill(9999));
+ const cx=player.x|0,cy=player.y|0;
+ if(isSolid(cx,cy))return values;
+ const queue=[[cx,cy]];values[cy][cx]=0;
+ for(let i=0;i<queue.length;i++){
+  const [x,y]=queue[i],d=values[y][x]+1;
+  for(const [dx,dy] of [[0,1],[0,-1],[1,0],[-1,0]]){
+   let nx=x+dx,ny=y+dy;if(!isSolid(nx,ny)&&values[ny][nx]>d){values[ny][nx]=d;queue.push([nx,ny]);}
+  }
+ }
+ return values;
+}
+function damageZombie(z,d){
+ z.hp-=d;z.blink=.17;z.stun=.12;
+ if(z.hp<=0){z.dead=true;player.kills++;sound(110,.09,"triangle",.018);if(player.kills>best){best=player.kills;try{localStorage.setItem("after_siren_best",best)}catch(_){}}}
+}
+function shoot(){
+ if(state!=="running"||player.reload>0||player.fireTimer>0)return;
+ if(player.ammo<=0){showToast("EMPTY MAGAZINE · PRESS R");sound(150,.05,"square",.013);player.fireTimer=.25;return;}
+ player.fireTimer=.20;player.ammo--;player.shots++;flash=.09;sound(160,.12,"sawtooth",.075);
+ let target=null,closest=1e4;
+ for(const z of zombies){
+  if(z.dead)continue;
+  const dx=z.x-player.x,dy=z.y-player.y,d=Math.hypot(dx,dy);
+  if(d>13||d>=closest)continue;
+  const angle=Math.abs(wrapAngle(Math.atan2(dy,dx)-player.a));
+  if(angle<Math.atan2(.29,d)+.012&&lineClear(player.x,player.y,z.x,z.y)){
+   target=z;closest=d;
+  }
+ }
+ if(target){damageZombie(target,44+rnd(-6,6));el("hitmark").style.opacity="1";hitFlash=.16;}
+ updateHud();
+ if(player.ammo===0&&player.reserve>0)showToast("RELOAD · R");
+}
+function reload(){
+ if(state!=="running"||player.reload>0||player.ammo===24||player.reserve<=0)return;
+ player.reload=1.25;showToast("RELOADING",1.2);sound(410,.11,"triangle",.026);updateHud();
+}
+function heal(){
+ if(state!=="running"||player.medkits<=0||player.hp>=100)return;
+ player.medkits--;player.hp=clamp(player.hp+50,0,100);showToast("MEDKIT USED · +50 HP");
+ sound(680,.24,"sine",.025);updateHud();
+}
+function updateHud(){
+ if(!player)return;
+ el("waveText").textContent="WAVE "+String(Math.max(1,wave)).padStart(2,"0")+" / 05";
+ el("zombieText").textContent="INFECTED: "+(zombies.filter(z=>!z.dead).length+spawnCount)+"  ·  KILLS: "+player.kills;
+ el("hpValue").textContent=Math.ceil(player.hp);
+ el("hpBar").style.width=clamp(player.hp,0,100)+"%";
+ el("ammoCurrent").textContent=player.reload>0?"··":player.ammo;
+ el("ammoReserve").textContent="/ "+player.reserve;
+ el("weapon").textContent="9MM SERVICE PISTOL · R RELOAD · F MEDKIT ×"+player.medkits;
+ for(let i=0;i<2;i++){
+  el(i===0?"rookHp":"novaHp").textContent=Math.ceil(allies[i].hp);
+  el(i===0?"rookBar":"novaBar").style.width=clamp(allies[i].hp,0,100)+"%";
+ }
+}
+function update(dt){
+ clock+=dt;frameTime+=dt;
+ if(player.fireTimer>0)player.fireTimer-=dt;
+ if(player.reload>0){player.reload-=dt;if(player.reload<=0){const n=Math.min(24-player.ammo,player.reserve);player.ammo+=n;player.reserve-=n;sound(620,.08,"sine",.025);updateHud();}}
+ flash=Math.max(0,flash-dt);hitFlash=Math.max(0,hitFlash-dt);
+ el("hitmark").style.opacity=hitFlash>0?"1":"0";
+ el("danger").style.opacity=player.bleed>0?String(player.bleed*.36):"0";player.bleed=Math.max(0,player.bleed-dt*1.7);
+ if(toastTime>0){toastTime-=dt;if(toastTime<=0)el("toasts").textContent="";}
+ if(bannerTime>0){bannerTime-=dt;el("topBanner").style.opacity=String(Math.min(1,bannerTime*1.5));}
+ const turning=(keys.ArrowRight?1:0)-(keys.ArrowLeft?1:0);
+ player.a+=turning*dt*1.95;
+ let forward=((keys.KeyW||keys.ArrowUp)?1:0)-((keys.KeyS||keys.ArrowDown)?1:0);
+ let strafe=(keys.KeyD?1:0)-(keys.KeyA?1:0);
+ const len=Math.hypot(forward,strafe)||1;
+ forward/=len;strafe/=len;
+ let speed=keys.ShiftLeft||keys.ShiftRight?4.25:2.75;
+ if(forward<0)speed*=.8;
+ const dx=(Math.cos(player.a)*forward-Math.sin(player.a)*strafe)*speed*dt;
+ const dy=(Math.sin(player.a)*forward+Math.cos(player.a)*strafe)*speed*dt;
+ move(player,dx,dy,.24);player.walk+=Math.hypot(dx,dy)*6;
+ if(shooting||keys.Space)shoot();
+ for(const p of pickups){
+  if(p.used)continue;
+  if(Math.hypot(player.x-p.x,player.y-p.y)<.65){
+   p.used=true;if(p.type==="ammo"){player.reserve+=55;showToast("AMMO CACHE +55");}
+   else if(p.type==="health"){player.hp=clamp(player.hp+34,0,100);showToast("FIRST AID +34 HP");}
+   else{player.medkits++;showToast("MEDKIT FOUND");}
+   sound(810,.25,"sine",.033);updateHud();
+  }
+ }
+ for(let i=0;i<allies.length;i++){
+  const a=allies[i];if(a.hp<=0)continue;
+  a.cool-=dt;const goalAngle=player.a+(i===0?-2.15:2.15);
+  const gx=player.x+Math.cos(goalAngle)*1.25,gy=player.y+Math.sin(goalAngle)*1.25;
+  let d=Math.hypot(gx-a.x,gy-a.y);
+  if(d>.45)move(a,(gx-a.x)/d*dt*2.35,(gy-a.y)/d*dt*2.35,.24);
+  if(a.cool<=0){
+   let nearest=null,near=7;
+   for(const z of zombies){if(z.dead)continue;d=Math.hypot(a.x-z.x,a.y-z.y);
+    if(d<near&&lineClear(a.x,a.y,z.x,z.y)){near=d;nearest=z;}
+   }
+   if(nearest){damageZombie(nearest,22);a.cool=rnd(.54,.92);if(Math.random()<.3)sound(220,.08,"sawtooth",.016);}
+  }
+ }
+ routeTimer-=dt;if(routeTimer<=0){distField=calcDistanceField();routeTimer=.38;}
+ for(const z of zombies){
+  if(z.dead)continue;
+  z.attack-=dt;z.stun=Math.max(0,z.stun-dt);z.blink=Math.max(0,z.blink-dt);
+  let target=player,min=Math.hypot(z.x-player.x,z.y-player.y);
+  for(const a of allies){if(a.hp<=0)continue;const d=Math.hypot(z.x-a.x,z.y-a.y);if(d<min*.72){target=a;min=d;}}
+  if(min<.72){if(z.attack<=0){target.hp=clamp(target.hp-(z.type==="runner"?7:11),0,100);
+    z.attack=z.attackRate;if(target===player){player.bleed=1;sound(98,.15,"sawtooth",.055);if(player.hp<=0){state="dead";
+      overlay("THE <span>NIGHT</span><br>WON.","You were overwhelmed. The city is still out there. Regroup and take another run at the five-wave challenge.","TRY AGAIN","SURVIVOR LOST","ELIMINATIONS: "+player.kills);}
+    }updateHud();}
+    continue;
+  }
+  let tx=target.x,ty=target.y;
+  if(target===player&&min>1.4&&!lineClear(z.x,z.y,tx,ty)){
+   const cx=z.x|0,cy=z.y|0;let bx=cx,by=cy,bd=(distField[cy]||[])[cx]||9999;
+   for(const [vx,vy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+    const xx=cx+vx,yy=cy+vy;
+    if(!isSolid(xx,yy)&&distField[yy]&&distField[yy][xx]<bd){bx=xx;by=yy;bd=distField[yy][xx];}
+   }
+   if(bx!==cx||by!==cy){tx=bx+.5;ty=by+.5;}
+  }
+  const dist=Math.hypot(tx-z.x,ty-z.y);
+  if(dist>.01&&z.stun<=0)move(z,(tx-z.x)/dist*z.speed*dt,(ty-z.y)/dist*z.speed*dt,.18);
+ }
+ zombies=zombies.filter(z=>!z.dead);
+ if(spawnCount>0){
+  spawnTimer-=dt;if(spawnTimer<=0){spawnZombie();spawnCount--;spawnTimer=clamp(.75-wave*.08,.22,.8);}
+ }else if(zombies.length===0){
+  if(between===0){between=6;banner(wave===5?"EXTRACTION SECURED":"AREA CLEAR",3);showToast("RESUPPLY · NEXT WAVE SOON",3);sound(530,.4,"triangle",.04);}
+  else {between-=dt;if(between<=0)nextWave();}
+ }
+ updateHud();
+}
+const zbuffer=new Float32Array(W);
+function cast(ang){
+ const dx=Math.cos(ang),dy=Math.sin(ang),x=player.x,y=player.y;
+ let cellX=Math.floor(x),cellY=Math.floor(y),stepX=dx<0?-1:1,stepY=dy<0?-1:1;
+ const deltaX=Math.abs(1/(Math.abs(dx)<1e-9?1e-9:dx)),deltaY=Math.abs(1/(Math.abs(dy)<1e-9?1e-9:dy));
+ let sx=(dx<0?x-cellX:cellX+1-x)*deltaX,sy=(dy<0?y-cellY:cellY+1-y)*deltaY;
+ let side=0,dist=0,tile=0;
+ for(let i=0;i<55;i++){
+  if(sx<sy){dist=sx;sx+=deltaX;cellX+=stepX;side=0;}
+  else{dist=sy;sy+=deltaY;cellY+=stepY;side=1;}
+  if(cellX<0||cellY<0||cellX>=GW||cellY>=GH){tile=1;break;}
+  tile=grid[cellY][cellX];if(tile)break;
+ }
+ const frac=(side===0?y+dy*dist:x+dx*dist)%1;
+ return {dist:Math.max(.04,dist),side,tile,frac:Math.abs(frac)};
+}
+function worldToScreen(x,y){
+ const dx=x-player.x,dy=y-player.y;
+ const depth=dx*Math.cos(player.a)+dy*Math.sin(player.a);
+ const horizontal=-dx*Math.sin(player.a)+dy*Math.cos(player.a);
+ return {depth,sx:W/2+horizontal*PROJ/Math.max(.01,depth)};
+}
+function drawFigure(o,isAlly){
+ const p=worldToScreen(o.x,o.y);
+ if(p.depth<=.16||p.depth>17||p.sx<-180||p.sx>W+180)return;
+ const idx=clamp(p.sx|0,0,W-1);
+ if(p.depth>zbuffer[idx]+.3)return;
+ const height=clamp(PROJ/p.depth*1.55,8,680);
+ const center=H/2+height*.035;
+ const width=height*.42,top=center-height*.50;
+ const a=clamp(1-p.depth/20,.3,1);
+ ctx.save();ctx.globalAlpha=a;ctx.translate(p.sx,top);ctx.scale(width/100,height/180);
+ const wobble=isAlly?0:Math.sin(clock*5+(o.phase||0))*4;
+ ctx.translate(wobble,0);
+ ctx.fillStyle="#070b0c";ctx.fillRect(-38,167,76,12);
+ ctx.fillStyle=isAlly?"#26373d":"#252d27";
+ ctx.fillRect(-32,72,26,67);ctx.fillRect(6,72,26,67);
+ ctx.fillStyle=isAlly?"#334950":"#36413a";
+ ctx.beginPath();ctx.moveTo(-28,125);ctx.lineTo(-29,165);ctx.lineTo(-9,174);ctx.lineTo(0,123);ctx.lineTo(10,171);ctx.lineTo(29,166);ctx.lineTo(26,116);ctx.closePath();ctx.fill();
+ ctx.fillStyle=o.blink>0?"#f6aaa0":(isAlly?o.color:"#748c66");
+ ctx.fillRect(-22,43,44,74);
+ ctx.fillStyle=isAlly?"#213b3f":"#68765d";
+ ctx.fillRect(-31,45,14,75);ctx.fillRect(17,45,14,75);
+ ctx.fillStyle=isAlly?"#dcb89b":"#a8ac85";
+ ctx.fillRect(-28,116,10,22);ctx.fillRect(18,116,10,22);
+ ctx.fillRect(-15,12,30,39);
+ ctx.fillStyle=isAlly?"#d4ac8b":"#414838";
+ ctx.fillRect(-15,8,30,13);
+ ctx.fillStyle=isAlly?"#9ce5d8":"#ff6e58";
+ ctx.fillRect(-10,29,7,5);ctx.fillRect(4,29,7,5);
+ if(!isAlly){ctx.fillStyle="#2e1b1b";ctx.fillRect(-5,41,11,4);ctx.fillStyle="#4d1517";ctx.fillRect(7,69,17,5);}
+ else{ctx.fillStyle="#182527";ctx.fillRect(18,78,32,9);}
+ ctx.restore();
+ if(isAlly){ctx.fillStyle="#bce5d1";ctx.font="bold 12px monospace";ctx.textAlign="center";ctx.fillText(o.name,p.sx,top-9);}
+}
+function drawPickup(p){
+ if(p.used)return;
+ const s=worldToScreen(p.x,p.y);
+ if(s.depth<=.15||s.depth>14||s.sx<0||s.sx>W||s.depth>zbuffer[clamp(s.sx|0,0,W-1)])return;
+ const size=clamp(PROJ/s.depth*.31,8,92),y=H/2+PROJ/s.depth*.24+Math.sin(clock*3+p.x)*5;
+ ctx.save();ctx.translate(s.sx,y);ctx.shadowBlur=17;ctx.shadowColor=p.type==="ammo"?"#d59b49":"#83e1bd";
+ ctx.fillStyle=p.type==="ammo"?"#f1c371":"#6bdaad";ctx.fillRect(-size/2,-size/2,size,size);
+ ctx.shadowBlur=0;ctx.fillStyle="#102e2b";
+ if(p.type==="ammo"){ctx.fillRect(-size*.21,-size*.16,size*.42,size*.32);ctx.fillStyle="#f1c371";ctx.fillRect(-size*.07,-size*.10,size*.14,size*.2);}
+ else{ctx.fillRect(-size*.09,-size*.32,size*.18,size*.64);ctx.fillRect(-size*.32,-size*.09,size*.64,size*.18);}
+ ctx.restore();
+}
+function renderWorld(){
+ const sky=ctx.createLinearGradient(0,0,0,H/2);
+ sky.addColorStop(0,"#141e26");sky.addColorStop(.72,"#39454a");sky.addColorStop(1,"#64594f");
+ ctx.fillStyle=sky;ctx.fillRect(0,0,W,H/2);
+ const floor=ctx.createLinearGradient(0,H/2,0,H);
+ floor.addColorStop(0,"#434540");floor.addColorStop(.3,"#292f2e");floor.addColorStop(1,"#171e1d");
+ ctx.fillStyle=floor;ctx.fillRect(0,H/2,W,H/2);
+ ctx.strokeStyle="#a9a58e10";ctx.lineWidth=1;
+ for(let i=1;i<13;i++){const y=H/2+H/(i*.49+2);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+ for(let x=0;x<W;x+=3){
+  const ang=player.a+Math.atan((x-W/2)/PROJ);
+  const ray=cast(ang);const dist=ray.dist*Math.cos(ang-player.a);
+  const slice=clamp(PROJ/dist,0,H*4),top=H/2-slice/2;
+  const fade=clamp(1-dist/23,.18,1);
+  const base=ray.tile===2?[89,101,108]:[109,115,111];
+  const edge=ray.frac<.035||ray.frac>.96?.78:1;
+  const shading=(ray.side===1?.70:1)*fade*edge;
+  ctx.fillStyle="rgb("+Math.floor(base[0]*shading)+","+Math.floor(base[1]*shading)+","+Math.floor(base[2]*shading)+")";
+  ctx.fillRect(x,top,4,slice+1);
+  if(slice>25&&ray.frac>.15&&ray.frac<.17){
+   ctx.fillStyle="rgba(17,25,27,"+(fade*.38)+")";ctx.fillRect(x,top,2,slice);
+  }
+  if(slice>40){
+   ctx.fillStyle="rgba(225,186,127,"+(fade*.08)+")";ctx.fillRect(x,top+slice*.19,3,2);
+   ctx.fillRect(x,top+slice*.77,3,2);
+  }
+  for(let j=0;j<3&&x+j<W;j++)zbuffer[x+j]=dist;
+ }
+ // Environmental glow at ceiling line.
+ const vignette=ctx.createLinearGradient(0,0,0,H);
+ vignette.addColorStop(0,"#00000030");vignette.addColorStop(.6,"#00000000");vignette.addColorStop(1,"#0000005c");
+ ctx.fillStyle=vignette;ctx.fillRect(0,0,W,H);
+ const objects=[];
+ for(const z of zombies)objects.push({o:z,ally:false,dist:Math.hypot(z.x-player.x,z.y-player.y)});
+ for(const a of allies)if(a.hp>0)objects.push({o:a,ally:true,dist:Math.hypot(a.x-player.x,a.y-player.y)});
+ for(const p of pickups)if(!p.used)objects.push({o:p,pickup:true,dist:Math.hypot(p.x-player.x,p.y-player.y)});
+ objects.sort((a,b)=>b.dist-a.dist);
+ for(const item of objects){if(item.pickup)drawPickup(item.o);else drawFigure(item.o,item.ally);}
+ // Gun and muzzle flash
+ const bob=Math.sin(player.walk*2.1)*Math.min(5,Math.hypot((keys.KeyW?1:0)-(keys.KeyS?1:0),(keys.KeyA?1:0)-(keys.KeyD?1:0))*5);
+ const kick=flash>0?18:0;
+ const px=W/2+96,py=H+20+bob+kick;
+ ctx.save();ctx.translate(px,py);
+ ctx.fillStyle="#1c2629";ctx.beginPath();ctx.moveTo(-82,-18);ctx.lineTo(-29,-137);ctx.lineTo(1,-147);ctx.lineTo(43,-65);ctx.lineTo(91,-13);ctx.closePath();ctx.fill();
+ ctx.fillStyle="#364343";ctx.fillRect(-26,-139,55,79);ctx.fillStyle="#11191b";ctx.fillRect(-14,-151,37,53);
+ ctx.fillStyle="#637174";ctx.fillRect(-8,-154,24,27);ctx.fillStyle="#182122";ctx.fillRect(-14,-148,7,67);
+ ctx.fillStyle="#282f30";ctx.fillRect(-19,-71,45,64);
+ ctx.fillStyle="#b58d73";ctx.beginPath();ctx.moveTo(-80,7);ctx.lineTo(-51,-73);ctx.lineTo(-19,-43);ctx.lineTo(9,10);ctx.closePath();ctx.fill();
+ ctx.fillStyle="#ad856d";ctx.beginPath();ctx.moveTo(25,6);ctx.lineTo(25,-56);ctx.lineTo(66,-32);ctx.lineTo(103,6);ctx.closePath();ctx.fill();
+ if(flash>0){ctx.fillStyle="#ffd37e";ctx.beginPath();ctx.moveTo(-2,-156);ctx.lineTo(-47,-223);ctx.lineTo(-11,-194);ctx.lineTo(8,-240);ctx.lineTo(28,-187);ctx.lineTo(44,-209);ctx.lineTo(26,-157);ctx.closePath();ctx.fill();}
+ ctx.restore();
+ if(player.reload>0){ctx.fillStyle="#eec48a";ctx.font="bold 13px monospace";ctx.textAlign="center";ctx.fillText("RELOADING...",W/2,H-44);}
+}
+function renderMap(){
+ const width=minimap.width,scale=5.15;
+ mc.fillStyle="#071012df";mc.fillRect(0,0,width,width);
+ const ox=width/2-player.x*scale,oy=width/2-player.y*scale;
+ for(let y=0;y<GH;y++)for(let x=0;x<GW;x++)if(grid[y][x]){
+  mc.fillStyle=grid[y][x]===2?"#53656b":"#8b9489";
+  mc.fillRect(ox+x*scale,oy+y*scale,scale+.15,scale+.15);
+ }
+ for(const p of pickups){if(p.used)continue;mc.fillStyle=p.type==="ammo"?"#e6ad55":"#67cd9b";
+  mc.fillRect(ox+p.x*scale-1.8,oy+p.y*scale-1.8,3.6,3.6);}
+ for(const z of zombies){mc.fillStyle="#d0685d";mc.beginPath();mc.arc(ox+z.x*scale,oy+z.y*scale,1.8,0,TAU);mc.fill();}
+ for(const a of allies){if(a.hp<=0)continue;mc.fillStyle=a.color;mc.fillRect(ox+a.x*scale-2,oy+a.y*scale-2,4,4);}
+ mc.save();mc.translate(width/2,width/2);mc.rotate(player.a+Math.PI/2);mc.fillStyle="#ffe0a6";
+ mc.beginPath();mc.moveTo(0,-6);mc.lineTo(-4,5);mc.lineTo(4,5);mc.closePath();mc.fill();mc.restore();
+ mc.strokeStyle="#ffffff31";mc.strokeRect(.5,.5,width-1,width-1);
+}
+function draw(){
+ renderWorld();if(mapVisible)renderMap();
+}
+function tick(time){
+ let dt=Math.min(.05,(time-last)/1000);last=time;
+ if(state==="running")update(dt);
+ draw();requestAnimationFrame(tick);
+}
+function startGame(){
+ if(state==="menu"||state==="dead"||state==="win")reset();
+ state="running";el("overlay").hidden=true;el("hud").classList.add("topview");canvas.focus();
+ try{const pending=canvas.requestPointerLock();if(pending&&pending.catch)pending.catch(()=>{showToast("MOUSE LOCK UNAVAILABLE · USE ARROW KEYS");});}catch(_){showToast("USE ARROW KEYS TO AIM");}
+ sound(450,.17,"triangle",.02);
+}
+el("play").addEventListener("click",startGame);
+canvas.addEventListener("click",()=>{
+ if(state==="running"&&document.pointerLockElement!==canvas){try{canvas.requestPointerLock();}catch(_){}}
+});
+document.addEventListener("pointerlockchange",()=>{
+ if(document.pointerLockElement!==canvas&&state==="running"){
+  state="paused";overlay("PAUSED<span>.</span>","Take a moment. Your teammates are holding position. Return when you're ready.","RESUME","PAUSE MENU","ESC / CLICK TO RESUME");
+ }
+});
+document.addEventListener("mousemove",e=>{if(document.pointerLockElement===canvas&&state==="running")player.a=wrapAngle(player.a+(e.movementX||0)*.0024);});
+canvas.addEventListener("mousedown",e=>{if(e.button===0){shooting=true;if(state==="running")shoot();}});
+document.addEventListener("mouseup",()=>shooting=false);
+document.addEventListener("contextmenu",e=>{if(e.target===canvas)e.preventDefault();});
+document.addEventListener("keydown",e=>{
+ if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code))e.preventDefault();
+ keys[e.code]=true;
+ if(e.repeat)return;
+ if(e.code==="KeyR")reload();
+ if(e.code==="KeyF")heal();
+ if(e.code==="KeyM"){mapVisible=!mapVisible;minimap.style.display=mapVisible?"block":"none";}
+ if(e.code==="KeyP"&&state==="running"){state="paused";overlay("PAUSED<span>.</span>","Your team is standing by.","RESUME","PAUSE MENU","");}
+ else if(e.code==="KeyP"&&state==="paused")startGame();
+ if(e.code==="Escape"&&state==="running"&&document.pointerLockElement!==canvas){
+  state="paused";overlay("PAUSED<span>.</span>","Your team is standing by.","RESUME","PAUSE MENU","");
+ }
+});
+document.addEventListener("keyup",e=>{keys[e.code]=false;});
+window.addEventListener("blur",()=>{
+ keys={};shooting=false;
+ if(state==="running"){state="paused";overlay("PAUSED<span>.</span>","You switched away from the game. Everything is paused.","RESUME","PAUSE MENU","");}
+});
+el("mute").addEventListener("click",()=>{
+ muted=!muted;el("mute").textContent=muted?"SOUND OFF":"SOUND ON";
+ if(!muted)sound(550,.08,"sine",.035);
+});
+el("mapToggle").addEventListener("click",()=>{
+ mapVisible=!mapVisible;minimap.style.display=mapVisible?"block":"none";
+ el("mapToggle").textContent=mapVisible?"MAP ON":"MAP OFF";
+});
+ctx.fillStyle="#263039";ctx.fillRect(0,0,W,H);reset();state="menu";el("hud").classList.remove("topview");draw();requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
