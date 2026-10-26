@@ -52,6 +52,50 @@ class HotelTextureBatchTests(unittest.TestCase):
         self.assertEqual([row[0] for row in choices],
                          ["plaster/plaster_ext_20","tile/tile_ceiling_01"])
 
+    def test_floor_focus_prioritizes_ground_materials(self):
+        raw=pack()
+        report=scan_directory(io.BytesIO(raw),len(raw))
+        source=Counter({"PLASTER/PLASTER_EXT_20":1000,
+                        "TILE/TILE_CEILING_01":80,
+                        "CONCRETE/CONCRETE_FLOOR_10":40})
+        items=choose_materials(source,report["entries"],8,focus="floor")
+        # There is no matching concrete PNG in the synthetic pack. Don't guess.
+        self.assertEqual(items,[])
+
+    def test_exact_material_ignores_popularity(self):
+        raw=pack()
+        report=scan_directory(io.BytesIO(raw),len(raw))
+        source=Counter({"PLASTER/PLASTER_EXT_20":100,
+                        "TILE/TILE_CEILING_01":1})
+        items=choose_materials(source,report["entries"],1,
+                               material="TILE/TILE_CEILING_01")
+        self.assertEqual([x[0] for x in items],["tile/tile_ceiling_01"])
+
+    def test_exact_material_rejects_missing_and_tool_surfaces(self):
+        raw=pack()
+        report=scan_directory(io.BytesIO(raw),len(raw))
+        source=Counter({"PLASTER/PLASTER_EXT_20":100,
+                        "TOOLS/TOOLSTRIGGER":1,
+                        "CONCRETE/FLOOR":5})
+        with self.assertRaisesRegex(ValueError,"not present"):
+            choose_materials(source,report["entries"],4,material="floor/unknown")
+        with self.assertRaisesRegex(ValueError,"Tool/sky"):
+            choose_materials(source,report["entries"],4,material="TOOLS/TOOLSTRIGGER")
+        with self.assertRaisesRegex(ValueError,"No direct-name"):
+            choose_materials(source,report["entries"],4,material="CONCRETE/FLOOR")
+
+    def test_floor_name_candidate_if_present(self):
+        raw=io.BytesIO()
+        with zipfile.ZipFile(raw,"w",compression=zipfile.ZIP_STORED) as z:
+            z.writestr("materials/concrete/concrete_floor_10.360.vtf",vtfx())
+            z.writestr("materials/plaster/plaster_ext_20.360.vtf",vtfx())
+        content=raw.getvalue()
+        report=scan_directory(io.BytesIO(content),len(content))
+        source=Counter({"PLASTER/PLASTER_EXT_20":800,
+                        "CONCRETE/CONCRETE_FLOOR_10":20})
+        selected=choose_materials(source,report["entries"],8,focus="floor")
+        self.assertEqual([row[0] for row in selected],["concrete/concrete_floor_10"])
+
     def test_refuse_path_traversal(self):
         for name in ("../evil","plaster/../../evil","plaster/a.b","plaster/a b"):
             with self.assertRaises(ValueError):
