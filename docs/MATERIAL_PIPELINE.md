@@ -98,6 +98,23 @@ Instead of widening the 128-byte gap allowance, we've added [tools/scan_xbox_zip
 Share only the printed metadata report. Candidate filenames are a diagnostic, not proof of successful archive decoding.
 
 
+## Latest confirmed archive index and next research step
+
+The owner's new 55-test run and independent raw scan give **24,435 / 24,435 plausible central headers** in \`zip0.360.zip\`, with zero rejected candidates. The very large "extra-length" values cause 24,434 **declared-span overlaps** when interpreted as ordinary ZIP extra fields. Consequently, our earlier sequential parser's reported "+58-byte gap" was **not a reliable physical gap**; it skipped genuine intervening directory headers.
+
+\`zip0.360.zip\` appears to hold primarily audio and models and contained no apparent \`.vmt\` filenames in this raw scan. Modding research indicates \`zip1.360.zip\` is likely to hold console-format textures.
+
+**Use the all-pack scanner now instead of the old sequential ZIP reader:**
+
+\`\`\`powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\scan_source_asset_packs.py --include-map-pak
+\`\`\`
+
+It checks all eight \`.360.zip\` files and optionally the embedded hotel BSP PAKFILE lump 40. The script is metadata-only, looks for \`materials/\` paths and common VTFX-related file suffixes, and compares filenames to the BSP's 189 hotel material names. Results from the real asset packs still need to be observed. See [XBOX_PACK_DISCOVERY.md](XBOX_PACK_DISCOVERY.md).
+
 ## Next engineering milestones
 
 1. Verify Source texture-name paths and matching material files in the console archives or BSP pakfile.
