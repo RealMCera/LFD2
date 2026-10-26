@@ -84,6 +84,10 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] Implement bounded 128-byte recovery for unexpected central-directory gaps and synthetic 3/58-byte tests (awaiting run on owner's archive).
 - [x] Confirm 51/51 synthetic tests passed. Bounded sequential ZIP parser reaches record 1,470 before directory exhaustion.
 - [x] Add independent EOCD-bounded central signature scanner and synthetic tests; waiting for real archive report.
+- [x] Confirm 55/55 unit tests and independent scan of zip0: all 24,435/24,435 central-header candidates structurally plausible; no .vmt filenames reported.
+- [x] Correct erroneous 58-byte alignment hypothesis: old sequential parser was skipping valid central headers due unusual extra-length values.
+- [x] Add multi-pack and embedded BSP PAKFILE directory scanner with synthetic tests (awaiting local results).
+- [ ] Locate original Xbox material/texture files, especially in zip1.360.zip, and validate any actual texture decoder.
 - [ ] Verify complete console ZIP directory parsing, original VMT material-file matches, and console texture format.
 - [x] Correct Windows 8.3 short-path vs resolved long-path ISO unit-test expectation (re-run tests pending).
 - [ ] Identify original material paths, console texture payload format, and valid Xbox archive directory structure.
@@ -95,7 +99,7 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status: hotel BSP material names mapped; custom Xbox ZIP directory reader is next to verify. Original textures and actual L4D2 game code are not yet rendered/running in Chrome.**
+**Status: original hotel brush geometry and 189 material names confirmed; 24,435/24,435 console ZIP directory signatures identified. Scanning the other local Xbox asset archives for textures is next. No actual L4D2 gameplay runs in Chrome.**
 
 ### New full-disc ISO input (pending local verification)
 
