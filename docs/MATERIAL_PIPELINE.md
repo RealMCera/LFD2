@@ -84,6 +84,20 @@ The standard ZIP specification uses variable-length filename, extra field, and c
 
 Results for the real archive are still pending. Avoid claiming full support until the reader successfully validates and counts its entries.
 
+## New: independent Xbox ZIP central-directory scan
+
+The latest Windows run passed **51/51 tests**. The safe sequential Xbox ZIP reader advanced to entry **1,470** before refusing a header near the end of the directory. However, the EOCD declares **24,435 records in 2,355,200 bytes** (~96 bytes/record), which is incompatible with trusting many oversized "extra length" values to step between records.
+
+Instead of widening the 128-byte gap allowance, we've added [tools/scan_xbox_zip_directory.py](tools/scan_xbox_zip_directory.py). It scans only the **EOCD-bounded central directory** for PK central signatures, validates fixed header and filename bounds, and reports how many plausible candidates exist, including potential VMT/VTFX paths. It **never reads compressed game file data**. Synthetic tests are committed; the scanner is not yet verified on the owner's Xbox archive.
+
+    cd C:\Users\FrontDesk\LFD2
+    git pull
+    py -m unittest discover -s tests -v
+    py tools\scan_xbox_zip_directory.py
+
+Share only the printed metadata report. Candidate filenames are a diagnostic, not proof of successful archive decoding.
+
+
 ## Next engineering milestones
 
 1. Verify Source texture-name paths and matching material files in the console archives or BSP pakfile.
