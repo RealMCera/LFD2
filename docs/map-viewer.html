@@ -198,7 +198,7 @@ input.addEventListener("change",async()=>{
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,lineIndexBuffer);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,edges,gl.STATIC_DRAW);
   lineCount=edges.length;gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indexBuffer);
   indexCount=indices.length;mesh={name:f.name,triangles:indices.length/3,bounds:data.bounds};
-  setUvData(data);
+  if(typeof setUvData==="function")setUvData(data);
   cameraSpawns=safeSpawns(data);setSpawnList();
   if(cameraSpawns.length)atSpawn(0);else overview();
   loader.style.display="none";show.style.display="block";cross.style.display="block";viewcontrols.style.display="flex";
@@ -262,7 +262,7 @@ function frame(now){
    if(wireEnabled){gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1,1);}
    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indexBuffer);
    gl.drawElements(gl.TRIANGLES,indexCount,gl.UNSIGNED_INT,0);
-   renderMaterialPreview();
+   if(typeof renderMaterialPreview==="function")renderMaterialPreview();
    if(wireEnabled){
     gl.disable(gl.POLYGON_OFFSET_FILL);
     gl.uniform1i(uniforms.wire,1);
