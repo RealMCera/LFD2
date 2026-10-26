@@ -28,7 +28,8 @@ DEFAULT_ROOT = ROOT / "game-extracted"
 # These are only filename conventions. The actual texture *contents* may be
 # VTFX regardless of the file extension and must be inspected separately.
 MATERIAL_SUFFIXES = (
-    ".vtf.360", ".360.vtf", ".vtfx", ".vmt", ".vtf", ".360",
+    ".vtfx.360", ".vtf.360", ".vmt.360", ".360.vtf",
+    ".vtfx", ".vmt", ".vtf", ".360",
 )
 MAX_REPORT_MATCHES = 12
 
