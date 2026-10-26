@@ -19,13 +19,33 @@ The Xbox 360 **PowerPC XEX2** binaries cannot themselves be compiled by Emscript
 
 **Full porting strategy and completion gates: [WEB_PORT_PLAN.md](docs/WEB_PORT_PLAN.md).**
 
+## First Chrome preview: original L4D2 BSP geometry (experimental)
+
+**New tools:** [local BSP-to-mesh converter](tools/bsp_to_browser_mesh.py), [HDR/compression lump diagnostics](tools/inspect_bsp_lumps.py), and the [WebGL2 local map viewer](docs/map-viewer.html). These are **not yet validated on the actual Xbox map**; the converter is designed to fail with an explanation if this map variant needs further decoding.
+
+From Windows PowerShell:
+
+    cd C:\Users\FrontDesk\LFD2
+    git pull
+    py -m unittest discover -s tests -v
+    py tools\inspect_bsp_lumps.py
+    py tools\bsp_to_browser_mesh.py
+
+If conversion succeeds, open the local viewer:
+
+    Start-Process (Resolve-Path ".\docs\map-viewer.html").Path
+
+Select the output mesh from research\local\c1m1_hotel.mesh.json through the viewer's file picker. The entire process stays local. **No actual Left 4 Dead 2 game runtime, AI, collision or Source engine is running in Chrome yet.**
+
+Full local setup: [MAP_VIEWER.md](docs/MAP_VIEWER.md).
+
 ## Completed original-game research
 
 - Local `.zar` unpack: **96 files**, including **22 Xbox 360 XEX2 modules**, **24 BSP maps**, and **8 .360.zip packages**.
 - Extracted and inspected XEX2 loader and gameplay-related server module.
 - `left4dead2/bin/server_360.dll` local decoded PE32/PowerPC image: **5,740,436 bytes of .text**, base `0x89780000`, entry `0x89DED900`.
 - Verified original XEX/PE memory addresses and all **13** synthetic tests in the owner's last report.
-- **No engine source recovered**, no browser-native build, no actual map rendered yet.
+- **No engine source recovered**, and a true L4D2 game is not playable in the browser. The untextured WebGL2 map preview has been built but needs testing on the owner's local BSP.
 
 ## Next research command (Windows PowerShell)
 
