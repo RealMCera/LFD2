@@ -1,6 +1,6 @@
-# Play the Chrome prototype
+# Legacy original Chrome prototype (archived)
 
-**This is an original browser FPS/zombie-survival prototype, not an emulated or ported copy of Left 4 Dead 2.** No Valve game files are bundled. Everything runs in your browser using Canvas and JavaScript.
+**This is an original browser FPS/zombie-survival prototype, not an emulated or ported copy of Left 4 Dead 2.** No Valve game files are bundled. Everything runs in your browser using Canvas and JavaScript. The demo has moved to **docs/legacy-demo.html** because the project now focuses on a real local Source BSP geometry viewer at **docs/map-viewer.html**.
 
 ## Play it locally now (Windows + Chrome)
 
@@ -8,9 +8,9 @@ Open PowerShell:
 
     cd C:\Users\FrontDesk\LFD2
     git pull
-    Start-Process (Resolve-Path ".\docs\index.html").Path
+    Start-Process (Resolve-Path ".\docs\legacy-demo.html").Path
 
-The command opens your default browser, which may be Chrome or Edge. For Chrome specifically, open C:\Users\FrontDesk\LFD2\docs\index.html with **Open with → Google Chrome**. No server, backend, or additional game archive is needed. Desktop mouse and keyboard are recommended.
+The command opens the archived demo in your default browser, which may be Chrome or Edge. For Chrome specifically, open C:\Users\FrontDesk\LFD2\docs\legacy-demo.html with **Open with → Google Chrome**. No server, backend, or additional game archive is needed. Desktop mouse and keyboard are recommended.
 
 Click **ENTER THE CITY** to begin. Chrome can lock your mouse for first-person aiming. Press Escape to release it. Arrow keys and Space provide a fallback.
 
@@ -40,7 +40,7 @@ Click **ENTER THE CITY** to begin. Chrome can lock your mouse for first-person a
 
 ## Publish to GitHub Pages for a shareable Chrome link
 
-The browser game is already in docs/index.html. To publish it:
+The old independent raycasting game is preserved in docs/legacy-demo.html. The GitHub Pages homepage docs/index.html is now a map research portal, which links to docs/map-viewer.html. To publish it:
 
 1. Visit https://github.com/RealMCera/LFD2
 2. Select Settings → Pages.
