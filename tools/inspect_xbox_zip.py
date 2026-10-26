@@ -24,6 +24,7 @@ CENTRAL_MAGIC = b"PK\x01\x02"
 MAX_DIRECTORY = 128 * 1024 * 1024
 MAX_FILES = 150_000
 MAX_NAME = 1024
+MAX_RECOVERY_GAP = 128   # Only search this far *within* the central directory.
 MAX_TAIL = 22 + 65535
 INTERESTING = {".vmt", ".vtf", ".vtfx", ".mdl", ".vtx", ".vvd", ".vtx360",
                ".phy", ".wav", ".mp3", ".pcf", ".vcd"}
@@ -58,63 +59,122 @@ def _eocd(stream, filesize: int) -> dict:
     raise XboxZipError("Standard ZIP end-of-central-directory record not found in final 65557 bytes")
 
 
+def _central_entry_at(stream, position: int, end: int, directory_start: int) -> dict | None:
+    """Check a fixed central header and its declared lengths; never open a payload."""
+    if position < directory_start or position + 46 > end:
+        return None
+    stream.seek(position)
+    record = stream.read(46)
+    if len(record) != 46 or record[:4] != CENTRAL_MAGIC:
+        return None
+    fields = struct.unpack("<I6H3I5H2I", record)
+    flags, method, compressed = fields[3], fields[4], fields[8]
+    nlen, elen, clen = fields[10], fields[11], fields[12]
+    disk_number, local_offset = fields[13], fields[16]
+    following = position + 46 + nlen + elen + clen
+    if (not 1 <= nlen <= MAX_NAME or following > end or disk_number != 0
+            or local_offset >= directory_start):
+        return None
+    stream.seek(position + 46)
+    filename = stream.read(nlen)
+    # A path must not contain a NUL; a candidate signature embedded in extra
+    # bytes may otherwise falsely appear to be a real central file record.
+    if len(filename) != nlen or b"\x00" in filename:
+        return None
+    name = filename.decode("utf-8" if flags & 0x800 else "cp437",
+                           errors="replace").replace("\\", "/")
+    return {"following": following, "name": name, "flags": flags,
+            "method": method, "compressed": compressed,
+            "extra_length": elen}
+
+
+def _recover_next_entry(stream, expected: int, directory_end: int,
+                        directory_start: int, index: int) -> tuple[int, dict, int]:
+    """Find a narrowly bounded next header, reporting any unaccounted padding."""
+    current = _central_entry_at(stream, expected, directory_end, directory_start)
+    if current is not None:
+        return expected, current, 0
+    # Only scan between central-directory records, never in game file bodies.
+    length = min(MAX_RECOVERY_GAP, directory_end - expected - 46)
+    if length <= 0:
+        raise XboxZipError(f"No valid central header for entry {index} at {expected:,}; "
+                           "recovery window beyond directory")
+    stream.seek(expected)
+    preview = stream.read(length + 4)
+    seek = 1
+    while True:
+        at = preview.find(CENTRAL_MAGIC, seek)
+        if at < 0 or at > length:
+            break
+        candidate = expected + at
+        parsed = _central_entry_at(stream, candidate, directory_end, directory_start)
+        if parsed is not None:
+            return candidate, parsed, at
+        seek = at + 1
+    raise XboxZipError(f"No valid central header for entry {index} at {expected:,} "
+                       f"(searched next {MAX_RECOVERY_GAP} bytes within directory). "
+                       "Run --diagnose for metadata offsets.")
+
+
 def parse_directory(stream, filesize: int) -> dict:
-    """Read only ZIP central records and filenames (skip raw extra/comment bytes)."""
+    """List bounded ZIP central metadata, tolerating small console-only gaps.
+
+    Never reads compressed game payloads, and never guesses if a gap exceeds
+    128 bytes or a central header fails its record-boundary validation.
+    """
     eocd = _eocd(stream, filesize)
     offset, size = eocd["offset"], eocd["size"]
     actual = eocd["eocd_pos"] - size
-    # Prefer EOCD directory offset where valid; tolerate prepended bytes when
-    # the directory lies immediately before the EOCD.
-    def sig_at(candidate):
-        if candidate < 0 or candidate + 4 > filesize:
-            return b""
-        stream.seek(candidate)
-        return stream.read(4)
-    if sig_at(offset) != CENTRAL_MAGIC:
-        if sig_at(actual) != CENTRAL_MAGIC:
+    if _sig_at(stream, offset, filesize) != CENTRAL_MAGIC:
+        if _sig_at(stream, actual, filesize) != CENTRAL_MAGIC:
             raise XboxZipError(f"Central header missing at EOCD offset {offset:,} "
                                f"or computed position {actual:,}")
         offset = actual
     if offset + size > filesize or offset + size > eocd["eocd_pos"]:
         raise XboxZipError("Central directory points beyond ZIP file bounds")
     end = offset + size
-    stream.seek(offset)
     by_extension = Counter()
     names = []
     sample = []
     total_compressed = 0
     skipped_extra_bytes = 0
+    skipped_gap_bytes = 0
+    recovered_entries = 0
+    max_gap = 0
+    position = offset
     for index in range(eocd["count"]):
-        if stream.tell() + 46 > end:
+        if position + 46 > end:
             raise XboxZipError(f"Central entry {index} extends beyond directory")
-        record = stream.read(46)
-        if len(record) != 46 or record[:4] != CENTRAL_MAGIC:
-            raise XboxZipError(f"Invalid central header at entry {index}")
-        fields = struct.unpack("<I6H3I5H2I", record)
-        flags, method, compressed = fields[3], fields[4], fields[8]
-        nlen, elen, clen = fields[10], fields[11], fields[12]
-        if nlen > MAX_NAME or stream.tell() + nlen + elen + clen > end:
-            raise XboxZipError(f"Filename/extra lengths are unsafe at entry {index}")
-        filename = stream.read(nlen)
-        stream.seek(elen + clen, 1)  # Do not parse unusual Xbox extra fields.
-        name = filename.decode("utf-8" if flags & 0x800 else "cp437",
-                               errors="replace").replace("\\", "/")
+        if index == 0:
+            entry = _central_entry_at(stream, position, end, offset)
+            if entry is None:
+                raise XboxZipError("First ZIP central record failed fixed-header validation")
+        else:
+            position, entry, gap = _recover_next_entry(stream, position, end, offset, index)
+            if gap:
+                skipped_gap_bytes += gap
+                recovered_entries += 1
+                max_gap = max(max_gap, gap)
+        name = entry["name"]
         if not name.endswith("/"):
             suffix = Path(name).suffix.lower()
             by_extension[suffix] += 1
             names.append(name)
-            total_compressed += compressed
+            total_compressed += entry["compressed"]
             if suffix in INTERESTING and len(sample) < 25:
                 sample.append(name)
-        skipped_extra_bytes += elen
-    if stream.tell() > end:
+        skipped_extra_bytes += entry["extra_length"]
+        position = entry["following"]
+    if position > end:
         raise XboxZipError("Central directory overread")
-    return {"count":len(names), "entries_declared":eocd["count"],
-            "directory_offset":offset,"directory_size":size,
-            "extension_counts":by_extension,"sample_assets":sample,
-            "filenames":names,"skipped_extra_bytes":skipped_extra_bytes,
-            "compressed_bytes_header_total":total_compressed}
-
+    return {"count": len(names), "entries_declared": eocd["count"],
+            "directory_offset": offset, "directory_size": size,
+            "extension_counts": by_extension, "sample_assets": sample,
+            "filenames": names, "skipped_extra_bytes": skipped_extra_bytes,
+            "recovered_entries": recovered_entries, "skipped_gap_bytes": skipped_gap_bytes,
+            "max_recovery_gap": max_gap,
+            "trailing_directory_bytes": end - position,
+            "compressed_bytes_header_total": total_compressed}
 
 def inspect_xbox_zip(path: Path) -> dict:
     filesize=path.stat().st_size
@@ -227,6 +287,10 @@ def main() -> int:
         print(f"Directory offset: {record['directory_offset']:,}; "
               f"size: {record['directory_size']:,}; records: {record['entries_declared']:,}")
         print(f"Directory extras skipped without decoding: {record['skipped_extra_bytes']:,} bytes")
+        print(f"Nonstandard directory gaps: {record['recovered_entries']:,} recovered entries; "
+              f"total {record['skipped_gap_bytes']:,} bytes; "
+              f"largest gap {record['max_recovery_gap']} bytes")
+        print(f"Remaining directory tail: {record['trailing_directory_bytes']:,} bytes")
         print(f"File entries found: {record['count']:,}")
         print("EXTENSIONS:")
         for suffix,count in record["extension_counts"].most_common(args.limit):
