@@ -171,6 +171,25 @@ Run on the owner's Windows PC:
 
 If the local file headers and VTFX magic are valid, the next engineering phase can implement local-only image conversion and UV/material rendering; until then, do not assume ordinary ZIP extraction works. Full report: [XBOX_PACK_DISCOVERY.md](docs/XBOX_PACK_DISCOVERY.md).
 
+## First real Xbox texture → private VTFX file
+
+**New verified owner results:** **66/66 synthetic tests passed**; the hotel has **189/189 material filename matches**, **10,840/10,840 face references**, and **zero duplicated or missing IDs**. The Xbox \`zip1.360.zip\` and the hotel map's embedded pak both have validated local ZIP file headers and the original Xbox **VTFX** texture signature.
+
+We've added [tools/extract_single_vtfx.py](tools/extract_single_vtfx.py) and synthetic tests. It inspects the **Xbox VTFX big-endian header** (dimensions, format, mip/resource metadata) for one original hotel-wall texture. It can optionally copy only that validated, uncompressed ZIP member to ignored \`research/local/vtfx/\` — **no bulk extraction, no image decoding, no upload**. New tests need to be run on the owner's Windows PC.
+
+    cd C:\Users\FrontDesk\LFD2
+    git pull
+    py -m unittest discover -s tests -v
+    py tools\extract_single_vtfx.py
+
+If that reports valid header fields, optionally copy the private texture locally:
+
+    py tools\extract_single_vtfx.py --extract
+
+An existing community-supported [VTFX Reader](https://github.com/rob5300/vtfx_reader) can convert Xbox DXT1/DXT5 and LZMA-resource VTFX files to PNG. The original texture **has not yet been decoded or shown in Chrome**; proper map UV and material-binding support will still be needed.
+
+Step-by-step guide: [VTFX_FIRST_TEXTURE.md](docs/VTFX_FIRST_TEXTURE.md).
+
 ## Further research and options
 
 - [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
