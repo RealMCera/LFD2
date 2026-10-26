@@ -66,6 +66,16 @@ footer a{color:#f1ba87}
     <button type="button" id="multiTextureToggle">MULTI-TEXTURES ON</button>
     <div id="multiTextureStatus" style="font:11px/1.55 Consolas,monospace;color:#b6c9cc;margin-top:8px;white-space:pre-wrap">Select several PNGs to texture multiple matched Source materials simultaneously.</div>
   </div>
+  <div style="margin-top:13px;padding-top:12px;border-top:1px solid #57717d">
+    <p>NONVISUAL / DEBUG BRUSHES</p>
+    <label for="hideToolBrushes" style="display:flex;gap:8px;align-items:center;justify-content:center;letter-spacing:0">
+      <input id="hideToolBrushes" type="checkbox" checked>
+      HIDE TOOLS / DEV / SKY / EFFECTS
+    </label>
+    <div id="hideToolInfo" style="font:11px/1.6 Consolas,monospace;color:#b6c9cc;margin-top:8px">
+      Source tool/debug faces can block the view as gray geometry.
+    </div>
+  </div>
   <div style="margin-top:14px;padding-top:12px;border-top:1px solid #57717d">
     <p>SURFACE INSPECTOR · AIM AT FLOOR / WALL · PRESS I</p>
     <button type="button" id="inspectSurfaceButton">IDENTIFY MATERIAL AT CROSSHAIR · I</button>
@@ -228,6 +238,7 @@ input.addEventListener("change",async()=>{
   indexCount=indices.length;mesh={name:f.name,triangles:indices.length/3,bounds:data.bounds};
   if(typeof setUvData==="function")setUvData(data);
   if(typeof setMultiUvData==="function")setMultiUvData(data);
+  if(typeof showOriginalToolSurfaces==="function")showOriginalToolSurfaces(data);
   if(typeof updateMaterialCoverage==="function")updateMaterialCoverage();
   cameraSpawns=safeSpawns(data);setSpawnList();
   if(cameraSpawns.length)atSpawn(0);else overview();
@@ -313,5 +324,6 @@ requestAnimationFrame(frame);
 <script src="surface-inspector.js"></script>
 <script src="material-coverage.js"></script>
 <script src="finish-texture-folder.js"></script>
+<script src="tool-surface-visibility.js"></script>
 </body>
 </html>
