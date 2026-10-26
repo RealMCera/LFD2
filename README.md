@@ -23,9 +23,9 @@ To play directly in Chrome on Windows:
 
     cd C:\Users\FrontDesk\LFD2
     git pull
-    & "$env:ProgramFiles\Google\Chrome\Application\chrome.exe" (Resolve-Path ".\docs\index.html").Path
+    Start-Process (Resolve-Path ".\docs\index.html").Path
 
-The one-file demo includes WASD movement, mouse-look, shooting, AI teammates, pickups and five waves. To make it playable at a shareable web address, see [Chrome play and GitHub Pages setup](docs/PLAY.md) (choose branch main and /docs in GitHub Settings → Pages).
+This opens the game in your default browser. For Chrome specifically, you can right-click docs/index.html in File Explorer and choose Open with → Google Chrome. The one-file demo includes WASD movement, mouse-look, shooting, AI teammates, pickups and five waves. To make it playable at a shareable web address, see [Chrome play and GitHub Pages setup](docs/PLAY.md) (choose branch main and /docs in GitHub Settings → Pages).
 
 ## Next step: import server_360.dll in Ghidra
 
