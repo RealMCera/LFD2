@@ -14,7 +14,9 @@
 - [x] Add read-only grouped failure classifier weighted by original placement impact so format fixes can recover many objects at once.
 - [x] Owner screenshot on October 27 visually verifies the all-model Chrome folder importer: textured original hotel BSP and multiple separately colored original prop meshes appear in the hallway; NEXT MODEL control active. This confirms import/render operation, not that all 96 model types are anatomically/material-correct.
 - [ ] Add authentic Source studio material and texture assignments for rendered model types (currently diagnostic flat colors); check affected geometry families, not individual objects.
-- [ ] Review read-only batch report and extend shared MDL/VVD/VTX decoder patterns for the highest-impact rejected category.
+- [x] Owner-side report grouped all **132 skipped original model types / 1,142 placement references** under the same Xbox raw-LZMA one-byte decoded-length mismatch.
+- [x] Commit a studio-only compatibility guard for streams lacking an LZMA EOS marker with precisely one extra decoded byte; leave BSP/map decoding strict and preserve Source structure/checksum validation.
+- [ ] Validate recovery counts by converting all original hotel assets to a **new private v2 folder**, not overwriting v1. Confirm Chrome prop rendering and the remaining skipped-format families.
 - [ ] Generalize same asset importer across the other maps and model formats, then integrate faithful model materials and Source gameplay systems
 
 See [Batch original model pipeline](BATCH_ORIGINAL_ASSETS.md). User should not have to inspect or manually import items individually.
