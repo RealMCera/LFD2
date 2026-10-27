@@ -287,7 +287,8 @@ def expanded_vtx(data: bytes, checksum: str) -> tuple[bytes,dict]:
             "Xbox VTX LZMA sizes do not match bounded Source bodypart data: "
             f"wrapper={candidates}, compressed_available={len(raw)-17}"
         )
-    decoded=decode_valve_lzma(raw,good[0][1],order)
+    decoded=decode_valve_lzma(raw,good[0][1],order,
+                             allow_studio_no_eos=True)
     if len(decoded)!=good[0][1]:
         raise BspError("Original Xbox VTX LZMA unpacked size mismatch")
     output=data[:start]+decoded
