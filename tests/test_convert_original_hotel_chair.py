@@ -136,8 +136,11 @@ class OriginalChairTrianglesTests(unittest.TestCase):
                 +b"\x5d"+struct.pack("<I",65536))
         compressed_vvd=bytes(source[:64])+header+compressed
         report=describe_vvd_layout(compressed_vvd)
-        self.assertIn("Valve LZMA signature found at VVD vertex offset",
-                      report["hints"])
+        self.assertTrue(
+            any("Valve LZMA signature found at VVD vertex offset" in hint
+                for hint in report["hints"]),
+            "VVD diagnostic must recognize the compressed Xbox vertex block",
+        )
         expanded,meta=expanded_vvd(compressed_vvd)
         self.assertEqual(expanded,bytes(source))
         self.assertEqual(meta["compression"],"Valve LZMA")
