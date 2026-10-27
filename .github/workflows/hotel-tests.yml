@@ -20,3 +20,5 @@ jobs:
           done
       - name: Hotel texture folder manifest tests
         run: node tests/js/finish_texture_folder.test.js
+      - name: Original Source chair placement and browser mesh JSON tests
+        run: node tests/js/original_hotel_props.test.js
