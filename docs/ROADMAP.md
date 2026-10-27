@@ -153,12 +153,17 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] User's original Xbox chair model trio extracted privately: compressed LZMA-wrapped `.360.mdl` (482 bytes), big-endian version 4 VVD (21,717 bytes), version 7 VTX (3,876 bytes). VVD/VTX checksum `f3737e00` matches.
 - [x] Add bounded local Valve LZMA MDL decode, Source studiohdr bodypart/material counts, three-way checksum validation and opt-in ignored decoded-model output (new tests committed; owner validation pending).
 - [ ] Validate decompressed MDL checksum against the known `f3737e00` companion checksum on user's actual Xbox chair; then implement vertex and triangle-strip decoding and actual chair rendering.
+- [x] Owner verified **140 tests**, real chair MDL LZMA-decoded to **1,792 bytes**, Source v49, one bodypart/material/bone, full MDL/VVD/VTX checksum match f3737e00.
+- [x] Add bounded real MDL/VVD/VTX LOD0 triangle converter and one-model private JSON export (synthetic tests committed, actual private asset run pending).
+- [x] Add WebGL2 local original hotel chair preview at original 47 authored chair positions (material-neutral, pending owner screenshot and asset decoder validation).
+- [ ] Validate actual model triangle count and original LOD0 decoder against user's chair binary on Windows; inspect Chrome geometry.
+- [ ] Resolve Source model material binding and apply original converted chair textures; implement prop movement and collision separately.
 - [ ] Read original hotel's MDL/VVD/VTX binary versions, checksum consistency and Xbox endianness, then implement real chair geometry conversion and rendering.
 - [ ] Locate and decode original .mdl/.vvd/.vtx triplet files before rendering genuine furniture and doors in Chrome.
 
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status (October 27, 2026): Hotel brush/textures phase screenshot-confirmed. Phase 2 has 2,164 verified original placements and 228/228 MDL definitions; owner confirmed 128 tests and resolved the real Xbox model companion naming `.dx90.360.vtx` / `.360.phy`. Matching code corrected and first chair MDL/VVD/VTX header probe committed, awaiting owner validation. No original prop meshes or L4D2 gameplay render in Chrome yet.**
+**Status (October 27, 2026): Hotel brush/textures phase screenshot-confirmed. Phase 2 user passed 140 tests; chair's private Xbox MDL decoded to real Source v49 (1,792 bytes), VVD4 and VTX7 all checksum-match f3737e00. 2,164 original prop locations, including 47 chairs, are decoded. A bounded original triangle converter and opt-in browser chair overlay have been committed, awaiting real-asset and Chrome validation. No original gameplay is running in Chrome.**
 
 ### Full-disc ISO input (extraction confirmed; code analysis pending)
 
