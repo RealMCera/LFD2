@@ -67,6 +67,34 @@ An optional `--export` stores metadata only in a new ignored private
 `research/local/hotel-studio-materials.json`. Material image conversion
 and browser assignment are separate next steps; we will automate those
 across all models rather than selecting textures per item.
+## First whole-hotel model textures — optional provisional Xbox VTFX preview
+
+Owner's read-only VMT format scan identified **257 original binary Xbox
+material scripts**, all sampled prefixes `AA 4F F4 D8`. Full binary VMT
+shader structure remains unknown. An independent filename scan found
+**219 studio material slots** with exact-same-name original Xbox VTFX
+image candidates; these are not confirmed `$basetexture` mappings.
+
+The new bulk converter cautiously packages these authentic Xbox image
+candidates for local Chrome preview, with explicit provisional labels:
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\build_hotel_model_texture_candidates.py
+py tools\build_hotel_model_texture_candidates.py --run
+```
+
+Keep the completed `research/local/hotel-auto-props-v2` geometry
+bundle intact. Select that folder once in Chrome, then select the
+new `research/local/hotel-model-textures-v1` folder once using the
+**LOAD ALL PROVISIONAL ORIGINAL MODEL TEXTURES** picker.
+Viewer applies original model UVs and per-triangle material slots;
+unmatched ones remain diagnostic colored. Binary Xbox VMT shader
+parameters and transparency remain unverified, and this is not
+a playable L4D2 browser port.
+
 ## Studio texture resolver diagnostic — October 27
 
 Owner Windows run: 5/5 isolated resolver tests passed, but **393/393**
