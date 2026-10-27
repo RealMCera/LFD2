@@ -14,9 +14,9 @@ main{height:calc(100vh - 95px);min-height:400px;position:relative}
 #loader h1 span{color:#f2b980}
 #loader p{color:#aebfc6;font-size:13px;line-height:1.65}
 #loader label{display:block;cursor:pointer;text-align:center;background:#e6a66f;color:#141e22;font-weight:900;padding:14px;letter-spacing:.09em;font-size:12px}
-#loader label:hover{background:#ffd09c}#file,#textureFile,#multiTextureFiles,#finishFolder,#originalChairMesh,#originalPropPlacements{display:none}
+#loader label:hover{background:#ffd09c}#file,#textureFile,#multiTextureFiles,#finishFolder,#originalChairMesh,#originalPropPlacements,#originalBatchFolder{display:none}
 #materialPanel{display:none;margin-top:16px;padding-top:13px;border-top:1px solid #57717d}
-#originalPropPanel button{cursor:pointer;background:#21313d;border:1px solid #617984;color:#edc59e;width:100%;padding:9px;margin-top:7px}
+#originalPropPanel button,#originalBatchPanel button{cursor:pointer;background:#21313d;border:1px solid #617984;color:#edc59e;width:100%;padding:9px;margin-top:7px}
 #materialPanel select{display:block;width:100%;background:#22343e;color:#f5dbba;padding:8px;border:1px solid #607884;margin:8px 0 11px;font:12px Consolas,monospace}
 #materialPanel button{cursor:pointer;background:#21313d;border:1px solid #617984;color:#edc59e;width:100%;padding:9px;margin-top:7px}
 #textureStatus{font:11px/1.6 Consolas,monospace;color:#b6c9cc;padding-top:8px}
@@ -45,8 +45,14 @@ footer a{color:#f1ba87}
 <button type="button" id="closeLoader" aria-label="Close map loader">×</button>
 <div style="color:#e5b585;font-size:11px;font-weight:bold;letter-spacing:.18em">XBOX 360 BSP · LOCAL FILES ONLY</div>
 <h1>Explore the <span>original map geometry.</span></h1>
-<p>This experimental renderer opens a mesh converted from your own L4D2 BSP. No map files or game assets are uploaded. Brush surfaces from your original game. Optional one- or multi-material texture previews using private PNGs + UV mesh. No props, enemies or complete Source engine yet.</p>
+<p>This experimental renderer opens a mesh converted from your own L4D2 BSP. No map files or game assets are uploaded. Brush surfaces from your original game. Optional one- or multi-material texture previews using private PNGs + UV mesh. Original untextured prop meshes supported; gameplay, enemies and complete Source engine not yet implemented.</p>
 <label for="file">SELECT A LOCAL .MESH.JSON FILE</label><input type="file" id="file" accept=".json,application/json">
+<div id="originalBatchPanel" style="margin-top:16px;padding-top:13px;border-top:1px solid #57717d">
+  <p>ALL ORIGINAL HOTEL MODELS · ONE FOLDER</p>
+  <label for="originalBatchFolder">LOAD ENTIRE HOTEL AUTO-PROPS FOLDER</label>
+  <input type="file" id="originalBatchFolder" webkitdirectory directory multiple>
+  <div id="originalBatchStatus" style="font:11px/1.6 Consolas,monospace;color:#b5cfb6;margin-top:9px;white-space:pre-wrap">Run py tools\build_hotel_scene_bundle.py --run once. Then select research/local/hotel-auto-props here. Loads supported original model geometry in one selection. Unsupported models are reported automatically.</div>
+</div>
 <div id="originalPropPanel" style="margin-top:16px;padding-top:13px;border-top:1px solid #57717d">
   <div style="padding-bottom:13px;margin-bottom:13px;border-bottom:1px solid #57717d">
     <p>PHASE 2 · ORIGINAL SOURCE MODEL TRIANGLES (EARLY PREVIEW)</p>
@@ -121,10 +127,11 @@ Use research\\local\\c1m1_hotel_spawns_uv.mesh.json for texture previews. Older 
   <button type="button" id="toOverview">OVERVIEW · 2</button>
   <button type="button" id="edgesToggle">EDGES OFF · 3</button>
   <button type="button" id="originalNextChair" disabled title="Load both private original chair JSON files first">NEXT CHAIR · C</button>
+  <button type="button" id="originalNextModel" disabled title="Load the auto-props folder first">NEXT MODEL · B</button>
 </div>
 <div id="hint"></div>
 <div id="stats">NO MAP LOADED</div><div id="cross">+</div>
-<div id="help">1 START AT SELECTED PLAYER POSITION · 2 OVERVIEW · 3 TOGGLE BRUSH EDGES · N NEXT SPAWN · C NEXT ORIGINAL CHAIR (AFTER LOAD) · I IDENTIFY SURFACE · OPEN MAP LOADER FOR TEXTURE PREVIEW · CLICK TO AIM · WASD FLY · MOUSE / ARROWS LOOK · SPACE ASCEND · CTRL DESCEND · SHIFT SPEED BOOST · ESC RELEASE MOUSE · H HIDE HELP</div>
+<div id="help">1 START AT SELECTED PLAYER POSITION · 2 OVERVIEW · 3 TOGGLE BRUSH EDGES · N NEXT SPAWN · C NEXT ORIGINAL CHAIR · B NEXT BATCH MODEL · I IDENTIFY SURFACE · OPEN MAP LOADER FOR TEXTURE PREVIEW · CLICK TO AIM · WASD FLY · MOUSE / ARROWS LOOK · SPACE ASCEND · CTRL DESCEND · SHIFT SPEED BOOST · ESC RELEASE MOUSE · H HIDE HELP</div>
 </main>
 <footer><span>Only local browser memory is used; no copyright assets hosted.</span><a href="WEB_PORT_PLAN.md">Port roadmap</a></footer>
 <script id="vs" type="x-shader/x-vertex">#version 300 es
@@ -286,6 +293,7 @@ document.addEventListener("keydown",e=>{
  if(e.code==="Digit2"&&!e.repeat)overview();
  if(e.code==="Digit3"&&!e.repeat)toggleEdges();
  if(e.code==="KeyC"&&!e.repeat&&typeof originalJumpToChair==="function")originalJumpToChair();
+ if(e.code==="KeyB"&&!e.repeat&&typeof batchNextCamera==="function")batchNextCamera();
  if(e.code==="KeyN"&&!e.repeat&&cameraSpawns.length){
   const next=(Number(spawnSelect.value)+1)%cameraSpawns.length;atSpawn(next);
  }
@@ -322,6 +330,7 @@ function frame(now){
    if(typeof renderMaterialPreview==="function")renderMaterialPreview();
    if(typeof renderMultiMaterials==="function")renderMultiMaterials();
    if(typeof renderOriginalHotelProps==="function")renderOriginalHotelProps();
+   if(typeof renderOriginalHotelBatch==="function")renderOriginalHotelBatch();
    if(wireEnabled){
     gl.disable(gl.POLYGON_OFFSET_FILL);
     gl.uniform1i(uniforms.wire,1);
@@ -343,5 +352,6 @@ requestAnimationFrame(frame);
 <script src="finish-texture-folder.js"></script>
 <script src="tool-surface-visibility.js"></script>
 <script src="original-hotel-props.js"></script>
+<script src="original-hotel-batch.js"></script>
 </body>
 </html>
