@@ -148,7 +148,7 @@ def decode_xbox_mdl(stream, record: dict) -> bytes:
         if not any(64<=n<=MAX_DECODED_MDL for n in sizes):
             raise XboxZipError("Decoded MDL size exceeds safe 32MB limit")
         try:
-            decoded=decode_valve_lzma(payload,0,">")
+            decoded=decode_valve_lzma(payload,0,">",allow_studio_no_eos=True)
         except (BspError,ValueError) as error:
             raise XboxZipError("Unable to decode Xbox LZMA-wrapped MDL: "+str(error)) from error
     else:
