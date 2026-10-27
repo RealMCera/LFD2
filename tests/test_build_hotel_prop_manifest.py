@@ -10,7 +10,7 @@ import zipfile
 from tools.bsp_to_browser_mesh import BspError
 from tools.build_hotel_prop_manifest import (
     decode_v9_static_records,decode_static_from_bsp,normalize_archive_path,
-    scan_model_archive_directories,build_inventory
+    scan_model_archive_directories,build_inventory,diagnose_model_companion_naming
 )
 from test_inspect_hotel_elements import make_bsp
 
@@ -121,6 +121,22 @@ class HotelPropManifestTests(unittest.TestCase):
             self.assertIn("models/props/hotel/chair.mdl",sources)
             self.assertIn("hotel_BSP_embedded_pak",packs)
             self.assertEqual(errors,[])
+
+    def test_model_companion_diagnostic_reports_real_exact_suffixes(self):
+        names={
+            "models/props_furniture/hotel_chair.mdl":["left4dead2/zip0.360.zip"],
+            "models/props_furniture/hotel_chair.vvd":["left4dead2/zip0.360.zip"],
+            "models/props_furniture/hotel_chair.360.vtx":["left4dead2/zip0.360.zip"],
+            "models/props_furniture/hotel_chair.phy":["left4dead2/zip0.360.zip"],
+            "models/props_furniture/hotel_chair_red.mdl":["left4dead2/zip0.360.zip"],
+        }
+        diagnosis=diagnose_model_companion_naming(
+            names,["models/props_furniture/hotel_chair.mdl"])
+        report=diagnosis["examples"][0]
+        self.assertEqual(report["suffixes"],
+                         [".360.vtx",".phy",".vvd"])
+        self.assertEqual(report["nearby"],
+                         ["models/props_furniture/hotel_chair_red.mdl"])
 
     def test_canonical_suffixes_and_prefixes(self):
         self.assertEqual(normalize_archive_path(
