@@ -159,3 +159,31 @@ Optional `--export` creates an ignored local metadata catalog without
 overwriting. The next shared pipeline stage should resolve exact VMT
 material paths and associated Xbox VTFX images, then use mesh material
 IDs + studio skin tables to render faithful model textures across the hotel.
+
+## October 27: verified MDL material headers and automatic original VMT/VTFX matching
+
+The owner's Windows run passed **172 synthetic Python tests** and
+scanned **228 original hotel models**. Material names and skin-family tables
+parsed for **223**, with **5 checkpoint-door family MDLs** rejected at
+the material-name validation stage. There are **268 candidate material
+paths**, not yet 268 physically verified Xbox texture images.
+
+The next stage, `tools/resolve_hotel_studio_textures.py`, is a single
+read-only model-material pass. It reuses the original model catalog
+and existing stored VMT/BSP-pak/Xbox ZIP readers. A match requires the
+original studio candidate material's **exact VMT path**, that VMT's
+`$basetexture`, and an **exact original Xbox VTFX path**. It reports
+unresolved/missing/ambiguous slots rather than selecting near matches.
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\resolve_hotel_studio_textures.py
+```
+
+The optional `--export` saves material-asset reference metadata only in
+`research/local/hotel-studio-texture-matches.json`, not game textures.
+Existing `hotel-auto-props-v2` geometry remains untouched. The next
+separate implementation milestone is batching original VTFX conversion
+and assigning decoded PNGs by original model mesh/skin material IDs.
