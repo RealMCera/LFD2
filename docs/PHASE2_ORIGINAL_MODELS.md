@@ -169,3 +169,28 @@ py tools\convert_original_hotel_chair.py --diagnose-vvd
 \`\`\`
 
 Compare this new diagnostic output with the original Source \`vertexFileHeader_t\` specification before implementing an Xbox-specific layout or decompression path: [Valve source studio.h](https://swarm.workshop.perforce.com/files/guest/knut_wikstrom/ValveSDKCodepublic/studio.h) and [VVD layout](https://pysourcesdk.github.io/ValveMDL/datastructures/vvd.html). **Do not run \`--run\` again until a diagnosed, tested layout fix has been committed.** The browser chair overlay remains unverified.
+
+## October 27 — Real Xbox VVD compression layout conclusively identified
+
+The owner's second private diagnostic run passed **148 synthetic tests**, and provided the exact binary header of the authentic chair VVD:
+
+- Big-endian VVD4, checksum \`f3737e00\`, **1,395 LOD0 vertices**.
+- Header length **64** bytes; **0 vertex fixups**; \`vertex_data_start = 64\`.
+- \`tangent_data_start = 67,024\`, which equals 64 + (1,395 × 48 original Source vertex bytes).
+- Original Xbox VVD file length **21,717** bytes, while the declared original vertex+tangent end would be **89,344** bytes.
+- The vertex-data start bytes are \`4c 5a 4d 41 c0 5c 01 00\`: a Valve \`LZMA\` wrapper whose 4-byte little-endian unpacked length is **89,280** (hex \`00015cc0\`).
+- **89,280 = (1,395 × 48) + (1,395 × 16)**: full original Source vertices plus the separate 16-byte tangent pool. The remaining 21,636 compressed bytes also fit exactly after the 17-byte LZMA wrapper.
+
+This is a validated size/layout match, not a reason to reinterpret 48-byte vertices as 15.52-byte packed records.
+
+The studio converter now detects that specific layout, verifies exact LZMA header sizes against all 1,395 vertices **and** the complete tangent block, decompresses the original payload in memory with the already-tested bounded Valve LZMA helper and reconstructs the original VVD file's absolute offsets. Synthetic tests include successful compressed VVD triangle decoding, incorrect LZMA sizes and uncompressed fallback. The converter retains all geometry/index/checksum safety validation and refuses to produce guessed objects.
+
+\`\`\`powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\convert_original_hotel_chair.py
+py tools\convert_original_hotel_chair.py --run
+\`\`\`
+
+The first command to the converter is **read-only**, and only if it succeeds should \`--run\` create the private \`research/local/hotel-chair.mesh.json\` file. The real-asset MDL/VTX geometry mapping has not yet been validated in an owner console run, so the browser's original chair overlay may still need another format-specific correction. Do not report the chair as rendered until the owner verifies it.
