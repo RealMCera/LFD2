@@ -67,6 +67,27 @@ An optional `--export` stores metadata only in a new ignored private
 `research/local/hotel-studio-materials.json`. Material image conversion
 and browser assignment are separate next steps; we will automate those
 across all models rather than selecting textures per item.
+## Source studio material inventory validated; exact original texture matching next
+
+User's Windows run passed **172/172 tests**, read studio material headers
+for **223 of the 228 original hotel model types**, and found **268
+candidate material paths**. Five related checkpoint-door models did not
+pass strict material-string validation. These counts represent names,
+**not yet decoded original images or texturing in Chrome**.
+
+An automatic read-only Source studio VMT/VTFX matcher now resolves
+candidate original model materials via their exact VMT files, each VMT's
+`$basetexture`, and the local Xbox VTFX archive. It never guesses
+nearest names or overwrites the fully converted v2 model bundle.
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\resolve_hotel_studio_textures.py
+```
+
+See [automated batch-model and material stages](docs/BATCH_ORIGINAL_ASSETS.md).
 ## Automated model importing — no per-object conversion
 
 With the first original Xbox chair model decoded, the next phase uses the
