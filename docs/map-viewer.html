@@ -116,10 +116,11 @@ Use research\\local\\c1m1_hotel_spawns_uv.mesh.json for texture previews. Older 
   <button type="button" id="toSpawn">START POSITION · 1</button>
   <button type="button" id="toOverview">OVERVIEW · 2</button>
   <button type="button" id="edgesToggle">EDGES OFF · 3</button>
+  <button type="button" id="originalNextChair" disabled title="Load both private original chair JSON files first">NEXT CHAIR · C</button>
 </div>
 <div id="hint"></div>
 <div id="stats">NO MAP LOADED</div><div id="cross">+</div>
-<div id="help">1 START AT SELECTED PLAYER POSITION · 2 OVERVIEW · 3 TOGGLE BRUSH EDGES · N NEXT SPAWN · I IDENTIFY SURFACE · OPEN MAP LOADER FOR TEXTURE PREVIEW · CLICK TO AIM · WASD FLY · MOUSE / ARROWS LOOK · SPACE ASCEND · CTRL DESCEND · SHIFT SPEED BOOST · ESC RELEASE MOUSE · H HIDE HELP</div>
+<div id="help">1 START AT SELECTED PLAYER POSITION · 2 OVERVIEW · 3 TOGGLE BRUSH EDGES · N NEXT SPAWN · C NEXT ORIGINAL CHAIR (AFTER LOAD) · I IDENTIFY SURFACE · OPEN MAP LOADER FOR TEXTURE PREVIEW · CLICK TO AIM · WASD FLY · MOUSE / ARROWS LOOK · SPACE ASCEND · CTRL DESCEND · SHIFT SPEED BOOST · ESC RELEASE MOUSE · H HIDE HELP</div>
 </main>
 <footer><span>Only local browser memory is used; no copyright assets hosted.</span><a href="WEB_PORT_PLAN.md">Port roadmap</a></footer>
 <script id="vs" type="x-shader/x-vertex">#version 300 es
@@ -280,6 +281,7 @@ document.addEventListener("keydown",e=>{
  if(e.code==="Digit1"&&!e.repeat)atSpawn(spawnSelect.value);
  if(e.code==="Digit2"&&!e.repeat)overview();
  if(e.code==="Digit3"&&!e.repeat)toggleEdges();
+ if(e.code==="KeyC"&&!e.repeat&&typeof originalJumpToChair==="function")originalJumpToChair();
  if(e.code==="KeyN"&&!e.repeat&&cameraSpawns.length){
   const next=(Number(spawnSelect.value)+1)%cameraSpawns.length;atSpawn(next);
  }
