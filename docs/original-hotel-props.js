@@ -8,7 +8,9 @@ const originalChairInput=document.getElementById("originalChairMesh");
 const originalPlacementsInput=document.getElementById("originalPropPlacements");
 const originalPropStatus=document.getElementById("originalPropStatus");
 const originalPropToggle=document.getElementById("originalPropToggle");
+const originalNextChair=document.getElementById("originalNextChair");
 let originalChairMesh=null,originalPropPlacementData=null;
+let originalChairInstances=[],originalChairCursor=-1;
 let originalPropProgram=null,originalPropVao=null,originalPropBuffer=null;
 let originalPropUniforms=null,originalPropVertexCount=0,originalPropsEnabled=true;
 
@@ -20,6 +22,8 @@ function originalPropsClear(){
 function originalPropsReset(){
  originalPropsClear();
  originalChairMesh=null;originalPropPlacementData=null;
+ originalChairInstances=[];originalChairCursor=-1;
+ if(originalNextChair)originalNextChair.disabled=true;
  if(originalPropStatus)originalPropStatus.textContent=
   "Load private hotel-chair.mesh.json and hotel-all-props.json from research/local to see actual original Source model triangles.";
 }
@@ -122,11 +126,38 @@ function originalPropsInitGL(){
   aspect:gl.getUniformLocation(prog,"uAspect")
  };
 }
+function originalChairCamera(placement){
+ // Source props orient model X forward, Y left, Z up.
+ // View from 120 Source units in front of the original model,
+ // 56 units above its authored origin. Camera looks back at the chair.
+ const yaw=placement.angles[1]*Math.PI/180;
+ return {
+  x:placement.origin[0]+Math.cos(yaw)*120,
+  y:placement.origin[1]+Math.sin(yaw)*120,
+  z:placement.origin[2]+56,
+  yaw:yaw+Math.PI,
+  pitch:-0.20
+ };
+}
+function originalJumpToChair(){
+ if(!mesh||!originalChairMesh||!originalChairInstances.length)return;
+ originalChairCursor=(originalChairCursor+1)%originalChairInstances.length;
+ Object.assign(cam,originalChairCamera(originalChairInstances[originalChairCursor]));
+ if(typeof loader!=="undefined"&&loader)loader.style.display="none";
+ if(typeof show!=="undefined"&&show)show.style.display="block";
+ if(typeof flashHint==="function")
+  flashHint("ORIGINAL CHAIR "+(originalChairCursor+1)+"/"+originalChairInstances.length+
+            " · 1,403 AUTHENTIC SOURCE TRIANGLES PER CHAIR · C FOR NEXT");
+}
+if(originalNextChair)originalNextChair.addEventListener("click",originalJumpToChair);
+
 function rebuildOriginalProps(){
  originalPropsClear();
  if(!originalChairMesh||!originalPropPlacementData)return;
  const instances=originalPlacementValidate(originalPropPlacementData);
  const packed=originalChairPacked(originalChairMesh,instances);
+ originalChairInstances=instances;
+ originalChairCursor=-1;
  originalPropsInitGL();
  originalPropVao=gl.createVertexArray();
  originalPropBuffer=gl.createBuffer();
@@ -140,10 +171,11 @@ function rebuildOriginalProps(){
  }
  gl.bindVertexArray(null);
  originalPropVertexCount=packed.length/6;
+ if(originalNextChair)originalNextChair.disabled=false;
  originalPropStatus.textContent=instances.length+" AUTHENTIC CHAIR PLACEMENTS · "+
    originalChairMesh.indices.length/3+" original triangles each · "+
    (originalPropVertexCount/3).toLocaleString()+
-   " textured-hotel overlay triangles in neutral diagnostic shading. "+
+   " original-model overlay triangles in neutral diagnostic shading. "+
    "Original chair skin/lighting not yet converted.";
 }
 async function originalPropLoadFile(file,kind){
