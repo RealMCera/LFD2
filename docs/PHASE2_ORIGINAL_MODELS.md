@@ -126,3 +126,31 @@ py tools\probe_original_hotel_model.py --write-decoded-mdl
 ```
 
 The result stays under `research/local/original-models/decoded/models/props_furniture/hotel_chair.mdl`. The user has **not yet run this new LZMA stage**; model vertices, triangle strips, material assignments and actual rendered chair remain further work. We will not substitute boxes or claim the game port is playable.
+
+
+## October 27: Original chair MDL / VVD / VTX fully verified — real triangle mesh next
+
+The owner ran **140 Python tests successfully** on Windows and confirmed the original chair's three Source checksums match **f3737e00**. The .360.mdl is 482 compressed bytes, LZMA-decoded into **1,792 bytes of real Source version 49 model data**. Its studiohdr tables passed validation: **1 bone, 1 texture, 1 bodypart**. Original VVD is big-endian v4 (21,717 bytes); VTX is big-endian v7 (3,876 bytes), 1 bodypart / 1 LOD. The decoded private model exists at \`research/local/original-models/decoded/models/props_furniture/hotel_chair.mdl\`.
+
+We have now committed **tools/convert_original_hotel_chair.py**, a bounded one-original-model triangle converter. It reads that private trio, follows Source MDL bodypart/model/mesh tables, reads VVD vertex position/normal/UV records (including validated LOD0 fixups), follows VTX optimized stripgroup/strip original vertex IDs, validates common checksum and emits a **private JSON mesh** with original vertices and triangles. The first implementation targets Source v49 / VVD4 / VTX7 and **LOD0** with original simple/fixed chair geometry, not skinned animation, arbitrary models or fake approximations.
+
+The Chrome browser viewer also has a first-phase **ORIGINAL SOURCE MODEL TRIANGLES** panel. It can load the converted \`hotel-chair.mesh.json\` and existing \`hotel-all-props.json\` locally. The browser rotates/translates exact chair triangle geometry to the **47 original BSP chair placements** and shows neutral lighting/shading so geometry can be inspected. Original chair VMT/texture bindings, reflections, lightmaps, collision and game logic are not yet implemented.
+
+### Windows verification and first real geometry preview
+
+\`\`\`powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\convert_original_hotel_chair.py
+py tools\convert_original_hotel_chair.py --run
+Start-Process (Resolve-Path ".\docs\map-viewer.html").Path
+\`\`\`
+
+The first converter run **without --run** validates and prints the exact original triangle and vertex counts without writing. Use \`--run\` only after it successfully reports geometry; it creates ignored \`research/local/hotel-chair.mesh.json\` and refuses overwrite. No game model bytes are uploaded to GitHub.
+
+In the map viewer, choose the existing UV-enriched original hotel BSP mesh, optionally reload the private \`hotel-complete\` texture folder, then find **PHASE 2 · ORIGINAL SOURCE MODEL TRIANGLES** in MAP LOADER. Pick both \`research/local/hotel-chair.mesh.json\` and \`research/local/hotel-all-props.json\`. Chrome's first model overlay stays neutral gray until authentic model materials are supported. Toggle SHOW/HIDE ORIGINAL CHAIRS to compare with the bare map.
+
+**Current validation boundary:** the Python converter and new WebGL viewer have been committed with synthetic tests and JavaScript syntax checks, but they have not yet been run against the user's complete actual VVD/VTX contents in a reported console run. If the decoder rejects an offset, index or unsupported strip layout, it stops rather than inventing coordinates or indices. Do not claim the actual chair renders until the owner's browser verification.
+
+References: [Valve's Source optimization/VTX structures](https://swarm.workshop.perforce.com/files/guest/knut_wikstrom/ValveSDKCodepublic/optimize.h), [studio model hierarchy](https://pysourcesdk.github.io/ValveMDL/datastructures/mesh.html), [VVD vertex header](https://pysourcesdk.github.io/ValveMDL/datastructures/vvd.html).
