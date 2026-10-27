@@ -44,6 +44,29 @@ Pick the new `hotel-auto-props-v2` folder in the Chrome viewer; leave
 the first output folder untouched. See
 [automatic original asset pipeline](docs/BATCH_ORIGINAL_ASSETS.md).
 
+## All 228 original hotel model types converted — October 27
+
+The owner's second original asset batch completed with **228/228 successfully decoded
+model types, zero skipped, and all 2,164 BSP prop placements included**.
+This is 100% coverage of the hotel's referenced studio-model geometry
+conversion, **not** full-game functionality, model texturing or animation.
+The existing conversion output is private under `research/local/hotel-auto-props-v2`.
+
+The next automated stage inventories real material references, model material
+search paths and skin families from the Source MDL headers across **all 228**
+referenced models. This phase does not invent skins or copy game textures.
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\inventory_hotel_studio_materials.py
+```
+
+An optional `--export` stores metadata only in a new ignored private
+`research/local/hotel-studio-materials.json`. Material image conversion
+and browser assignment are separate next steps; we will automate those
+across all models rather than selecting textures per item.
 ## Automated model importing — no per-object conversion
 
 With the first original Xbox chair model decoded, the next phase uses the
