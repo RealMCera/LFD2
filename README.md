@@ -67,6 +67,25 @@ An optional `--export` stores metadata only in a new ignored private
 `research/local/hotel-studio-materials.json`. Material image conversion
 and browser assignment are separate next steps; we will automate those
 across all models rather than selecting textures per item.
+## Studio texture resolver diagnostic — October 27
+
+Owner Windows run: 5/5 isolated resolver tests passed, but **393/393**
+studio material slots remain unresolved; 388 had no recognized plain-text
+`$basetexture` in the original Xbox VMT bytes, and 5 had missing or
+ambiguous VMT records. The viewer still draws the original converted
+model meshes in diagnostic colors, not the original model skins.
+
+Run a one-pass, read-only file-format diagnosis:
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py tools\diagnose_hotel_vmt_payloads.py
+```
+
+Nothing is extracted, overwritten or uploaded. We will not infer original
+texture links until inspecting the actual Xbox VMT byte format.
+
 ## Source studio material inventory validated; exact original texture matching next
 
 User's Windows run passed **172/172 tests**, read studio material headers
