@@ -17,6 +17,12 @@ function originalPropsClear(){
  if(gl&&originalPropVao)gl.deleteVertexArray(originalPropVao);
  originalPropBuffer=originalPropVao=null;originalPropVertexCount=0;
 }
+function originalPropsReset(){
+ originalPropsClear();
+ originalChairMesh=null;originalPropPlacementData=null;
+ if(originalPropStatus)originalPropStatus.textContent=
+  "Load private hotel-chair.mesh.json and hotel-all-props.json from research/local to see actual original Source model triangles.";
+}
 function originalChairValidate(data){
  if(!data||data.format!=="lfd2-source-original-model-v1"||
     data.model!=="models/props_furniture/hotel_chair.mdl"||
@@ -162,7 +168,7 @@ if(originalPlacementsInput)originalPlacementsInput.addEventListener("change",asy
 });
 if(originalPropToggle)originalPropToggle.addEventListener("click",()=>{
  originalPropsEnabled=!originalPropsEnabled;
- originalPropToggle.textContent=originalPropsEnabled?"SHOW ORIGINAL CHAIRS":"HIDE ORIGINAL CHAIRS";
+ originalPropToggle.textContent=originalPropsEnabled?"HIDE ORIGINAL CHAIRS":"SHOW ORIGINAL CHAIRS";
 });
 function renderOriginalHotelProps(){
  if(!originalPropsEnabled||!originalPropVertexCount||!originalPropProgram||!gl)return;
