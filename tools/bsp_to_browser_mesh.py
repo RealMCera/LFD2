@@ -66,7 +66,8 @@ def read_directory(data: bytes, layout: str = "auto") -> tuple[str, list[dict], 
     return endian, dirs, layout
 
 
-def decode_valve_lzma(payload: bytes, expected_size: int, endian: str) -> bytes:
+def decode_valve_lzma(payload: bytes, expected_size: int, endian: str, *,
+                      allow_studio_no_eos: bool = False) -> bytes:
     if len(payload) < 17 or payload[:4] != b"LZMA":
         raise BspError("Compressed lump lacks standard Valve LZMA wrapper")
     # Valve wrapper: "LZMA", realSize:uint32, compressedSize:uint32,
@@ -98,6 +99,18 @@ def decode_valve_lzma(payload: bytes, expected_size: int, endian: str) -> bytes:
             out = dec.decompress(payload[17:17+compressed], max_length=MAX_LUMP_BYTES+1)
             if len(out) == actual:
                 return out
+            # Xbox studio MDL/VVD/VTX streams sometimes omit the LZMA
+            # end-of-stream marker. Their final range-coder flush can
+            # synthesize one trailing byte when Python decodes to input
+            # exhaustion instead of stopping at Valve's declared length.
+            # Enable ONLY for model assets, never BSP/map lump data.
+            # We also require the complete compressed member, no EOS marker,
+            # and exactly ONE surplus byte; callers then independently
+            # validate full studio headers, checksums and index bounds.
+            if (allow_studio_no_eos and len(out) == actual + 1
+                    and not dec.eof and not dec.unused_data
+                    and compressed == len(payload) - 17):
+                return out[:actual]
             errors.append(f"{fmt}: expected {actual} bytes; got {len(out)}")
         except (lzma.LZMAError, ValueError) as ex:
             errors.append(str(ex))
