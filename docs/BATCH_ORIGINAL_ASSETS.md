@@ -53,3 +53,31 @@ formats benefit many assets; do not debug every model individually.
 
 All original commercial assets remain under gitignored `research/local/`.
 Neither source game data nor generated original meshes are uploaded to GitHub.
+
+## October 27 first full Xbox hotel batch — owner-verified
+
+The first one-command Windows batch completed successfully with **228/228**
+original hotel model references inspected; **96** Source model types
+converted to `research/local/hotel-auto-props` and **132** skipped
+with machine-readable reasons. The resulting private `scene.json` includes
+**1,022 of the original 2,164 prop placements** (47.2%). No original assets
+were committed to GitHub. This does not mean all 96 are visually confirmed
+in Chrome yet; folder-import verification is next.
+
+For the next iteration, **do not repeat the full export**. The private
+folder already exists and the converter refuses overwrites. Run the new
+read-only diagnosis on the existing output:
+
+```powershell
+git pull
+py tools\report_hotel_scene_bundle.py
+```
+
+It groups the 132 rejected model types by generic decoder failure and
+ranks each family by how many originally placed hotel objects it affects,
+using the original private placement manifest. This guides shared
+format fixes instead of manual per-object conversions.
+
+For the Chrome preview, load the same original hotel UV map as before,
+then choose the entire `research/local/hotel-auto-props` folder using
+**LOAD ENTIRE HOTEL AUTO-PROPS FOLDER** in the map loader.
