@@ -21,6 +21,13 @@ const p={model:mesh.model,class:"prop_static",
  origin:[10,20,100],angles:[0,90,0]};
 const manifest={format:"lfd2-original-prop-placements-v1",placements:[p]};
 assert.equal(context.originalPlacementValidate(manifest).length,1);
+const view=context.originalChairCamera(p);
+assert.ok(Math.abs(view.x-10)<1e-6);
+assert.ok(Math.abs(view.y-140)<1e-6);
+assert.equal(view.z,156);
+assert.ok(Math.abs(view.yaw-1.5*Math.PI)<1e-6);
+assert.equal(view.pitch,-0.20);
+
 const result=context.originalChairPacked(mesh,[p]);
 assert.equal(result.length,18);
 const coords=[result[0],result[1],result[2],
