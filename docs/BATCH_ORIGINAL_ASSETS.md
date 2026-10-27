@@ -132,3 +132,30 @@ re-upload the v1 folder. The first owner run of this decoder modification
 is still pending; success is measured by real decoded model and placement
 counts and a browser visual check, not by an assertion that all 228
 models are automatically recovered.
+
+## Verified 100% original studio geometry conversion, October 27
+
+The owner's new local batch status is **228 attempted, 228 decoded,
+0 skipped, 2,164 original placements included out of 2,164 total**.
+The earlier first-pass 96/228 coverage is preserved in v1; the v2 output
+is private under `research/local/hotel-auto-props-v2`.
+
+The upcoming visual bottleneck is model materials and original Source skin
+mapping, not missing referenced model meshes. The new
+`tools/inventory_hotel_studio_materials.py` uses one safe, read-only pass
+to catalog the original Source v49 MDL material-table names, CDTexture
+search paths and skin family mappings for all hotel referenced model types.
+This inventories paths only: it does not pretend to resolve original
+material images, nor change the working v2 scene.
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\inventory_hotel_studio_materials.py
+```
+
+Optional `--export` creates an ignored local metadata catalog without
+overwriting. The next shared pipeline stage should resolve exact VMT
+material paths and associated Xbox VTFX images, then use mesh material
+IDs + studio skin tables to render faithful model textures across the hotel.
