@@ -278,14 +278,15 @@ def main()->int:
               f"combined placements: {record['total']:,}")
         print("Class counts:",record["classes"])
         print(f"Unique referenced model paths: {record['unique_models']:,}; "
-              f"MDL files matched: {record['models_with_mdl']:,}; "
-              f"full MDL/VVD/VTX groups: {record['models_with_complete_mesh_triplet']:,}")
+              f"MDL filenames matched: {record['models_with_mdl']:,}; "
+              f"MDL/VVD/VTX filename sets: {record['models_with_complete_mesh_triplet']:,}")
+        print("These are filename matches, not proof of decoded model geometry.")
         print("Most frequently placed original assets:")
         for model,count in record["top_models"][:12]:
             print(f"  {count:>5} {model}")
         complete=next((row for row in record["availability"] if row["mesh_ready"]),None)
         if complete:
-            print("First verified filename triplet:",complete["model"])
+            print("First model filename triplet:",complete["model"])
             for kind in ("mdl","vvd","vtx"):
                 for key in model_files(complete["model"])[kind]:
                     if key in sources:
@@ -314,6 +315,8 @@ def main()->int:
             print("Saved private 2,000+ prop placement manifest:",target)
         else:
             print("Read-only by default. --export saves metadata to private research/local.")
+        print("Next: py tools\\probe_original_hotel_model.py "
+              "(inspect original hotel chair binary headers and checksums).")
         print("No proprietary model geometry copied or uploaded.")
         return 0
     except (OSError,BspError,ValueError,struct.error) as err:
