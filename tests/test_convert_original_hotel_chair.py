@@ -3,7 +3,7 @@ import struct
 import unittest
 from tools.bsp_to_browser_mesh import BspError
 from tools.convert_original_hotel_chair import (
-    decode_vvd,studio_meshes,vtx_triangles,convert_original_model
+    decode_vvd,studio_meshes,vtx_triangles,convert_original_model,describe_vvd_layout
 )
 
 CHECKSUM=0xf3737e00
@@ -66,6 +66,38 @@ class OriginalChairTrianglesTests(unittest.TestCase):
         self.assertEqual(out["uvs"],[0.,0.,1.,0.,0.,1.])
         self.assertEqual(out["triangle_material_ids"],[0])
         self.assertEqual(out["checksum"],"f3737e00")
+
+    def test_read_only_vvd_header_diagnostic_for_valid_source_layout(self):
+        _mdl,vvd,_vtx=original_tri_test_data()
+        details=describe_vvd_layout(vvd)
+        self.assertEqual(details["header_version"],4)
+        self.assertEqual(details["byte_order"],"big")
+        self.assertEqual(details["lod_vertex_counts"][0],3)
+        self.assertEqual(details["vertex_data_start"],64)
+        self.assertEqual(details["expected_vertex_end_48"],208)
+        self.assertEqual(details["file_bytes"],208)
+        self.assertEqual(details["hints"][-1],
+                         "Bytes available per declared LOD0 vertex: 48.00")
+
+    def test_vvd_invalid_vertex_bounds_shows_real_offsets(self):
+        _mdl,vvd,_vtx=original_tri_test_data()
+        wrong=bytearray(vvd)
+        struct.pack_into(">I",wrong,16,99)
+        diagnostic=describe_vvd_layout(wrong)
+        self.assertEqual(diagnostic["lod_vertex_counts"][0],99)
+        self.assertEqual(diagnostic["expected_vertex_end_48"],4816)
+        self.assertEqual(diagnostic["file_bytes"],208)
+        with self.assertRaisesRegex(BspError,
+            "LOD0=99, vertex_start=64, expected_end=4816, file_bytes=208"):
+            decode_vvd(bytes(wrong),"f3737e00")
+
+    def test_vvd_embedded_lzma_signature_is_a_hint_not_a_guess(self):
+        _mdl,vvd,_vtx=original_tri_test_data()
+        modified=bytearray(vvd)
+        modified[64:68]=b"LZMA"
+        details=describe_vvd_layout(bytes(modified))
+        self.assertTrue(any("LZMA signature" in hint
+                            for hint in details["hints"]))
 
     def test_checksum_mismatch_fails_before_reconstruction(self):
         mdl,vvd,vtx=original_tri_test_data()
