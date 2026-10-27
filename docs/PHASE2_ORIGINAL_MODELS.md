@@ -99,3 +99,30 @@ py tools\probe_original_hotel_model.py
 If that succeeds, use `py tools\probe_original_hotel_model.py --extract` to copy **just the three original chair files** into ignored `research/local/original-models/models/props_furniture/` (never the public GitHub repo). The tool will refuse overwrites and unknown compressed ZIP members. If Source checksums do not agree, inspect the headers before writing any mesh-conversion logic; do not claim the object is renderable simply because three filenames match.
 
 Reference material: [MDL studio headers](https://pysourcesdk.github.io/ValveMDL/datastructures/studiohdr.html), [VVD vertex headers](https://pysourcesdk.github.io/ValveMDL/datastructures/vvd.html), and [VTX optimized mesh header](https://pysourcesdk.github.io/ValveMDL/datastructures/vtx.html). The actual original Xbox data still needs the owner's local validation.
+
+## October 27: First authentic hotel chair files extracted — MDL is Valve LZMA-wrapped
+
+The owner's latest local console run successfully extracted exactly three private original Xbox 360 files from `left4dead2/zip0.360.zip`:
+
+- `research/local/original-models/models/props_furniture/hotel_chair.360.mdl` — **482 bytes**, starts with `LZMA` (compressed Source studio model, **not** a corrupt `IDST` header)
+- `research/local/original-models/models/props_furniture/hotel_chair.360.vvd` — **21,717 bytes**, Source `IDSV` version **4**, Xbox big-endian, checksum `f3737e00`
+- `research/local/original-models/models/props_furniture/hotel_chair.dx90.360.vtx` — **3,876 bytes**, optimized mesh version **7**, Xbox big-endian, checksum `f3737e00`, one bodypart and one LOD
+
+**The previous “all three headers recognized: False” was expected:** the old inspector treated the 482-byte compressed model file as raw `IDST`. Both uncompressed companion checksums already match. The original game/model file archive is untouched and all original bytes remain under Git-ignored `research/local/`.
+
+`tools/probe_original_hotel_model.py` now detects the `LZMA` wrapper, decodes the model in memory through our already-tested bounded Valve LZMA parser, reads its actual Source model header and validates the full MDL/VVD/VTX checksum trio. It also reports bounded Source `studiohdr_t` bone/material/bodypart counts to prepare vertex/index conversion. Only `--write-decoded-mdl` writes the decompressed result privately; it refuses mismatched checksums and existing output.
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\probe_original_hotel_model.py
+```
+
+If the real decompressed MDL reports **all three headers recognized** and **checksum matches**, save the decoded file without extracting or overwriting the three raw files:
+
+```powershell
+py tools\probe_original_hotel_model.py --write-decoded-mdl
+```
+
+The result stays under `research/local/original-models/decoded/models/props_furniture/hotel_chair.mdl`. The user has **not yet run this new LZMA stage**; model vertices, triangle strips, material assignments and actual rendered chair remain further work. We will not substitute boxes or claim the game port is playable.
