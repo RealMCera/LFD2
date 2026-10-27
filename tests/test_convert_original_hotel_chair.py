@@ -149,7 +149,7 @@ class OriginalChairTrianglesTests(unittest.TestCase):
                       "dict_size":65536,"lc":3,"lp":0,"pb":2}])
         corrupted=(b"LZMA"+struct.pack("<II",len(raw)+8,len(compressed))
                    +b"\x5d"+struct.pack("<I",65536)+compressed)
-        with self.assertRaisesRegex(BspError,"unpacked size mismatch"):
+        with self.assertRaisesRegex(BspError,"Unable to decode Valve LZMA lump|unpacked size mismatch"):
             expanded_vtx(vtx[:36]+corrupted,"f3737e00")
 
     def test_uncompressed_vtx_hierarchy_diagnostic_reports_model_counts(self):
