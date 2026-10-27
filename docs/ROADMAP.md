@@ -158,6 +158,9 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] Add WebGL2 local original hotel chair preview at original 47 authored chair positions (material-neutral, pending owner screenshot and asset decoder validation).
 - [x] Capture first actual original chair conversion failure at VVD vertex buffer bounds; add diagnostic of Xbox LOD count, fixup/vertex offsets and expected 48-byte end, without relaxing safety constraints.
 - [x] Owner's VVD diagnostic proved at offset 64 a Valve LZMA wrapper with 89,280 uncompressed bytes, exactly 1,395 × (48 original vertex + 16 tangent); committed strict decompression with synthetic regression tests.
+- [x] Owner run: all 151 Python tests passed and VVD decompression progressed; real conversion stopped safely at VTX/MDL model counts disagree.
+- [x] Add optional bounded Valve LZMA decoding at the Xbox VTX bodypart payload and read-only hierarchy diagnostic (unverified on private original file).
+- [ ] Verify actual Xbox VTX bodypart encoding and MDL counterpart model counts; only then export real triangles.
 - [ ] Validate original LOD0 chair geometry conversion end-to-end against the now-decompressible real Xbox VVD and VTX files.
 - [ ] Validate actual model triangle count and original LOD0 decoder against user's chair binary on Windows; inspect Chrome geometry.
 - [ ] Resolve Source model material binding and apply original converted chair textures; implement prop movement and collision separately.
