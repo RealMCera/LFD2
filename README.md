@@ -433,6 +433,19 @@ Start-Process (Resolve-Path '.\docs\map-viewer.html').Path
 
 Load the original UV hotel mesh, then under MAP LOADER choose both the private chair mesh and the combined prop placement file. No game binaries, decoded model bytes or images are checked in or uploaded. See [Phase 2 detailed guide](docs/PHASE2_ORIGINAL_MODELS.md).
 
+## First original Xbox VVD conversion diagnosis
+
+The first original-chair geometry conversion correctly refused a **VVD vertex bounds mismatch**. The 48-byte standard Source VVD stride may not fit the original Xbox data as currently interpreted; the MDL/VVD/VTX checksums remain verified. A new **read-only `--diagnose-vvd` mode** prints actual original header layout metadata for validation, without exporting a guessed mesh or copying original game bytes.
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\convert_original_hotel_chair.py --diagnose-vvd
+```
+
+Details: [Phase 2 Xbox VVD header investigation](docs/PHASE2_ORIGINAL_MODELS.md). No original chair geometry has been verified in Chrome yet.
+
 ## Further research and options
 
 - [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
