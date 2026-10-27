@@ -6,8 +6,12 @@
 const batchFolderInput=document.getElementById("originalBatchFolder");
 const batchStatus=document.getElementById("originalBatchStatus");
 const batchNextModel=document.getElementById("originalNextModel");
+const batchTextureFolderInput=document.getElementById("originalBatchTextureFolder");
+const batchTextureStatus=document.getElementById("originalBatchTextureStatus");
 let batchProgram=null,batchUniform=null,batchEntries=[];
 let batchInstances=[],batchCursor=-1;
+let batchTextureCache=new Map();
+const BATCH_TEXTURE_MAX_BYTES=500*1024*1024;
 const BATCH_LIMITS={maxModels:4000,maxPlacements:100000,
  totalBytes:450*1024*1024,maxOne:50*1024*1024,
  totalDrawTriangles:6000000,maxVertices:150000,maxIndices:900000};
@@ -25,8 +29,15 @@ function batchValidateMesh(item,path){
  const n=item.vertices.length/3;
  if(!item.vertices.every(x=>Number.isFinite(x)&&Math.abs(x)<1e6)||
     !item.normals.every(x=>Number.isFinite(x)&&Math.abs(x)<100)||
-    !item.indices.every(x=>Number.isInteger(x)&&x>=0&&x<n))
-    throw Error("Invalid original Source vertex/index bounds: "+path);
+    !item.indices.every(x=>Number.isInteger(x)&&x>=0&&x<n)||
+    (item.uvs!==undefined&&
+      (!Array.isArray(item.uvs)||item.uvs.length!==2*n||
+       !item.uvs.every(x=>Number.isFinite(x)&&Math.abs(x)<1e7)))||
+    (item.triangle_material_ids!==undefined&&
+      (!Array.isArray(item.triangle_material_ids)||
+       item.triangle_material_ids.length!==item.indices.length/3||
+       !item.triangle_material_ids.every(x=>Number.isInteger(x)&&x>=0&&x<1024))))
+    throw Error("Invalid original Source vertex/index/material/UV bounds: "+path);
  return item;
 }
 function batchValidateScene(data){
@@ -75,9 +86,9 @@ function batchShader(){
  if(batchProgram)return;
  const vs=shader(gl.VERTEX_SHADER,[
  "#version 300 es","precision highp float;",
- "in vec3 aPos,aNormal,iOrigin,iBx,iBy,iBz;",
+ "in vec3 aPos,aNormal,iOrigin,iBx,iBy,iBz;","in vec2 aUV;",
  "uniform vec3 uCamera;","uniform float uYaw,uPitch,uAspect;",
- "out float vLight;",
+ "out float vLight;","out vec2 vUV;",
  "void main(){",
  "vec3 world=iOrigin+iBx*aPos.x+iBy*aPos.y+iBz*aPos.z;",
  "vec3 normal=normalize(iBx*aNormal.x+iBy*aNormal.y+iBz*aNormal.z);",
@@ -90,12 +101,17 @@ function batchShader(){
  "float z=eye.z*(farP+nearP)/(farP-nearP)-(2.0*farP*nearP)/(farP-nearP);",
  "gl_Position=vec4(eye.x*1.35/uAspect,eye.y*1.35,z,eye.z);",
  "vLight=0.45+0.55*abs(dot(normal,normalize(vec3(.4,.2,.9))));",
+ "vUV=aUV;",
  "}"
  ].join("\n"));
  const fs=shader(gl.FRAGMENT_SHADER,[
- "#version 300 es","precision highp float;","in float vLight;",
- "uniform vec3 uColor;","out vec4 outColor;",
- "void main(){outColor=vec4(uColor*vLight,1.0);}"
+ "#version 300 es","precision highp float;","in float vLight;","in vec2 vUV;",
+ "uniform vec3 uColor;","uniform bool uUseTexture;","uniform sampler2D uTexture;",
+ "out vec4 outColor;",
+ "void main(){",
+ "vec3 color=uUseTexture?texture(uTexture,vUV).rgb:uColor;",
+ "outColor=vec4(color*vLight,1.0);",
+ "}"
  ].join("\n"));
  const prog=gl.createProgram();gl.attachShader(prog,vs);gl.attachShader(prog,fs);
  gl.linkProgram(prog);
@@ -108,10 +124,14 @@ function batchShader(){
   yaw:gl.getUniformLocation(prog,"uYaw"),
   pitch:gl.getUniformLocation(prog,"uPitch"),
   aspect:gl.getUniformLocation(prog,"uAspect"),
-  color:gl.getUniformLocation(prog,"uColor")
+  color:gl.getUniformLocation(prog,"uColor"),
+  textured:gl.getUniformLocation(prog,"uUseTexture"),
+  sampler:gl.getUniformLocation(prog,"uTexture")
  };
 }
 function batchClear(){
+ if(gl)for(const tex of batchTextureCache.values())gl.deleteTexture(tex);
+ batchTextureCache.clear();
  if(gl)for(const e of batchEntries){
   gl.deleteBuffer(e.positions);gl.deleteBuffer(e.indices);
   gl.deleteBuffer(e.instances);gl.deleteVertexArray(e.vao);
@@ -122,17 +142,21 @@ function batchClear(){
 function batchCreateGpuModel(model,placements){
  batchShader();
  const vertexCount=model.vertices.length/3;
- const interleaved=new Float32Array(vertexCount*6);
+ const interleaved=new Float32Array(vertexCount*8);
  for(let i=0;i<vertexCount;i++){
   for(let j=0;j<3;j++){
-   interleaved[i*6+j]=model.vertices[i*3+j];
-   interleaved[i*6+3+j]=model.normals[i*3+j];
+   interleaved[i*8+j]=model.vertices[i*3+j];
+   interleaved[i*8+3+j]=model.normals[i*3+j];
   }
+  interleaved[i*8+6]=(model.uvs||[])[i*2]||0;
+  interleaved[i*8+7]=(model.uvs||[])[i*2+1]||0;
  }
+ const grouped=batchGroupIndices(model);
  const transforms=batchInstancesFor(placements);
  const e={vao:gl.createVertexArray(),positions:gl.createBuffer(),
           indices:gl.createBuffer(),instances:gl.createBuffer(),
-          count:model.indices.length,placed:placements.length};
+          count:model.indices.length,placed:placements.length,
+          groups:grouped.groups,materialTextures:new Map()};
  gl.bindVertexArray(e.vao);
  function attrib(name,size,stride,offset,divisor=0){
   const loc=gl.getAttribLocation(batchProgram,name);
@@ -143,16 +167,34 @@ function batchCreateGpuModel(model,placements){
  }
  gl.bindBuffer(gl.ARRAY_BUFFER,e.positions);
  gl.bufferData(gl.ARRAY_BUFFER,interleaved,gl.STATIC_DRAW);
- attrib("aPos",3,24,0);
- attrib("aNormal",3,24,12);
+ attrib("aPos",3,32,0);
+ attrib("aNormal",3,32,12);
+ attrib("aUV",2,32,24);
  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,e.indices);
- gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint32Array(model.indices),gl.STATIC_DRAW);
+ gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,grouped.indices,gl.STATIC_DRAW);
  gl.bindBuffer(gl.ARRAY_BUFFER,e.instances);
  gl.bufferData(gl.ARRAY_BUFFER,transforms,gl.STATIC_DRAW);
  for(const [name,offset] of [["iOrigin",0],["iBx",12],["iBy",24],["iBz",36]])
   attrib(name,3,48,offset,1);
  gl.bindVertexArray(null);
  return e;
+}
+function batchGroupIndices(model){
+ const parts=new Map();
+ const ids=model.triangle_material_ids||[];
+ for(let t=0;t<model.indices.length/3;t++){
+  const slot=ids[t]||0;
+  if(!parts.has(slot))parts.set(slot,[]);
+  parts.get(slot).push(...model.indices.slice(3*t,3*t+3));
+ }
+ const combined=new Uint32Array(model.indices.length);
+ const groups=[];let pos=0;
+ for(const [slot,indices] of parts){
+  combined.set(indices,pos);
+  groups.push({slot,count:indices.length,offsetBytes:pos*4});
+  pos+=indices.length;
+ }
+ return {indices:combined,groups};
 }
 function batchColor(name){
  // Repeatable diagnostic model coloring; not the original model material.
@@ -198,6 +240,7 @@ async function batchLoadFolder(filelist){
     if(!placements.length)continue;
     const entry=batchCreateGpuModel(model,placements);
     entry.color=batchColor(name);
+    entry.model=name;
     batchEntries.push(entry);
     batchInstances.push({model:name,place:placements[0]});
     models++;
@@ -216,7 +259,7 @@ async function batchLoadFolder(filelist){
   scene.placements.length+" authored placements in scene; "+
   triangles.toLocaleString()+" real triangle instances drawn; "+
   skipped+" skipped by safety/performance checks. "+
-  "Untextured diagnostic shading, no original animated gameplay yet.";
+  "Original model geometry loaded; separate optional provisional texture folder supported.";
 }
 function batchNextCamera(){
  if(!mesh||!batchInstances.length)return;
@@ -239,6 +282,103 @@ if(batchFolderInput)batchFolderInput.addEventListener("change",async()=>{
  }
  batchFolderInput.value="";
 });
+function batchValidateTextureManifest(data){
+ if(!data||data.format!=="lfd2-original-hotel-provisional-model-textures-v1"||
+    !Array.isArray(data.models)||data.models.length>100000)
+    throw Error("Expected privately converted original model texture-manifest.json");
+ const unique=new Set();
+ for(const item of data.models){
+  if(!item||typeof item.model!=="string"||
+     !/^models\/[a-z0-9_./-]+\.mdl$/.test(item.model)||
+     !Number.isInteger(item.slot)||item.slot<0||item.slot>1024||
+     item.mapping!=="PROVISIONAL_EXACT_FILENAME_NOT_VMT_VERIFIED"||
+     typeof item.png!=="string"||
+     !/^textures\/[a-z0-9_.\/-]+\.png$/.test(item.png)||
+     item.png.split("/").includes("..")||
+     unique.has(item.model+"#"+item.slot))
+     throw Error("Invalid or duplicate original provisional material assignment");
+  unique.add(item.model+"#"+item.slot);
+ }
+ return data.models;
+}
+async function batchLoadTextureFolder(filelist){
+ if(!batchEntries.length)
+   throw Error("Load original hotel-auto-props-v2 model folder first.");
+ const files=Array.from(filelist||[]);
+ if(files.length<2||files.length>25000)
+   throw Error("Select original hotel-model-textures folder, including its manifest.");
+ const byPath=new Map();
+ for(const file of files){
+  const raw=(file.webkitRelativePath||"").replace(/\\/g,"/");
+  const root=raw.split("/")[0],name=raw.slice(root.length+1);
+  if(name&&file.size<=40*1024*1024)byPath.set(name,file);
+ }
+ const mf=byPath.get("texture-manifest.json");
+ if(!mf)throw Error("Selected folder lacks original texture-manifest.json");
+ const bindings=batchValidateTextureManifest(JSON.parse(await mf.text()));
+ let selectedBytes=0;
+ const needed=new Map(),owned=new Map(batchEntries.map(e=>[e.model,e]));
+ for(const b of bindings){
+  if(!owned.has(b.model))continue;
+  const file=byPath.get(b.png);
+  if(!file)continue;
+  if(!needed.has(b.png)){
+   needed.set(b.png,file);
+   selectedBytes+=file.size;
+  }
+ }
+ if(selectedBytes>BATCH_TEXTURE_MAX_BYTES)
+   throw Error("Too many original model PNG texture bytes for safe GPU upload.");
+ let converted=0,skipped=0;
+ try{
+  for(const [path,file] of needed){
+   const image=await createImageBitmap(file);
+   try{
+    if(!image.width||!image.height||image.width>8192||image.height>8192)
+     throw Error("Original texture dimensions unsupported");
+    const tex=gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D,tex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,image);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    batchTextureCache.set(path,tex);
+    converted++;
+   }finally{image.close();}
+  }
+ }catch(error){
+  if(batchTextureStatus)batchTextureStatus.textContent=
+     "Partial provisional model textures loaded; error: "+error.message;
+  throw error;
+ }finally{
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+  gl.bindTexture(gl.TEXTURE_2D,null);
+ }
+ let slots=0;
+ for(const b of bindings){
+  const owner=owned.get(b.model),tex=batchTextureCache.get(b.png);
+  if(!owner||!tex){skipped++;continue;}
+  if(owner.groups.some(g=>g.slot===b.slot)){
+   owner.materialTextures.set(b.slot,tex);slots++;
+  }else skipped++;
+ }
+ if(batchTextureStatus)batchTextureStatus.textContent=
+  "Loaded "+converted+" authentic original VTFX PNGs as PROVISIONAL diffuse previews "+
+  "for "+slots+" model material slots; "+skipped+" unavailable mappings. "+
+  "Binary Xbox VMT shader assignments NOT YET VERIFIED. No map or game files uploaded.";
+}
+if(batchTextureFolderInput)batchTextureFolderInput.addEventListener("change",async()=>{
+ try{
+  if(batchTextureStatus)batchTextureStatus.textContent="Importing local original Xbox model image previews...";
+  await batchLoadTextureFolder(batchTextureFolderInput.files);
+ }catch(error){
+  if(batchTextureStatus)batchTextureStatus.textContent="Texture folder stopped: "+error.message;
+ }
+ batchTextureFolderInput.value="";
+});
 function renderOriginalHotelBatch(){
  if(!batchProgram||!batchEntries.length||!gl)return;
  gl.useProgram(batchProgram);
@@ -246,11 +386,20 @@ function renderOriginalHotelBatch(){
  gl.uniform1f(batchUniform.yaw,cam.yaw);
  gl.uniform1f(batchUniform.pitch,cam.pitch);
  gl.uniform1f(batchUniform.aspect,cvs.width/cvs.height);
+ gl.uniform1i(batchUniform.sampler,0);
+ gl.activeTexture(gl.TEXTURE0);
  for(const item of batchEntries){
   gl.uniform3fv(batchUniform.color,item.color);
   gl.bindVertexArray(item.vao);
-  gl.drawElementsInstanced(gl.TRIANGLES,item.count,gl.UNSIGNED_INT,0,item.placed);
+  for(const group of item.groups){
+   const tex=item.materialTextures.get(group.slot);
+   gl.uniform1i(batchUniform.textured,tex?1:0);
+   gl.bindTexture(gl.TEXTURE_2D,tex||null);
+   gl.drawElementsInstanced(gl.TRIANGLES,group.count,
+                            gl.UNSIGNED_INT,group.offsetBytes,item.placed);
+  }
  }
+ gl.bindTexture(gl.TEXTURE_2D,null);
  gl.bindVertexArray(null);
  gl.useProgram(program);
 }
