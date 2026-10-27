@@ -416,6 +416,23 @@ py tools\probe_original_hotel_model.py --write-decoded-mdl
 
 Next: genuine Xbox Source model vertex/index decoding and putting the actual 3D hotel chair into Chrome at its known authored placement. New LZMA reader changes await owner-PC validation.
 
+## First real original 3D chair geometry converter and Chrome preview committed
+
+**Owner verified 140 passing tests and the genuine Xbox hotel chair studio trio**: 482-byte LZMA-wrapped MDL decoded into a 1,792-byte v49 model with 1 bodypart, 1 material and 1 bone; VVD4/VTX7 checksums all equal `f3737e00`. Original 2,164 object positions and 47 original chair placements are already saved privately.
+
+New [Source chair mesh converter](tools/convert_original_hotel_chair.py) validates original MDL mesh hierarchy, VVD vertex positions/normals/UVs and VTX strip indices and can export the real triangle geometry as `research/local/hotel-chair.mesh.json`. New [Chrome original-chair overlay](docs/original-hotel-props.js) loads this and `research/local/hotel-all-props.json` from local file pickers, placing the original chair triangles at their authored world locations. It uses neutral *diagnostic shading only*; authentic model textures, animation and game logic are not yet supported. Model converter tests are synthetic; first owner run on the actual local VVD/VTX is pending.
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\convert_original_hotel_chair.py
+py tools\convert_original_hotel_chair.py --run
+Start-Process (Resolve-Path '.\docs\map-viewer.html').Path
+```
+
+Load the original UV hotel mesh, then under MAP LOADER choose both the private chair mesh and the combined prop placement file. No game binaries, decoded model bytes or images are checked in or uploaded. See [Phase 2 detailed guide](docs/PHASE2_ORIGINAL_MODELS.md).
+
 ## Further research and options
 
 - [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
