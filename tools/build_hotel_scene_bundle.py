@@ -135,10 +135,7 @@ def build_bundle(source_zip: Path, manifest: Path, output: Path,
                     mdl=read_asset(stream,filesize,report["directory_offset"],trio["mdl"])
                     vvd=read_asset(stream,filesize,report["directory_offset"],trio["vvd"])
                     vtx=read_asset(stream,filesize,report["directory_offset"],trio["vtx"])
-                    mesh=convert_original_model(mdl,vvd,vtx)
-                    if mesh["model"]!="models/props_furniture/hotel_chair.mdl":
-                        raise BspError("Unexpected studio converter output signature")
-                    mesh["model"]=name
+                    mesh=convert_original_model(mdl,vvd,vtx,model_name=name)
                     # No file paths derived directly from ZIP filenames.
                     file_id=hashlib.sha256(name.encode("ascii")).hexdigest()[:24]
                     basename=file_id+".mesh.json"
