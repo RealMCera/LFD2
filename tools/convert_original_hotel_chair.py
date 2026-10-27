@@ -145,7 +145,8 @@ def expanded_vvd(data: bytes) -> tuple[bytes,dict]:
             f"allocation: expected {desired} decoded bytes and "
             f"{len(raw)-17} compressed bytes; found {header_candidates}"
         )
-    decoded=decode_valve_lzma(raw,desired,detail["byte_order"]=="big" and ">" or "<")
+    decoded=decode_valve_lzma(raw,desired,detail["byte_order"]=="big" and ">" or "<",
+                                allow_studio_no_eos=True)
     if len(decoded)!=desired:
         raise BspError("Xbox VVD LZMA decompressed size mismatch")
     expanded=data[:vertex_start]+decoded
