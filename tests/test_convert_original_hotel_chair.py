@@ -4,7 +4,7 @@ import lzma
 import unittest
 from tools.bsp_to_browser_mesh import BspError
 from tools.convert_original_hotel_chair import (
-    decode_vvd,studio_meshes,vtx_triangles,convert_original_model,describe_vvd_layout,expanded_vvd
+    decode_vvd,studio_meshes,vtx_triangles,convert_original_model,describe_vvd_layout,expanded_vvd,expanded_vtx,diagnose_studio_hierarchy
 )
 
 CHECKSUM=0xf3737e00
@@ -120,6 +120,47 @@ class OriginalChairTrianglesTests(unittest.TestCase):
         struct.pack_into(">i",bad,568,0)
         with self.assertRaisesRegex(BspError,"mesh association"):
             convert_original_model(bytes(bad),vvd,vtx)
+
+    def test_compressed_original_xbox_vtx_bodyparts_reconstruct_real_indices(self):
+        mdl,vvd,vtx=original_tri_test_data()
+        header=vtx[:36]
+        uncompressed=vtx[36:]
+        compressed=lzma.compress(uncompressed,format=lzma.FORMAT_RAW,
+            filters=[{"id":lzma.FILTER_LZMA1,
+                      "dict_size":65536,"lc":3,"lp":0,"pb":2}])
+        member=(b"LZMA"+struct.pack("<II",len(uncompressed),len(compressed))
+                +b"\x5d"+struct.pack("<I",65536)+compressed)
+        xbox=header+member
+        unpacked,info=expanded_vtx(xbox,"f3737e00")
+        self.assertEqual(unpacked,vtx)
+        self.assertEqual(info["compression"],"Valve LZMA")
+        report=diagnose_studio_hierarchy(mdl,xbox)
+        self.assertTrue(report["vtx_bodypart_lzma_wrapper"])
+        self.assertEqual(report["vtx_model_counts"][0]["vtxnummodels"],1)
+        actual=convert_original_model(mdl,vvd,xbox)
+        self.assertEqual(actual["indices"],[0,1,2])
+        self.assertEqual(actual["triangle_count"],1)
+
+    def test_corrupt_xbox_vtx_lzma_size_fails_strictly(self):
+        mdl,vvd,vtx=original_tri_test_data()
+        raw=vtx[36:]
+        compressed=lzma.compress(raw,format=lzma.FORMAT_RAW,
+            filters=[{"id":lzma.FILTER_LZMA1,
+                      "dict_size":65536,"lc":3,"lp":0,"pb":2}])
+        corrupted=(b"LZMA"+struct.pack("<II",len(raw)+8,len(compressed))
+                   +b"\x5d"+struct.pack("<I",65536)+compressed)
+        with self.assertRaisesRegex(BspError,"unpacked size mismatch"):
+            expanded_vtx(vtx[:36]+corrupted,"f3737e00")
+
+    def test_uncompressed_vtx_hierarchy_diagnostic_reports_model_counts(self):
+        mdl,vvd,vtx=original_tri_test_data()
+        info=diagnose_studio_hierarchy(mdl,vtx)
+        self.assertEqual(info["mdl_model_counts"][0]["mdlnummodels"],1)
+        self.assertEqual(info["vtx_model_counts"][0]["vtxnummodels"],1)
+        self.assertFalse(info["vtx_bodypart_lzma_wrapper"])
+        unchanged,detail=expanded_vtx(vtx,"f3737e00")
+        self.assertEqual(unchanged,vtx)
+        self.assertEqual(detail["compression"],"none")
 
     def test_compressed_original_xbox_vvd_replaces_vertex_and_tangent_arrays(self):
         mdl,vvd,vtx=original_tri_test_data()
