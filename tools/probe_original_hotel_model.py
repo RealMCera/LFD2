@@ -17,13 +17,13 @@ import struct
 import sys
 
 try:
-    from .bsp_to_browser_mesh import ROOT
+    from .bsp_to_browser_mesh import ROOT,decode_valve_lzma,BspError
     from .inspect_hotel_model_assets import PACK, model_files
     from .scan_xbox_zip_directory import scan_xbox_zip
     from .probe_xbox_texture_headers import inspect_local_header
     from .inspect_xbox_zip import XboxZipError
 except ImportError:
-    from bsp_to_browser_mesh import ROOT
+    from bsp_to_browser_mesh import ROOT,decode_valve_lzma,BspError
     from inspect_hotel_model_assets import PACK, model_files
     from scan_xbox_zip_directory import scan_xbox_zip
     from probe_xbox_texture_headers import inspect_local_header
@@ -33,6 +33,7 @@ OUT_DIR = (ROOT / "research" / "local" / "original-models").resolve()
 DEFAULT_MODEL = "models/props_furniture/hotel_chair.mdl"
 MAX_MEMBER = 32 * 1024 * 1024
 HEADER_BYTES = 64
+MAX_DECODED_MDL = 32 * 1024 * 1024
 
 
 def validate_name(name: str) -> str:
@@ -129,13 +130,68 @@ def parse_source_header(prefix: bytes, kind: str) -> dict:
     return result
 
 
+def decode_xbox_mdl(stream, record: dict) -> bytes:
+    """Decode a Source LZMA-wrapped .360.mdl locally with size bounds.
+
+    This is a compressed *model payload* inside a stored Xbox ZIP member.
+    Do not confuse that wrapper with ZIP deflate or an invalid MDL.
+    """
+    stream.seek(record["offset"])
+    payload=stream.read(record["length"])
+    if len(payload)!=record["length"]:
+        raise XboxZipError("Short read of private compressed studio model")
+    if payload.startswith(b"LZMA"):
+        if len(payload)<17:
+            raise XboxZipError("Truncated LZMA-wrapped Xbox MDL")
+        sizes=(struct.unpack_from(">I",payload,4)[0],
+               struct.unpack_from("<I",payload,4)[0])
+        if not any(64<=n<=MAX_DECODED_MDL for n in sizes):
+            raise XboxZipError("Decoded MDL size exceeds safe 32MB limit")
+        try:
+            decoded=decode_valve_lzma(payload,0,">")
+        except (BspError,ValueError) as error:
+            raise XboxZipError("Unable to decode Xbox LZMA-wrapped MDL: "+str(error)) from error
+    else:
+        decoded=payload
+    if len(decoded)>MAX_DECODED_MDL or len(decoded)<HEADER_BYTES:
+        raise XboxZipError("Decoded MDL size outside studio model limits")
+    return decoded
+
+
+def save_decoded_mdl(studio: bytes, model: str, root: Path = OUT_DIR) -> Path:
+    """Save only an already validated MDL under ignored local research.
+
+    The unmodified .360.mdl extracted previously is not changed.
+    """
+    model=validate_name(model)
+    folder=root.resolve()
+    if not folder.is_relative_to(OUT_DIR):
+        raise XboxZipError("Decoded MDL must stay in original-models private folder")
+    output=(folder/"decoded"/model).resolve()
+    if not output.is_relative_to(folder) or output.exists():
+        raise XboxZipError("Decoded MDL output already exists or escapes private folder")
+    if (len(studio)<HEADER_BYTES or len(studio)>MAX_DECODED_MDL or
+            studio[:4] not in (b"IDST",b"TSDI")):
+        raise XboxZipError("Not a validated decompressed Source MDL")
+    output.parent.mkdir(parents=True,exist_ok=True)
+    with output.open("xb") as dest:
+        dest.write(studio)
+    return output
+
+
 def inspect_model(stream, filesize: int, directory: dict,
                   model: str) -> tuple[dict[str,dict],dict]:
     items=find_components(directory["entries"],model)
     records={part:bounded_member(stream,filesize,directory["directory_offset"],entry)
              for part,entry in items.items()}
-    headers={part:parse_source_header(record["header"],part)
+    model_payload=decode_xbox_mdl(stream,records["mdl"])
+    headers={part:parse_source_header(
+                model_payload if part=="mdl" else record["header"],part)
              for part,record in records.items()}
+    headers["mdl"]["on_disk_encoding"]=(
+        "Valve LZMA" if records["mdl"]["header"].startswith(b"LZMA")
+        else "uncompressed")
+    headers["mdl"]["decoded_bytes"]=len(model_payload)
     checks=[hdr["checksum"] for hdr in headers.values() if "checksum" in hdr]
     matches=(len(checks)==3 and len(set(checks))==1)
     return records,{"parts":headers,"checksum_match":matches,
@@ -182,6 +238,8 @@ def main() -> int:
     p.add_argument("--pack",type=Path,default=PACK)
     p.add_argument("--extract",action="store_true",
                    help="Opt in to extracting one original model trio privately")
+    p.add_argument("--write-decoded-mdl",action="store_true",
+                   help="Save decompressed Source .mdl in ignored research/local (never overwrites)")
     args=p.parse_args()
     try:
         source=args.pack.expanduser().resolve()
@@ -197,15 +255,22 @@ def main() -> int:
                   header["all_headers_recognized"])
             print("  Original Source checksum matches between all three:",
                   header["checksum_match"])
+            if args.write_decoded_mdl:
+                if not header["all_headers_recognized"] or not header["checksum_match"]:
+                    raise XboxZipError("Decoded model header or triplet checksums failed; refusing to save")
+                decoded=decode_xbox_mdl(stream,records["mdl"])
+                out=save_decoded_mdl(decoded,args.model)
+                print(f"  PRIVATE DECOMPRESSED MDL: {out} ({len(decoded):,} bytes)")
             if args.extract:
                 saved=extract_model(stream,records,OUT_DIR)
                 for path in saved:
                     print(f"  PRIVATE FILE: {path}")
                 print("Only these three original model files copied locally.")
             else:
-                print("Read-only header probe complete; --extract copies only this trio.")
+                print("Read-only header probe complete. --write-decoded-mdl saves only "
+                      "the decompressed MDL privately; --extract copies raw trio.")
         return 0
-    except (OSError,ValueError,struct.error,XboxZipError) as error:
+    except (OSError,ValueError,struct.error,XboxZipError,BspError) as error:
         print(f"Xbox original model probe stopped: {error}",file=sys.stderr)
         return 1
 
