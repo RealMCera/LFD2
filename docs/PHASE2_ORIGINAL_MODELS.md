@@ -194,3 +194,20 @@ py tools\convert_original_hotel_chair.py --run
 \`\`\`
 
 The first command to the converter is **read-only**, and only if it succeeds should \`--run\` create the private \`research/local/hotel-chair.mesh.json\` file. The real-asset MDL/VTX geometry mapping has not yet been validated in an owner console run, so the browser's original chair overlay may still need another format-specific correction. Do not report the chair as rendered until the owner verifies it.
+
+
+## Original Xbox VTX hierarchy mismatch: October 27
+
+User's last private run passed 151/151 Python tests. The original VVD decompression no longer blocked conversion, but the authentic chair stopped at VTX/MDL model counts disagree. No original mesh JSON was written.
+
+The converter now optionally expands a bounded Valve LZMA member at the VTX v7 bodypart offset, **only if the wrapper and declared sizes verify**. Read-only --diagnose-hierarchy reports Source v49 MDL and v7 VTX original bodypart/model counts, offsets and the first header signature, together with compression status. Synthetic tests check compressed VTX, uncompressed VTX and invalid compression. The actual Xbox VTX encoding has not yet been verified; do not bypass safety checks or claim finished rendering.
+
+Windows commands:
+
+    cd C:\Users\FrontDesk\LFD2
+    git pull
+    py -m unittest discover -s tests -v
+    py tools\convert_original_hotel_chair.py --diagnose-hierarchy
+    py tools\convert_original_hotel_chair.py
+
+Run --run only after read-only conversion reports a valid triangle count. Source structure reference: https://swarm.workshop.perforce.com/files/guest/knut_wikstrom/ValveSDKCodepublic/optimize.h
