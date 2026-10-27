@@ -20,12 +20,12 @@ import struct
 import sys
 
 try:
-    from .bsp_to_browser_mesh import ROOT,BspError
+    from .bsp_to_browser_mesh import ROOT,BspError,decode_valve_lzma
     from .probe_original_hotel_model import (
         parse_source_header,studio_model_summary,OUT_DIR,DEFAULT_MODEL,
     )
 except ImportError:
-    from bsp_to_browser_mesh import ROOT,BspError
+    from bsp_to_browser_mesh import ROOT,BspError,decode_valve_lzma
     from probe_original_hotel_model import (
         parse_source_header,studio_model_summary,OUT_DIR,DEFAULT_MODEL,
     )
@@ -36,6 +36,7 @@ DEFAULT_VVD=OUT_DIR/"models"/"props_furniture"/"hotel_chair.360.vvd"
 DEFAULT_VTX=OUT_DIR/"models"/"props_furniture"/"hotel_chair.dx90.360.vtx"
 DEFAULT_OUT=PRIVATE/"hotel-chair.mesh.json"
 MAX_VERTICES=100000
+VVD_TANGENT_SIZE=16
 MAX_TRIANGLES=200000
 MAX_MODELS=64
 MAX_MESHES=128
@@ -105,10 +106,63 @@ def describe_vvd_layout(data: bytes) -> dict:
     }
 
 
+def expanded_vvd(data: bytes) -> tuple[bytes,dict]:
+    """Decompress Xbox VVD's Valve LZMA vertex/tangent payload.
+
+    The fixed 64-byte header is uncompressed. Xbox stores a second,
+    independent LZMA wrapper at header.vertexDataStart; its decoded bytes
+    replace the vertex + tangent arrays. Read declared sizes, verify exact
+    expected length (LOD0*48 vertex bytes + LOD0*16 tangent bytes), and
+    preserve original file-relative header pointers before parsing.
+    """
+    detail=describe_vvd_layout(data)
+    vertex_start=detail["vertex_data_start"]
+    vertex_count=detail["lod_vertex_counts"][0]
+    tangent_start=detail["tangent_data_start"]
+    if not (1<=vertex_count<=MAX_VERTICES and
+            64<=vertex_start<len(data) and
+            detail["lod_count"] in range(1,9)):
+        raise BspError("Invalid Xbox VVD vertex pool header")
+    if data[vertex_start:vertex_start+4]!=b"LZMA":
+        return data,{"compression":"none","expanded_bytes":len(data)}
+    # All 1395 chair vertices are stored in one LOD0 group, and the
+    # tangent block follows the 48-byte Source vertex pool directly.
+    required_tangent_start=vertex_start+vertex_count*VVD_VERTEX_SIZE
+    required_end=required_tangent_start+vertex_count*VVD_TANGENT_SIZE
+    if tangent_start!=required_tangent_start or required_end>10*1024*1024:
+        raise BspError("Xbox compressed VVD has unexpected tangent/vertex layout")
+    raw=data[vertex_start:]
+    if len(raw)<17:
+        raise BspError("Truncated Xbox VVD LZMA wrapper")
+    header_candidates=[struct.unpack_from("<II",raw,4),
+                       struct.unpack_from(">II",raw,4)]
+    desired=required_end-vertex_start
+    exact=[(decoded,compressed) for decoded,compressed in header_candidates
+           if decoded==desired and compressed==len(raw)-17]
+    if len(exact)!=1:
+        raise BspError(
+            "Xbox VVD LZMA declared sizes disagree with Source LOD0 vertex+tangent "
+            f"allocation: expected {desired} decoded bytes and "
+            f"{len(raw)-17} compressed bytes; found {header_candidates}"
+        )
+    decoded=decode_valve_lzma(raw,desired,detail["byte_order"]=="big" and ">" or "<")
+    if len(decoded)!=desired:
+        raise BspError("Xbox VVD LZMA decompressed size mismatch")
+    expanded=data[:vertex_start]+decoded
+    if len(expanded)!=required_end:
+        raise BspError("Xbox VVD vertex/tangent block did not end at declared size")
+    return expanded,{"compression":"Valve LZMA",
+                     "compressed_bytes":len(raw),
+                     "decoded_vertex_bytes":vertex_count*VVD_VERTEX_SIZE,
+                     "decoded_tangent_bytes":vertex_count*VVD_TANGENT_SIZE,
+                     "expanded_bytes":len(expanded)}
+
+
 def decode_vvd(data: bytes, checksum: str) -> list[dict]:
     hdr=parse_source_header(data[:64],"vvd")
     if (hdr.get("version")!=4 or hdr.get("checksum")!=checksum):
         raise BspError("VVD version or Source studio checksum mismatch")
+    data,_compression=expanded_vvd(data)
     endian="<" if hdr["endian"]=="little" else ">"
     num_lods=read_at(data,endian,"I",12)[0]
     lod_counts=read_at(data,endian,"8I",16)
@@ -330,6 +384,9 @@ def main() -> int:
             diag=describe_vvd_layout(args.vvd.read_bytes())
             print("ORIGINAL XBOX VVD LAYOUT (metadata only; no model data exported)")
             print(json.dumps(diag,indent=2))
+            if "Valve LZMA signature" in " ".join(diag["hints"]):
+                _expanded,info=expanded_vvd(args.vvd.read_bytes())
+                print("Verified bounded Source VVD decompression:",info)
             print("Read-only VVD diagnosis complete. No geometry written.")
             return 0
         decoded=convert_original_model(args.mdl.read_bytes(),args.vvd.read_bytes(),
