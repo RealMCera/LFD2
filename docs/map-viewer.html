@@ -45,15 +45,15 @@ footer a{color:#f1ba87}
 <button type="button" id="closeLoader" aria-label="Close map loader">×</button>
 <div style="color:#e5b585;font-size:11px;font-weight:bold;letter-spacing:.18em">XBOX 360 BSP · LOCAL FILES ONLY</div>
 <h1>Explore the <span>original map geometry.</span></h1>
-<p>This experimental renderer opens a mesh converted from your own L4D2 BSP. No map files or game assets are uploaded. Brush surfaces from your original game. Optional one- or multi-material texture previews using private PNGs + UV mesh. Original untextured prop meshes supported; gameplay, enemies and complete Source engine not yet implemented.</p>
+<p>Load your original hotel map, then import all compatible Xbox hotel models in a single local folder selection. Original model geometry and BSP placements stay on your PC. Model textures, AI, gameplay and the complete Source engine are not yet implemented.</p>
 <label for="file">SELECT A LOCAL .MESH.JSON FILE</label><input type="file" id="file" accept=".json,application/json">
 <div id="originalBatchPanel" style="margin-top:16px;padding-top:13px;border-top:1px solid #57717d">
   <p>ALL ORIGINAL HOTEL MODELS · ONE FOLDER</p>
   <label for="originalBatchFolder">LOAD ENTIRE HOTEL AUTO-PROPS FOLDER</label>
   <input type="file" id="originalBatchFolder" webkitdirectory directory multiple>
-  <div id="originalBatchStatus" style="font:11px/1.6 Consolas,monospace;color:#b5cfb6;margin-top:9px;white-space:pre-wrap">Run py tools\build_hotel_scene_bundle.py --run once. Then select research/local/hotel-auto-props here. Loads supported original model geometry in one selection. Unsupported models are reported automatically.</div>
+  <div id="originalBatchStatus" style="font:11px/1.6 Consolas,monospace;color:#b5cfb6;margin-top:9px;white-space:pre-wrap">ONE-TIME SETUP: py tools\build_hotel_scene_bundle.py --run. Then select the full research/local/hotel-auto-props folder. The importer reads all supported original model meshes and all their hotel placements together; no per-object loading.</div>
 </div>
-<div id="originalPropPanel" style="margin-top:16px;padding-top:13px;border-top:1px solid #57717d">
+<details id="originalPropPanel" style="margin-top:16px;padding-top:13px;border-top:1px solid #57717d"><summary style="cursor:pointer;font-size:12px;color:#d5b797;padding:7px 0">OPTIONAL: SINGLE CHAIR DEBUG TOOLS</summary>
   <div style="padding-bottom:13px;margin-bottom:13px;border-bottom:1px solid #57717d">
     <p>PHASE 2 · ORIGINAL SOURCE MODEL TRIANGLES (EARLY PREVIEW)</p>
     <label for="originalChairMesh">LOAD LOCAL HOTEL CHAIR MESH JSON</label>
@@ -64,7 +64,7 @@ footer a{color:#f1ba87}
     <button type="button" id="originalChairContrast" aria-pressed="true">CHAIR CONTRAST: ON</button>
     <div id="originalPropStatus" style="font:11px/1.6 Consolas,monospace;color:#b5cfb6;margin-top:9px;white-space:pre-wrap">Source chair mesh conversion is experimental. Original Xbox chair geometry was decoded successfully. Load research/local/hotel-chair.mesh.json and research/local/hotel-all-props.json. Renders only authentic mesh triangles at original placement coordinates, untextured pending original materials.</div>
   </div>
- </div>
+ </details>
 <div id="materialPanel">
   <div style="padding-bottom:13px;margin-bottom:13px;border-bottom:1px solid #57717d">
     <p>FINAL HOTEL TEXTURE SETUP · ONE FOLDER LOAD</p>
