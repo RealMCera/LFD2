@@ -16,6 +16,7 @@ main{height:calc(100vh - 95px);min-height:400px;position:relative}
 #loader label{display:block;cursor:pointer;text-align:center;background:#e6a66f;color:#141e22;font-weight:900;padding:14px;letter-spacing:.09em;font-size:12px}
 #loader label:hover{background:#ffd09c}#file,#textureFile,#multiTextureFiles,#finishFolder,#originalChairMesh,#originalPropPlacements{display:none}
 #materialPanel{display:none;margin-top:16px;padding-top:13px;border-top:1px solid #57717d}
+#originalPropPanel button{cursor:pointer;background:#21313d;border:1px solid #617984;color:#edc59e;width:100%;padding:9px;margin-top:7px}
 #materialPanel select{display:block;width:100%;background:#22343e;color:#f5dbba;padding:8px;border:1px solid #607884;margin:8px 0 11px;font:12px Consolas,monospace}
 #materialPanel button{cursor:pointer;background:#21313d;border:1px solid #617984;color:#edc59e;width:100%;padding:9px;margin-top:7px}
 #textureStatus{font:11px/1.6 Consolas,monospace;color:#b6c9cc;padding-top:8px}
@@ -46,7 +47,7 @@ footer a{color:#f1ba87}
 <h1>Explore the <span>original map geometry.</span></h1>
 <p>This experimental renderer opens a mesh converted from your own L4D2 BSP. No map files or game assets are uploaded. Brush surfaces from your original game. Optional one- or multi-material texture previews using private PNGs + UV mesh. No props, enemies or complete Source engine yet.</p>
 <label for="file">SELECT A LOCAL .MESH.JSON FILE</label><input type="file" id="file" accept=".json,application/json">
-<div id="materialPanel">
+<div id="originalPropPanel" style="margin-top:16px;padding-top:13px;border-top:1px solid #57717d">
   <div style="padding-bottom:13px;margin-bottom:13px;border-bottom:1px solid #57717d">
     <p>PHASE 2 · ORIGINAL SOURCE MODEL TRIANGLES (EARLY PREVIEW)</p>
     <label for="originalChairMesh">LOAD LOCAL HOTEL CHAIR MESH JSON</label>
@@ -54,8 +55,10 @@ footer a{color:#f1ba87}
     <label for="originalPropPlacements" style="margin-top:7px">LOAD PRIVATE ORIGINAL PROP PLACEMENTS JSON</label>
     <input id="originalPropPlacements" type="file" accept=".json,application/json">
     <button type="button" id="originalPropToggle">HIDE ORIGINAL CHAIRS</button>
-    <div id="originalPropStatus" style="font:11px/1.6 Consolas,monospace;color:#b5cfb6;margin-top:9px;white-space:pre-wrap">Source chair mesh conversion is experimental. First run py tools\convert_original_hotel_chair.py --run on your local decoded studio trio. Then load research/local/hotel-chair.mesh.json and research/local/hotel-all-props.json. Renders only authentic mesh triangles at original placement coordinates, untextured pending original materials.</div>
+    <div id="originalPropStatus" style="font:11px/1.6 Consolas,monospace;color:#b5cfb6;margin-top:9px;white-space:pre-wrap">Source chair mesh conversion is experimental. Original Xbox chair geometry was decoded successfully. Load research/local/hotel-chair.mesh.json and research/local/hotel-all-props.json. Renders only authentic mesh triangles at original placement coordinates, untextured pending original materials.</div>
   </div>
+ </div>
+<div id="materialPanel">
   <div style="padding-bottom:13px;margin-bottom:13px;border-bottom:1px solid #57717d">
     <p>FINAL HOTEL TEXTURE SETUP · ONE FOLDER LOAD</p>
     <label for="finishFolder">LOAD COMPLETE LOCAL TEXTURE FOLDER</label>
