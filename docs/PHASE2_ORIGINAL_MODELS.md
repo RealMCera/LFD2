@@ -65,3 +65,19 @@ py tools\build_hotel_prop_manifest.py --export
 ```
 
 The new JSON `research/local/hotel-all-props.json` contains original static and entity placements, each with Source model path, position, orientation and class. Original commercial model geometry is not copied. If any record fails validation, the decoder aborts rather than exporting guessed positions. The first full-PC run is pending.
+
+## October 27: Original 2,164 placements confirmed; companion name diagnostics
+
+Owner ran **127/127 tests successfully**. Full local Xbox archive and map scan reported **10 sources examined, 0 failures**. The hotel map successfully decoded **all 1,748 static placements from genuine 72-byte L4D2 v9 records**, combined with **416 entity/door placements**, and wrote `research/local/hotel-all-props.json` privately. **All 228 unique referenced MDL model paths matched** their archive names.
+
+The archive contains **3,211 MDL, 3,182 VVD, 3,182 VTX, and 2,383 PHY filenames** under `left4dead2/zip0.360.zip`. However, the current conventional matching rules returned **zero full MDL/VVD/VTX groups**. This is a filename/path matching diagnostic, **not** evidence that the thousands of companion files are absent. A Source Xbox 360 VTX is normally named `model.360.vtx`, but game/archive variants must be checked against actual names.
+
+The updated `tools/build_hotel_prop_manifest.py` prints read-only samples of actual VVD/VTX names, and the exact companion suffixes and nearby file candidates for the hotel's most frequently placed models. No need to export again; the combined manifest already exists.
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py tools\build_hotel_prop_manifest.py
+```
+
+**Next milestone:** resolve actual Xbox companion filename naming, then verify the first MDL/VVD/VTX binary headers, decode one genuine chair/door mesh privately and finally render that model at an original decoded Source position in Chrome. No original commercial model bytes belong in GitHub.
