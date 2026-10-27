@@ -9,7 +9,7 @@ import zipfile
 
 from tools.probe_original_hotel_model import (
     DEFAULT_MODEL,OUT_DIR,find_components,inspect_model,extract_model,
-    parse_source_header,decode_xbox_mdl,save_decoded_mdl,XboxZipError
+    parse_source_header,decode_xbox_mdl,save_decoded_mdl,studio_model_summary,XboxZipError
 )
 from tools.scan_xbox_zip_directory import scan_directory
 
@@ -83,6 +83,24 @@ class OriginalHotelModelTests(unittest.TestCase):
         self.assertEqual(info["parts"]["mdl"]["checksum"],"f3737e00")
         self.assertEqual(info["parts"]["mdl"]["on_disk_encoding"],"Valve LZMA")
         self.assertEqual(info["parts"]["mdl"]["decoded_bytes"],128)
+
+    def test_source_studio_header_counts_are_bounded(self):
+        mdl,_,_=studio_headers()
+        payload=bytearray(512)
+        payload[:len(mdl)]=mdl
+        payload[12:32]=b"hotel_chair.mdl\x00\x00\x00\x00\x00"
+        struct.pack_into(">I",payload,76,len(payload))
+        struct.pack_into(">2I",payload,204,1,400)
+        struct.pack_into(">2I",payload,232,1,480)
+        parsed=parse_source_header(payload,"mdl")
+        summary=studio_model_summary(bytes(payload),parsed)
+        self.assertEqual(summary["bodyparts"],1)
+        self.assertEqual(summary["textures"],1)
+        self.assertEqual(summary["status"],
+                         "studiohdr counts and table bounds plausible")
+        struct.pack_into(">I",payload,236,65535)
+        result=studio_model_summary(bytes(payload),parsed)
+        self.assertIn("outside decoded",result["status"])
 
     def test_refuse_corrupt_lzma_mdl(self):
         mdl,vvd,vtx=studio_headers()
