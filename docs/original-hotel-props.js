@@ -8,11 +8,13 @@ const originalChairInput=document.getElementById("originalChairMesh");
 const originalPlacementsInput=document.getElementById("originalPropPlacements");
 const originalPropStatus=document.getElementById("originalPropStatus");
 const originalPropToggle=document.getElementById("originalPropToggle");
+const originalChairContrast=document.getElementById("originalChairContrast");
 const originalNextChair=document.getElementById("originalNextChair");
 let originalChairMesh=null,originalPropPlacementData=null;
 let originalChairInstances=[],originalChairCursor=-1;
 let originalPropProgram=null,originalPropVao=null,originalPropBuffer=null;
 let originalPropUniforms=null,originalPropVertexCount=0,originalPropsEnabled=true;
+let originalBrightChairs=true;
 
 function originalPropsClear(){
  if(gl&&originalPropBuffer)gl.deleteBuffer(originalPropBuffer);
@@ -106,13 +108,18 @@ function originalPropsInitGL(){
  "float nearP=2.0,farP=25000.0;",
  "float z=eye.z*(farP+nearP)/(farP-nearP)-(2.0*farP*nearP)/(farP-nearP);",
  "gl_Position=vec4(eye.x*1.35/uAspect,eye.y*1.35,z,eye.z);",
- "vLight=0.30+0.70*max(0.0,dot(normalize(aNormal),normalize(vec3(.4,-.2,.9))));",
+ "vLight=0.38+0.62*abs(dot(normalize(aNormal),normalize(vec3(.4,-.2,.9))));",
  "}"
  ].join("\n"));
  const fs=shader(gl.FRAGMENT_SHADER,[
  "#version 300 es","precision highp float;","in float vLight;",
+ "uniform bool uBright;",
  "out vec4 outColor;",
- "void main(){outColor=vec4(vec3(.67,.76,.78)*vLight,1.0);}"
+ "void main(){",
+ "vec3 base=uBright?vec3(1.0,.73,.35):vec3(.67,.76,.78);",
+ "float light=uBright?max(.72,vLight):vLight;",
+ "outColor=vec4(base*light,1.0);",
+ "}"
  ].join("\n"));
  const prog=gl.createProgram();gl.attachShader(prog,vs);gl.attachShader(prog,fs);
  gl.linkProgram(prog);
@@ -123,7 +130,8 @@ function originalPropsInitGL(){
   camera:gl.getUniformLocation(prog,"uCamera"),
   yaw:gl.getUniformLocation(prog,"uYaw"),
   pitch:gl.getUniformLocation(prog,"uPitch"),
-  aspect:gl.getUniformLocation(prog,"uAspect")
+  aspect:gl.getUniformLocation(prog,"uAspect"),
+  bright:gl.getUniformLocation(prog,"uBright")
  };
 }
 function originalChairCamera(placement){
@@ -150,6 +158,12 @@ function originalJumpToChair(){
             " · 1,403 AUTHENTIC SOURCE TRIANGLES PER CHAIR · C FOR NEXT");
 }
 if(originalNextChair)originalNextChair.addEventListener("click",originalJumpToChair);
+if(originalChairContrast)originalChairContrast.addEventListener("click",()=>{
+ originalBrightChairs=!originalBrightChairs;
+ originalChairContrast.textContent=originalBrightChairs?
+  "CHAIR CONTRAST: ON":"CHAIR CONTRAST: OFF";
+ originalChairContrast.setAttribute("aria-pressed",String(originalBrightChairs));
+});
 
 function rebuildOriginalProps(){
  originalPropsClear();
@@ -176,7 +190,7 @@ function rebuildOriginalProps(){
    originalChairMesh.indices.length/3+" original triangles each · "+
    (originalPropVertexCount/3).toLocaleString()+
    " original-model overlay triangles in neutral diagnostic shading. "+
-   "Original chair skin/lighting not yet converted.";
+   "Diagnostic chair contrast is optional; original chair skin/lighting not yet converted.";
 }
 async function originalPropLoadFile(file,kind){
  if(!file||file.size>36*1024*1024)
@@ -209,6 +223,7 @@ function renderOriginalHotelProps(){
  gl.uniform1f(originalPropUniforms.yaw,cam.yaw);
  gl.uniform1f(originalPropUniforms.pitch,cam.pitch);
  gl.uniform1f(originalPropUniforms.aspect,cvs.width/cvs.height);
+ gl.uniform1i(originalPropUniforms.bright,originalBrightChairs?1:0);
  gl.drawArrays(gl.TRIANGLES,0,originalPropVertexCount);
  gl.bindVertexArray(null);gl.useProgram(program);
 }
