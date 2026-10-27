@@ -446,6 +446,22 @@ py tools\convert_original_hotel_chair.py --diagnose-vvd
 
 Details: [Phase 2 Xbox VVD header investigation](docs/PHASE2_ORIGINAL_MODELS.md). No original chair geometry has been verified in Chrome yet.
 
+## Authentic Xbox VVD compressed vertex block diagnosed and fixed
+
+The original hotel chair's VVD header declares **1,395 Source LOD0 vertices** and stores an \`LZMA\` wrapper at data offset 64. Its declared decompressed size is **89,280 bytes**, exactly the **1,395 × 48-byte vertices plus 1,395 × 16-byte tangents** Source expects. The first mesh conversion failed because it mistakenly read compressed payload bytes as if the full vertex pool were already present.
+
+The [revised authentic chair converter](tools/convert_original_hotel_chair.py) now validates and decodes the bounded Xbox 360 VVD vertex+tangent block in memory, keeping all original pointers and strict safety checks. Next step: confirm actual triangle geometry on the owner's private chair trio (the Source VTX mapping is not yet validated on the owner machine).
+
+\`\`\`powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\convert_original_hotel_chair.py
+py tools\convert_original_hotel_chair.py --run
+\`\`\`
+
+The first model converter invocation is read-only; run \`--run\` only after a valid triangle count is reported. If the later MDL/VTX hierarchy check fails, the converter will abort without writing a fabricated mesh.
+
 ## Further research and options
 
 - [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
