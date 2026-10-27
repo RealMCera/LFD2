@@ -156,6 +156,8 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] Owner verified **140 tests**, real chair MDL LZMA-decoded to **1,792 bytes**, Source v49, one bodypart/material/bone, full MDL/VVD/VTX checksum match f3737e00.
 - [x] Add bounded real MDL/VVD/VTX LOD0 triangle converter and one-model private JSON export (synthetic tests committed, actual private asset run pending).
 - [x] Add WebGL2 local original hotel chair preview at original 47 authored chair positions (material-neutral, pending owner screenshot and asset decoder validation).
+- [x] Capture first actual original chair conversion failure at VVD vertex buffer bounds; add diagnostic of Xbox LOD count, fixup/vertex offsets and expected 48-byte end, without relaxing safety constraints.
+- [ ] Use owner's read-only `--diagnose-vvd` header report to establish Xbox VVD data packing/decompression before running an exporter.
 - [ ] Validate actual model triangle count and original LOD0 decoder against user's chair binary on Windows; inspect Chrome geometry.
 - [ ] Resolve Source model material binding and apply original converted chair textures; implement prop movement and collision separately.
 - [ ] Read original hotel's MDL/VVD/VTX binary versions, checksum consistency and Xbox endianness, then implement real chair geometry conversion and rendering.
