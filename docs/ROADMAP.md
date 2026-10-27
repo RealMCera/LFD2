@@ -169,7 +169,7 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status (October 27, 2026): Hotel brush/textures phase screenshot-confirmed. Phase 2 user passed 140 tests; chair's private Xbox MDL decoded to real Source v49 (1,792 bytes), VVD4 and VTX7 all checksum-match f3737e00. 2,164 original prop locations, including 47 chairs, are decoded. A bounded original triangle converter and opt-in browser chair overlay have been committed, awaiting real-asset and Chrome validation. No original gameplay is running in Chrome.**
+**Status (October 27, 2026): User verified 154/154 Python tests, successfully decoded the genuine Xbox hotel chair to 1,403 triangles and 1,395 original vertices, and exported ignored `research/local/hotel-chair.mesh.json` after successful MDL/VVD/VTX LZMA handling. 47 original authored chair placements remain available. Chrome original-chair overlay and NEXT CHAIR jump control committed; user screenshot/visual inspection still pending. This is only an original-assets research renderer, not playable L4D2 or an engine port.**
 
 ### Full-disc ISO input (extraction confirmed; code analysis pending)
 
