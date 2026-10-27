@@ -150,6 +150,9 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] Add read-only exact suffix + nearby companion path diagnostics for models that failed current conventional match (owner output pending).
 - [x] Owner-confirmed: 128/128 synthetic tests passed; real Xbox model files use the `.dx90.360.vtx` index suffix and optional `.360.phy`; zero matches was a matcher bug.
 - [x] Fix exact Xbox model filename triplet detection, with synthetic hotel-chair test; commit private-only first chair MDL/VVD/VTX header/checksum probe plus explicit one-model extraction mode (owner validation pending).
+- [x] User's original Xbox chair model trio extracted privately: compressed LZMA-wrapped `.360.mdl` (482 bytes), big-endian version 4 VVD (21,717 bytes), version 7 VTX (3,876 bytes). VVD/VTX checksum `f3737e00` matches.
+- [x] Add bounded local Valve LZMA MDL decode, Source studiohdr bodypart/material counts, three-way checksum validation and opt-in ignored decoded-model output (new tests committed; owner validation pending).
+- [ ] Validate decompressed MDL checksum against the known `f3737e00` companion checksum on user's actual Xbox chair; then implement vertex and triangle-strip decoding and actual chair rendering.
 - [ ] Read original hotel's MDL/VVD/VTX binary versions, checksum consistency and Xbox endianness, then implement real chair geometry conversion and rendering.
 - [ ] Locate and decode original .mdl/.vvd/.vtx triplet files before rendering genuine furniture and doors in Chrome.
 
