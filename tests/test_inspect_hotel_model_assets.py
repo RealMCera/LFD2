@@ -44,6 +44,20 @@ class ModelInventoryTests(unittest.TestCase):
         self.assertIn("models/props/hotel/chair.dx90.vtx",
                       model_files("models/props/hotel/chair.mdl")["vtx"])
 
+    def test_real_xbox_dx90_360_filename_triplet(self):
+        model="models/props_furniture/hotel_chair.mdl"
+        expected={
+            model,
+            "models/props_furniture/hotel_chair.vvd",
+            "models/props_furniture/hotel_chair.dx90.360.vtx",
+            "models/props_furniture/hotel_chair.360.phy",
+        }
+        row=model_availability([model],expected)[0]
+        self.assertTrue(row["mesh_ready"])
+        self.assertTrue(row["phy"])
+        self.assertIn("models/props_furniture/hotel_chair.dx90.360.vtx",
+                      model_files(model)["vtx"])
+
     def test_probe_only_local_synthetic_model_headers(self):
         mem=io.BytesIO()
         with zipfile.ZipFile(mem,"w",compression=zipfile.ZIP_STORED) as z:
