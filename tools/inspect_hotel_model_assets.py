@@ -77,11 +77,13 @@ def list_model_placements(entity_lump: bytes) -> list[dict]:
 
 def model_files(model: str) -> dict[str,list[str]]:
     stem=model[:-4]
-    return {"mdl":[model],
-            "vvd":[stem+".vvd"],
-            "vtx":[stem+".vtx",stem+".dx90.vtx",stem+".dx80.vtx",
+    return {"mdl":[model,stem+".360.mdl"],
+            "vvd":[stem+".vvd",stem+".360.vvd"],
+            "vtx":[stem+".dx90.360.vtx",stem+".dx80.360.vtx",
+                   stem+".sw.360.vtx",stem+".vtx",
+                   stem+".dx90.vtx",stem+".dx80.vtx",
                    stem+".sw.vtx",stem+".360.vtx"],
-            "phy":[stem+".phy"]}
+            "phy":[stem+".360.phy",stem+".phy"]}
 
 
 def model_availability(models: list[str], indexed: set[str]) -> list[dict]:
