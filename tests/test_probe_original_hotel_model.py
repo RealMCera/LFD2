@@ -1,5 +1,6 @@
 """Synthetic-only original studio triplet tests, no game model data."""
 import io
+import lzma
 from pathlib import Path
 import struct
 import tempfile
@@ -8,7 +9,7 @@ import zipfile
 
 from tools.probe_original_hotel_model import (
     DEFAULT_MODEL,OUT_DIR,find_components,inspect_model,extract_model,
-    parse_source_header,XboxZipError
+    parse_source_header,decode_xbox_mdl,save_decoded_mdl,XboxZipError
 )
 from tools.scan_xbox_zip_directory import scan_directory
 
@@ -27,6 +28,15 @@ def studio_headers(big_endian=True,checksum=0x12345678):
     struct.pack_into(order+"I",vtx,20,1)
     struct.pack_into(order+"I",vtx,28,1)
     return bytes(mdl),bytes(vvd),bytes(vtx)
+
+
+def source_lzma_wrap(raw):
+    properties=b"\x5d"+struct.pack("<I",65536)
+    packed=lzma.compress(raw,format=lzma.FORMAT_RAW,
+        filters=[{"id":lzma.FILTER_LZMA1,
+                  "dict_size":65536,"lc":3,"lp":0,"pb":2}])
+    result=b"LZMA"+struct.pack(">II",len(raw),len(packed))+properties+packed
+    return result.ljust(64,b"\0")
 
 
 def make_zip(*, checksum=0x12345678, compressed=False):
@@ -53,6 +63,52 @@ class OriginalHotelModelTests(unittest.TestCase):
         self.assertEqual(info["parts"]["mdl"]["endian"],"big")
         self.assertEqual(info["parts"]["vvd"]["version"],4)
         self.assertEqual(info["parts"]["vtx"]["version"],7)
+
+    def test_lzma_wrapped_real_xbox_mdl_decodes_and_checksums_match(self):
+        mdl,vvd,vtx=studio_headers(big_endian=True,checksum=0xf3737e00)
+        mem=io.BytesIO()
+        stem=DEFAULT_MODEL[:-4]
+        with zipfile.ZipFile(mem,"w",compression=zipfile.ZIP_STORED) as out:
+            out.writestr(stem+".360.mdl",source_lzma_wrap(mdl))
+            out.writestr(stem+".360.vvd",vvd)
+            out.writestr(stem+".dx90.360.vtx",vtx)
+        data=mem.getvalue()
+        with io.BytesIO(data) as stream:
+            directory=scan_directory(stream,len(data))
+            records,info=inspect_model(stream,len(data),directory,DEFAULT_MODEL)
+            restored=decode_xbox_mdl(stream,records["mdl"])
+        self.assertEqual(restored,mdl)
+        self.assertTrue(info["all_headers_recognized"])
+        self.assertTrue(info["checksum_match"])
+        self.assertEqual(info["parts"]["mdl"]["checksum"],"f3737e00")
+        self.assertEqual(info["parts"]["mdl"]["on_disk_encoding"],"Valve LZMA")
+        self.assertEqual(info["parts"]["mdl"]["decoded_bytes"],128)
+
+    def test_refuse_corrupt_lzma_mdl(self):
+        mdl,vvd,vtx=studio_headers()
+        corrupted=bytearray(source_lzma_wrap(mdl))
+        struct.pack_into(">I",corrupted,4,0x7fffffff)
+        mem=io.BytesIO()
+        stem=DEFAULT_MODEL[:-4]
+        with zipfile.ZipFile(mem,"w",compression=zipfile.ZIP_STORED) as out:
+            out.writestr(stem+".360.mdl",corrupted)
+            out.writestr(stem+".vvd",vvd)
+            out.writestr(stem+".dx90.360.vtx",vtx)
+        data=mem.getvalue()
+        with io.BytesIO(data) as stream:
+            directory=scan_directory(stream,len(data))
+            with self.assertRaisesRegex(XboxZipError,"Decoded MDL size"):
+                inspect_model(stream,len(data),directory,DEFAULT_MODEL)
+
+    def test_save_decoded_mdl_private_and_refuse_overwrite(self):
+        mdl,_,_=studio_headers()
+        OUT_DIR.mkdir(parents=True,exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=OUT_DIR) as folder:
+            saved=save_decoded_mdl(mdl,DEFAULT_MODEL,Path(folder))
+            self.assertEqual(saved.read_bytes(),mdl)
+            self.assertTrue(saved.is_relative_to(OUT_DIR))
+            with self.assertRaisesRegex(XboxZipError,"already exists"):
+                save_decoded_mdl(mdl,DEFAULT_MODEL,Path(folder))
 
     def test_little_endian_header_fallback(self):
         mdl,vvd,vtx=studio_headers(big_endian=False)
