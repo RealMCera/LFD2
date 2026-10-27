@@ -462,6 +462,18 @@ py tools\convert_original_hotel_chair.py --run
 
 The first model converter invocation is read-only; run \`--run\` only after a valid triangle count is reported. If the later MDL/VTX hierarchy check fails, the converter will abort without writing a fabricated mesh.
 
+## Original chair: VTX hierarchy diagnosis
+
+Latest real-asset conversion passed all 151 synthetic tests and successfully reached the VTX/MDL model hierarchy, but it still refused to export real triangles because counts disagree. We have committed a read-only hierarchy inspector and strictly bounded **optional** Xbox VTX Valve LZMA support; the real Xbox data needs validation.
+
+    cd C:\Users\FrontDesk\LFD2
+    git pull
+    py -m unittest discover -s tests -v
+    py tools\convert_original_hotel_chair.py --diagnose-hierarchy
+    py tools\convert_original_hotel_chair.py
+
+Only use --run after the read-only converter reports a positive triangle count.
+
 ## Further research and options
 
 - [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
