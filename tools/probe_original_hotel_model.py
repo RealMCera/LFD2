@@ -179,6 +179,36 @@ def save_decoded_mdl(studio: bytes, model: str, root: Path = OUT_DIR) -> Path:
     return output
 
 
+def studio_model_summary(data: bytes, parsed: dict) -> dict:
+    """Probe conservative studiohdr_t offsets only after MDL decode.
+
+    Source v48-v49 studiohdr_t has a 408-byte header; header arrays contain
+    model topology metadata, not the actual VVD vertices / VTX triangles.
+    Bounds-check relative offsets before suggesting they are valid.
+    """
+    if "version" not in parsed or len(data)<408:
+        return {"status":"no supported 408-byte studiohdr_t available"}
+    order="<" if parsed["endian"]=="little" else ">"
+    declared=struct.unpack_from(order+"I",data,76)[0]
+    bones,bone_offset=struct.unpack_from(order+"II",data,156)
+    materials,material_offset=struct.unpack_from(order+"II",data,204)
+    bodyparts,bodypart_offset=struct.unpack_from(order+"II",data,232)
+    def bounds(n,at,minimum_size):
+        return (n==0 or (0<at<len(data) and n<=4096 and
+                         n*minimum_size<=len(data)-at))
+    if not all((bounds(bones,bone_offset,216),
+                bounds(materials,material_offset,64),
+                bounds(bodyparts,bodypart_offset,16))):
+        return {"status":"studiohdr arrays outside decoded MDL; format needs inspection",
+                "bones":bones,"textures":materials,"bodyparts":bodyparts,
+                "bodypart_offset":bodypart_offset}
+    return {"status":"studiohdr counts and table bounds plausible",
+            "declared_mdl_bytes":declared,"decoded_mdl_bytes":len(data),
+            "name":data[12:76].split(b"\0",1)[0].decode("ascii","replace"),
+            "bones":bones,"textures":materials,"bodyparts":bodyparts,
+            "bodypart_offset":bodypart_offset,"texture_offset":material_offset}
+
+
 def inspect_model(stream, filesize: int, directory: dict,
                   model: str) -> tuple[dict[str,dict],dict]:
     items=find_components(directory["entries"],model)
@@ -192,6 +222,7 @@ def inspect_model(stream, filesize: int, directory: dict,
         "Valve LZMA" if records["mdl"]["header"].startswith(b"LZMA")
         else "uncompressed")
     headers["mdl"]["decoded_bytes"]=len(model_payload)
+    headers["mdl"]["studio"]=studio_model_summary(model_payload,headers["mdl"])
     checks=[hdr["checksum"] for hdr in headers.values() if "checksum" in hdr]
     matches=(len(checks)==3 and len(set(checks))==1)
     return records,{"parts":headers,"checksum_match":matches,
