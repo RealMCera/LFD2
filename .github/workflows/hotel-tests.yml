@@ -22,3 +22,5 @@ jobs:
         run: node tests/js/finish_texture_folder.test.js
       - name: Original Source chair placement and browser mesh JSON tests
         run: node tests/js/original_hotel_props.test.js
+      - name: Offline all-model batch folder, manifest and GPU transform tests
+        run: node tests/js/original_hotel_batch.test.js
