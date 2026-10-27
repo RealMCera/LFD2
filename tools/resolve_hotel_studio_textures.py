@@ -65,7 +65,11 @@ def safe_catalog(catalog: dict) -> list[dict]:
 def resolve_slots(models: list[dict], tables: dict, vmt_loader) -> dict:
     """Only accept a path when its VMT and its VTFX are both identified."""
     cache={}
-    resolved=[];unresolved=[];stats=Counter()
+    resolved=[];unresolved=[]
+    # Include zero-valued keys in the serialized report. Counter returns 0 for
+    # a missing key, but dict(Counter) drops it; both the CLI and browser
+    # tooling require matched_slots to exist even when nothing matched.
+    stats=Counter({"matched_slots":0,"weighted_matched_slots":0})
     matched_materials=set()
     matched_images=set()
     for model in models:
