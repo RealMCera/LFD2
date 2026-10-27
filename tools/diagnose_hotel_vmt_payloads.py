@@ -87,9 +87,12 @@ def pick_samples(models: list[dict], tables: dict, loader, sample_limit: int=8):
                     break
     by_kind=defaultdict(list)
     errors=Counter()
+    source_index=defaultdict(list)
+    for entries in tables.get("vmt",{}).values():
+        for label,item in entries:
+            source_index[(label,item["name"])].append(item)
     for (label,name),uses in referenced.most_common():
-        matches=[i for entries in tables["vmt"].values() for l,i in entries
-                 if l==label and i["name"]==name]
+        matches=source_index[(label,name)]
         if len(matches)!=1:
             errors["duplicate_manifest_entry"]+=1
             continue
