@@ -63,6 +63,48 @@ def validate_array(data: bytes, start: int, count: int, stride: int,
         raise BspError(f"{label}: invalid count or relative array bounds")
 
 
+def describe_vvd_layout(data: bytes) -> dict:
+    """Report only public layout metadata from one privately held Xbox VVD.
+
+    No vertex payload, raw original data, geometry, or files are exported.
+    This compares the Source 48-byte vertex assumption to the actual on-disk
+    VVD header and identifies possible embedded Valve LZMA wrappers.
+    """
+    parsed=parse_source_header(data[:64],"vvd")
+    if parsed.get("version")!=4 or parsed.get("endian") not in ("big","little"):
+        raise BspError("VVD v4 header not independently recognized")
+    endian=">" if parsed["endian"]=="big" else "<"
+    num_lods=read_at(data,endian,"I",12)[0]
+    lod_counts=list(read_at(data,endian,"8I",16))
+    fixups,fixup_start,vertex_start,tangent_start=read_at(data,endian,"4I",48)
+    n=lod_counts[0]
+    remain=max(0,len(data)-vertex_start) if vertex_start<=len(data) else 0
+    at_start=(data[vertex_start:vertex_start+8].hex(" ")
+              if 0<=vertex_start<len(data) else "outside file")
+    hints=[]
+    if vertex_start==0 or vertex_start>=len(data):
+        hints.append("VVD vertex data start absent/out of range")
+    if n>0 and vertex_start<=len(data) and vertex_start+n*48>len(data):
+        hints.append("48-byte Source vertex array does not fit; Xbox data layout may differ")
+    if 0<=vertex_start<len(data) and data[vertex_start:vertex_start+4]==b"LZMA":
+        hints.append("Valve LZMA signature found at VVD vertex offset; compressed payload needs decoder")
+    if 0<=vertex_start<len(data) and n:
+        hints.append(f"Bytes available per declared LOD0 vertex: {remain/n:.2f}")
+    return {
+        "file_bytes":len(data),"header_magic":data[:4].hex(" "),
+        "header_version":parsed["version"],"byte_order":parsed["endian"],
+        "checksum":parsed["checksum"],"lod_count":num_lods,
+        "lod_vertex_counts":lod_counts,
+        "fixup_count":fixups,"fixup_start":fixup_start,
+        "vertex_data_start":vertex_start,"tangent_data_start":tangent_start,
+        "assumed_vertex_bytes":VVD_VERTEX_SIZE,
+        "expected_vertex_end_48":vertex_start+n*VVD_VERTEX_SIZE,
+        "available_vertex_bytes":remain,
+        "vertex_start_first8_hex":at_start,
+        "hints":hints,
+    }
+
+
 def decode_vvd(data: bytes, checksum: str) -> list[dict]:
     hdr=parse_source_header(data[:64],"vvd")
     if (hdr.get("version")!=4 or hdr.get("checksum")!=checksum):
@@ -74,7 +116,20 @@ def decode_vvd(data: bytes, checksum: str) -> list[dict]:
     if num_lods<1 or num_lods>8 or lod_counts[0]>MAX_VERTICES:
         raise BspError("VVD LOD count outside supported range")
     needed=lod_counts[0]
-    validate_array(data,vertex_start,needed,VVD_VERTEX_SIZE,"VVD positions",MAX_VERTICES)
+    try:
+        validate_array(data,vertex_start,needed,VVD_VERTEX_SIZE,"VVD positions",MAX_VERTICES)
+    except BspError as exc:
+        # Retain strict limits and explain which assumption failed rather than
+        # guessing Xbox vertex stride or silently truncating the original mesh.
+        meta=describe_vvd_layout(data)
+        raise BspError(
+            "VVD positions: 48-byte Source vertex array exceeds local Xbox VVD; "
+            f"LOD0={meta['lod_vertex_counts'][0]}, "
+            f"vertex_start={meta['vertex_data_start']}, "
+            f"expected_end={meta['expected_vertex_end_48']}, "
+            f"file_bytes={meta['file_bytes']}; "
+            "run --diagnose-vvd for exact original header layout"
+        ) from exc
     if fixups:
         validate_array(data,fixup_start,fixups,12,"VVD fixups",MAX_VERTICES)
         order_ids=[]
@@ -264,11 +319,19 @@ def main() -> int:
     p.add_argument("--out",type=Path,default=DEFAULT_OUT)
     p.add_argument("--run",action="store_true",
                    help="Explicitly save one original chair geometry JSON privately")
+    p.add_argument("--diagnose-vvd",action="store_true",
+                   help="Read-only report of VVD header, LOD0 vertex counts, offsets and source stride fit")
     args=p.parse_args()
     try:
         for file in (args.mdl,args.vvd,args.vtx):
             if not file.expanduser().resolve().is_relative_to(PRIVATE):
                 raise ValueError("Original commercial model inputs must remain inside ignored research/local")
+        if args.diagnose_vvd:
+            diag=describe_vvd_layout(args.vvd.read_bytes())
+            print("ORIGINAL XBOX VVD LAYOUT (metadata only; no model data exported)")
+            print(json.dumps(diag,indent=2))
+            print("Read-only VVD diagnosis complete. No geometry written.")
+            return 0
         decoded=convert_original_model(args.mdl.read_bytes(),args.vvd.read_bytes(),
                                        args.vtx.read_bytes())
         print(f"Source v49 studio mesh decoded: {decoded['triangle_count']:,} triangles, "
