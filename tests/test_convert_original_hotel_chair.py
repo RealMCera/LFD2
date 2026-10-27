@@ -1,9 +1,10 @@
 """Synthetic Source 49 MDL / VVD4 / Xbox VTX7 triangle reconstruction tests."""
 import struct
+import lzma
 import unittest
 from tools.bsp_to_browser_mesh import BspError
 from tools.convert_original_hotel_chair import (
-    decode_vvd,studio_meshes,vtx_triangles,convert_original_model,describe_vvd_layout
+    decode_vvd,studio_meshes,vtx_triangles,convert_original_model,describe_vvd_layout,expanded_vvd
 )
 
 CHECKSUM=0xf3737e00
@@ -119,6 +120,52 @@ class OriginalChairTrianglesTests(unittest.TestCase):
         struct.pack_into(">i",bad,568,0)
         with self.assertRaisesRegex(BspError,"mesh association"):
             convert_original_model(bytes(bad),vvd,vtx)
+
+    def test_compressed_original_xbox_vvd_replaces_vertex_and_tangent_arrays(self):
+        mdl,vvd,vtx=original_tri_test_data()
+        # Source header uncompressed; Xbox 360 packs vertex + tangent pools
+        # behind a Valve LZMA header beginning at vertexDataStart (byte 64).
+        source=bytearray(vvd)
+        source+=b"\x00"*(3*16)
+        struct.pack_into(">I",source,60,64+3*48)
+        raw_vertex_tangent=bytes(source[64:])
+        compressed=lzma.compress(raw_vertex_tangent,format=lzma.FORMAT_RAW,
+                                 filters=[{"id":lzma.FILTER_LZMA1,
+                                           "dict_size":65536,"lc":3,"lp":0,"pb":2}])
+        header=(b"LZMA"+struct.pack("<II",len(raw_vertex_tangent),len(compressed))
+                +b"\x5d"+struct.pack("<I",65536))
+        compressed_vvd=bytes(source[:64])+header+compressed
+        report=describe_vvd_layout(compressed_vvd)
+        self.assertIn("Valve LZMA signature found at VVD vertex offset",
+                      report["hints"])
+        expanded,meta=expanded_vvd(compressed_vvd)
+        self.assertEqual(expanded,bytes(source))
+        self.assertEqual(meta["compression"],"Valve LZMA")
+        self.assertEqual(meta["decoded_vertex_bytes"],144)
+        self.assertEqual(meta["decoded_tangent_bytes"],48)
+        self.assertEqual(decode_vvd(compressed_vvd,"f3737e00"),
+                         decode_vvd(bytes(source),"f3737e00"))
+        parsed=convert_original_model(mdl,compressed_vvd,vtx)
+        self.assertEqual(parsed["triangle_count"],1)
+
+    def test_compressed_xbox_vvd_rejects_wrong_unpacked_size(self):
+        _mdl,vvd,_vtx=original_tri_test_data()
+        source=bytearray(vvd)+b"\x00"*(3*16)
+        struct.pack_into(">I",source,60,64+3*48)
+        raw=bytes(source[64:])
+        compressed=lzma.compress(raw,format=lzma.FORMAT_RAW,
+                                 filters=[{"id":lzma.FILTER_LZMA1,
+                                           "dict_size":65536,"lc":3,"lp":0,"pb":2}])
+        bad=(b"LZMA"+struct.pack("<II",len(raw)-8,len(compressed))
+             +b"\x5d"+struct.pack("<I",65536)+compressed)
+        with self.assertRaisesRegex(BspError,"declared sizes disagree"):
+            expanded_vvd(bytes(source[:64])+bad)
+
+    def test_uncompressed_vvd_data_remains_untouched(self):
+        _mdl,vvd,_vtx=original_tri_test_data()
+        data,meta=expanded_vvd(vvd)
+        self.assertEqual(data,vvd)
+        self.assertEqual(meta["compression"],"none")
 
     def test_vvd_fixups_reorder_real_vertex_pool(self):
         mdl,vvd,vtx=original_tri_test_data()
