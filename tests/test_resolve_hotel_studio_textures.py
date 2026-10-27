@@ -49,6 +49,10 @@ class StudioTextureMatchTests(unittest.TestCase):
         result=resolve_slots([row(candidates=[["models/windows/glass"]])],tables,
                              lambda *args:b'"$basetexture" "models/windows/glass_base"')
         self.assertEqual(result["stats"]["matched_slots"],0)
+        self.assertEqual(result["stats"]["weighted_matched_slots"],0)
+        self.assertEqual(result["stats"]["unique_exact_materials"],0)
+        self.assertEqual(result["stats"]["unique_original_images"],0)
+        self.assertEqual(result["stats"]["unmatched_slots"],1)
         self.assertEqual(result["unresolved"][0]["reason"],"missing_or_ambiguous_vtfx")
 
     def test_missing_basetexture_cannot_be_filled_with_guessed_filenames(self):
