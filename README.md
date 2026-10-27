@@ -371,6 +371,35 @@ py tools\build_hotel_prop_manifest.py --export
 
 The private output is `research/local/hotel-all-props.json`. Original commercial model meshes **are not extracted or uploaded**. If the complete archive scan still finds no model triplets, we will inspect Xbox packaging/naming variants rather than fabricating geometry.
 
+## Xbox model companion naming resolved — first original chair binary next
+
+**Owner October 27 PowerShell result:** **128/128 tests passed**, all **2,164 original prop placements** remain verified and privately saved, with **228/228 referenced MDL files present** in `left4dead2/zip0.360.zip`. The directory diagnostics established the real Xbox filename suffixes:
+
+- `models/props_furniture/hotel_chair.mdl` — model definition
+- `models/props_furniture/hotel_chair.vvd` — Source vertex array
+- `models/props_furniture/hotel_chair.dx90.360.vtx` — Xbox optimized mesh indices
+- `models/props_furniture/hotel_chair.360.phy` — optional physics
+
+The earlier zero complete filename sets were due to a **matcher bug**: it checked `.dx90.vtx` but not `.dx90.360.vtx`. [tools/inspect_hotel_model_assets.py](tools/inspect_hotel_model_assets.py) now recognizes the observed suffixes (including `.360.phy`).
+
+New [tools/probe_original_hotel_model.py](tools/probe_original_hotel_model.py) reads only the original studio headers, infers plausible endianness and compares Source MDL/VVD/VTX checksums. It may optionally copy one original chair trio under ignored `research/local/original-models/`. No original commercial bytes are added to GitHub.
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\build_hotel_prop_manifest.py
+py tools\probe_original_hotel_model.py
+```
+
+After a successful header probe, opt in to copying **only the chair's three original model files**:
+
+```powershell
+py tools\probe_original_hotel_model.py --extract
+```
+
+**Not yet done:** Xbox model vertex/index decoding or displaying authentic chairs inside Chrome. The inspector and its synthetic tests still require verification on the owner's PC. The project remains focused on original models and props, not revisiting textures.
+
 ## Further research and options
 
 - [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
