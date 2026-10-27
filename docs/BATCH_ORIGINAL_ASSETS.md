@@ -187,3 +187,32 @@ The optional `--export` saves material-asset reference metadata only in
 Existing `hotel-auto-props-v2` geometry remains untouched. The next
 separate implementation milestone is batching original VTFX conversion
 and assigning decoded PNGs by original model mesh/skin material IDs.
+
+## October 27: Xbox material contents not yet decoded — shared VMT diagnostic
+
+The owner-side exact-match resolver passed all five isolated Python tests
+and scanned **393 original Source studio material slots**: **zero** had
+a verified VMT `$basetexture` plus an original VTFX link.
+**388 slots** had a VMT source entry, but its bytes yielded no usable
+`$basetexture`; five had missing/ambiguous VMT source names.
+This is not evidence that all those textures are absent. The current
+VMT parser assumes uncompressed, plain-text Source KeyValues,
+while the actual Xbox payload encoding remains unverified.
+
+Use the new `tools/diagnose_hotel_vmt_payloads.py` to inspect a
+few bounded byte signatures across all original referenced VMT files
+in **one read-only pass** (no extraction or game uploads):
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -p "test_diagnose_hotel_vmt_payloads.py" -v
+py tools\diagnose_hotel_vmt_payloads.py
+```
+
+The report distinguishes likely binary, NUL-heavy, LZMA-wrapped and
+ordinary-text materials and shows just file names, short hex prefixes,
+byte ratios and parser flags. It also separately reports direct same-name
+VTFX filename *candidates*, without pretending those are verified
+shader material bindings. Once the format is established, implement
+a shared decoder and retry exact matching, then batch texture conversion.
