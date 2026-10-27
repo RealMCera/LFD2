@@ -4,6 +4,25 @@
 
 The archived [After the Siren demo](docs/legacy-demo.html) is a **separate, basic JavaScript raycasting experiment**. It is NOT the original game, does not use Source, and is **not the target implementation**. We will stop treating improvements to the demo's graphics as progress toward running actual L4D2.
 
+## First complete hotel model batch result — October 27
+
+The owner's automatic importer processed all **228 original model types**.
+It successfully decoded **96 original mesh types** and saved a private
+scene covering **1,022 of the 2,164 original prop placements**.
+The 132 remaining types are saved as categorized errors, not manual tasks.
+To inspect shared failure families without reconverting anything:
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py tools\report_hotel_scene_bundle.py
+```
+
+Open the Chrome hotel map viewer, load the previously converted hotel mesh,
+then **LOAD ENTIRE HOTEL AUTO-PROPS FOLDER** and choose
+`research/local/hotel-auto-props` (one folder, not 96 individual models).
+WebGL rendering of the complete batch still needs the owner's validation.
+
 ## Automated model importing — no per-object conversion
 
 With the first original Xbox chair model decoded, the next phase uses the
