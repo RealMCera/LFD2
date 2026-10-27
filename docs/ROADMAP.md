@@ -12,7 +12,8 @@
 - [x] New browser one-folder loader with WebGL2 GPU instancing across original model placements; old single-chair test UI collapsed
 - [x] Owner's first full Windows model batch processed **228/228** original models, decoded **96**, skipped **132** and generated a private scene with **1,022/2,164** original prop placements.
 - [x] Add read-only grouped failure classifier weighted by original placement impact so format fixes can recover many objects at once.
-- [ ] Verify Chrome loads the full original model bundle through a single local directory picker and inspect model rendering.
+- [x] Owner screenshot on October 27 visually verifies the all-model Chrome folder importer: textured original hotel BSP and multiple separately colored original prop meshes appear in the hallway; NEXT MODEL control active. This confirms import/render operation, not that all 96 model types are anatomically/material-correct.
+- [ ] Add authentic Source studio material and texture assignments for rendered model types (currently diagnostic flat colors); check affected geometry families, not individual objects.
 - [ ] Review read-only batch report and extend shared MDL/VVD/VTX decoder patterns for the highest-impact rejected category.
 - [ ] Generalize same asset importer across the other maps and model formats, then integrate faithful model materials and Source gameplay systems
 
