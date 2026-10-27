@@ -252,6 +252,103 @@ def studio_meshes(mdl: bytes, checksum: str) -> list[dict]:
     return bodyparts
 
 
+MAX_DECODED_VTX = 16 * 1024 * 1024
+
+
+def expanded_vtx(data: bytes, checksum: str) -> tuple[bytes,dict]:
+    """Inspect and optionally expand the Xbox VTX bodypart block.
+
+    A Source v7 VTX header is 36 bytes; some Xbox archives store following
+    optimized model data as a bounded Valve LZMA member. No guessed bodypart
+    counts/offsets are used: expand only if its own exact wrapper is present.
+    """
+    hdr=parse_source_header(data[:64],"vtx")
+    if hdr.get("version")!=7 or hdr.get("checksum")!=checksum:
+        raise BspError("VTX header checksum/version mismatch")
+    order=">" if hdr["endian"]=="big" else "<"
+    count,start=read_at(data,order,"2I",28)
+    if not 1<=count<=MAX_MODELS or not 36<=start<len(data):
+        raise BspError("VTX original bodypart header offset/count invalid")
+    if data[start:start+4]!=b"LZMA":
+        return data,{"compression":"none","bodypart_offset":start,
+                     "bodypart_count":count,"file_bytes":len(data)}
+    raw=data[start:]
+    if len(raw)<17:
+        raise BspError("Truncated Xbox VTX Valve LZMA wrapper")
+    # Wrapper sizes can be little or big endian regardless of the studio file
+    # byte order. Both 32-bit fields must agree with the actual stored bytes.
+    candidates=[(o,*read_at(raw,o,"2I",4)) for o in ("<",">")]
+    good=[(o,unpacked,compressed) for o,unpacked,compressed in candidates
+          if 8*count<=unpacked<=MAX_DECODED_VTX
+          and compressed==len(raw)-17]
+    if len(good)!=1:
+        raise BspError(
+            "Xbox VTX LZMA sizes do not match bounded Source bodypart data: "
+            f"wrapper={candidates}, compressed_available={len(raw)-17}"
+        )
+    decoded=decode_valve_lzma(raw,good[0][1],order)
+    if len(decoded)!=good[0][1]:
+        raise BspError("Original Xbox VTX LZMA unpacked size mismatch")
+    output=data[:start]+decoded
+    validate_array(output,start,count,8,"decompressed VTX bodyparts",MAX_MODELS)
+    return output,{"compression":"Valve LZMA","bodypart_offset":start,
+                   "bodypart_count":count,"compressed_bytes":len(raw),
+                   "decoded_bodypart_bytes":len(decoded),
+                   "expanded_bytes":len(output)}
+
+
+def diagnose_studio_hierarchy(mdl: bytes, vtx: bytes) -> dict:
+    """Read-only counts/offsets, never original vertices or model geometry."""
+    hdr=parse_source_header(mdl[:64],"mdl")
+    tx=parse_source_header(vtx[:64],"vtx")
+    if hdr.get("version")!=49 or tx.get("version")!=7 or (
+        hdr.get("checksum")!=tx.get("checksum")
+    ):
+        raise BspError("Studio hierarchy diagnosis requires checksum-matched v49/v7 files")
+    mdle=">" if hdr["endian"]=="big" else "<"
+    txe=">" if tx["endian"]=="big" else "<"
+    mb,mbptr=read_at(mdl,mdle,"2I",232)
+    vb,vbptr=read_at(vtx,txe,"2I",28)
+    if not (1<=mb<=MAX_MODELS and 1<=vb<=MAX_MODELS
+            and mbptr+mb*16<=len(mdl) and 36<=vbptr<len(vtx)):
+        raise BspError("Studio hierarchy bodypart bounds invalid")
+    mdls=[]
+    for i in range(mb):
+        pos=mbptr+16*i
+        num=read_at(mdl,mdle,"I",pos+4)[0]
+        offset=read_at(mdl,mdle,"I",pos+12)[0]
+        mdls.append({"part":i,"mdlnummodels":num,
+                     "mdlmodeloffset_relative":offset,
+                     "mdlmodel_start":pos+offset})
+    prefix=vtx[vbptr:vbptr+8]
+    wrapper=prefix[:4]==b"LZMA"
+    raw= {"vtx_version":tx["version"],"vtx_endian":tx["endian"],
+          "checksum_match":hdr["checksum"]==tx["checksum"],
+          "mdl_bodyparts":mb,"mdl_bodypart_offset":mbptr,
+          "mdl_model_counts":mdls,
+          "vtx_bodyparts":vb,"vtx_bodypart_offset":vbptr,
+          "vtx_first_bodypart_eight_bytes_hex":prefix.hex(" "),
+          "vtx_bodypart_lzma_wrapper":wrapper,
+          "vtx_file_bytes":len(vtx)}
+    if wrapper:
+        unpacked,info=expanded_vtx(vtx,hdr["checksum"])
+        raw["decoded_vtx"] = info
+        vtx=unpacked
+    else:
+        raw["decoded_vtx"]={"compression":"none"}
+    parts=[]
+    for i in range(vb):
+        p=vbptr+i*8
+        if p+8>len(vtx):
+            raise BspError("Original VTX bodypart outside data")
+        n,offset=read_at(vtx,txe,"2I",p)
+        parts.append({"part":i,"vtxnummodels":n,
+                      "vtxmodeloffset_relative":offset,
+                      "vtxmodel_start":p+offset})
+    raw["vtx_model_counts"]=parts
+    return raw
+
+
 def vtx_triangles(vtx: bytes, studio: list, pool_size: int,
                   checksum: str) -> list[tuple[int,int,int,int]]:
     hdr=parse_source_header(vtx[:64],"vtx")
@@ -259,6 +356,7 @@ def vtx_triangles(vtx: bytes, studio: list, pool_size: int,
         hdr.get("endian") not in ("little","big")):
         raise BspError("VTX v7 header/checksum mismatch")
     order=">" if hdr["endian"]=="big" else "<"
+    vtx,_vtx_compression=expanded_vtx(vtx,checksum)
     nbody,bodyptr=read_at(vtx,order,"2I",28)
     if nbody!=len(studio):
         raise BspError("VTX/MDL bodypart counts disagree")
@@ -268,7 +366,13 @@ def vtx_triangles(vtx: bytes, studio: list, pool_size: int,
         pbody=bodyptr+b*8
         nm,mo=read_at(vtx,order,"2I",pbody)
         if nm!=len(studio[b]):
-            raise BspError("VTX/MDL model counts disagree")
+            raise BspError(
+                "VTX/MDL model counts disagree at bodypart "
+                f"{b}: VTX={nm}, MDL={len(studio[b])}, "
+                f"bodypart_offset={pbody}, model_array_offset={mo}, "
+                f"compression={_vtx_compression['compression']}; "
+                "run --diagnose-hierarchy for read-only Source offsets"
+            )
         validate_array(vtx,pbody+mo,nm,8,"VTX models",MAX_MODELS)
         for m in range(nm):
             pmodel=pbody+mo+m*8
@@ -375,6 +479,8 @@ def main() -> int:
                    help="Explicitly save one original chair geometry JSON privately")
     p.add_argument("--diagnose-vvd",action="store_true",
                    help="Read-only report of VVD header, LOD0 vertex counts, offsets and source stride fit")
+    p.add_argument("--diagnose-hierarchy",action="store_true",
+                   help="Read-only compare MDL/VTX bodypart/model offsets and inspect any Xbox VTX LZMA")
     args=p.parse_args()
     try:
         for file in (args.mdl,args.vvd,args.vtx):
@@ -388,6 +494,13 @@ def main() -> int:
                 _expanded,info=expanded_vvd(args.vvd.read_bytes())
                 print("Verified bounded Source VVD decompression:",info)
             print("Read-only VVD diagnosis complete. No geometry written.")
+            return 0
+        if args.diagnose_hierarchy:
+            report=diagnose_studio_hierarchy(args.mdl.read_bytes(),
+                                               args.vtx.read_bytes())
+            print("ORIGINAL XBOX MDL/VTX HIERARCHY (read-only metadata)")
+            print(json.dumps(report,indent=2))
+            print("No original geometry exported.")
             return 0
         decoded=convert_original_model(args.mdl.read_bytes(),args.vvd.read_bytes(),
                                        args.vtx.read_bytes())
