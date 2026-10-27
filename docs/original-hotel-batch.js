@@ -329,13 +329,22 @@ async function batchLoadTextureFolder(filelist){
  }
  if(selectedBytes>BATCH_TEXTURE_MAX_BYTES)
    throw Error("Too many original model PNG texture bytes for safe GPU upload.");
- let converted=0,skipped=0;
+ // A second folder import must free its previous GPU textures first.
+ for(const tex of batchTextureCache.values())gl.deleteTexture(tex);
+ batchTextureCache.clear();
+ for(const e of batchEntries)e.materialTextures.clear();
+ let converted=0,skipped=0,totalPixels=0;
  try{
   for(const [path,file] of needed){
    const image=await createImageBitmap(file);
    try{
     if(!image.width||!image.height||image.width>8192||image.height>8192)
      throw Error("Original texture dimensions unsupported");
+    // Bound expanded RGBA GPU memory instead of trusting PNG byte sizes.
+    if(totalPixels+image.width*image.height>60*1024*1024){
+     skipped++;continue;
+    }
+    totalPixels+=image.width*image.height;
     const tex=gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D,tex);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
