@@ -55,11 +55,11 @@ class StudioExactNameTextureCandidateTests(unittest.TestCase):
                          "vmt_not_observed_binary_family")
 
     def test_no_nearest_name_guess_and_search_path_fallback(self):
-        n="models/furniture/chair",fallback="chair"
+        name="models/furniture/chair";fallback="chair"
         tables={"vmt":{"chair":[pair("vmt","chair")]},
                 "vtfx":{"chair":[pair("vtfx","chair")],
                         "models/furniture/chairs":[pair("vtfx","models/furniture/chairs")]}}
-        result=plan_provisional([mdl([n[0],fallback])],tables,
+        result=plan_provisional([mdl([name,fallback])],tables,
                                 lambda *_:PREFIX+b"\0"*8)
         self.assertEqual(result["stats"]["candidate_slots"],1)
         self.assertEqual(result["matches"][0]["texture"],fallback)
