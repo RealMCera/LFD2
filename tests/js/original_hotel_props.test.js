@@ -6,10 +6,26 @@ const fs=require("node:fs");
 const path=require("node:path");
 const vm=require("node:vm");
 const code=fs.readFileSync(path.join(__dirname,"../../docs/original-hotel-props.js"),"utf8");
-const document={getElementById(){return {textContent:"",value:"",
-  addEventListener(){}}}};
+const controls=new Map();
+const document={getElementById(id){
+ const el={textContent:"",value:"",listeners:{},
+  addEventListener(type,fn){this.listeners[type]=fn;},
+  setAttribute(name,value){this[name]=value;}};
+ controls.set(id,el);return el;
+}};
 const context=vm.createContext({document,gl:null,program:null});
 vm.runInContext(code,context);
+const contrast=controls.get("originalChairContrast");
+assert.ok(contrast.listeners.click);
+assert.equal(vm.runInContext("originalBrightChairs",context),true);
+contrast.listeners.click();
+assert.equal(contrast.textContent,"CHAIR CONTRAST: OFF");
+assert.equal(contrast["aria-pressed"],"false");
+assert.equal(vm.runInContext("originalBrightChairs",context),false);
+contrast.listeners.click();
+assert.equal(contrast.textContent,"CHAIR CONTRAST: ON");
+assert.equal(contrast["aria-pressed"],"true");
+assert.equal(vm.runInContext("originalBrightChairs",context),true);
 const mesh={format:"lfd2-source-original-model-v1",
  model:"models/props_furniture/hotel_chair.mdl",
  vertices:[0,0,0,4,0,0,0,2,0],
