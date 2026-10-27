@@ -81,3 +81,21 @@ py tools\build_hotel_prop_manifest.py
 ```
 
 **Next milestone:** resolve actual Xbox companion filename naming, then verify the first MDL/VVD/VTX binary headers, decode one genuine chair/door mesh privately and finally render that model at an original decoded Source position in Chrome. No original commercial model bytes belong in GitHub.
+
+## October 27: Correct Xbox studio model names and first-chair binary inspection
+
+Owner's read-only run passed **128/128 Python tests** and found model filename suffixes beside each referenced `*.mdl`. The model files are present: Source Xbox VTX indexes are named **`*.dx90.360.vtx`**, not the assumed `*.dx90.vtx`, and physics files are `*.360.phy`. VVD files retain `*.vvd`, MDL retain `*.mdl`. Model mesh companion matching is now fixed.
+
+The new single-model tool `tools/probe_original_hotel_model.py` safely reads at most **64 bytes of binary headers for each of the original chair MDL, VVD and VTX**, checks plausible Xbox byte order and their common Source checksums, and reports the original file sizes. It does not itself decode triangle strips or vertex weights; these must be interpreted using the source studio structures before any accurate 3D rendering.
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\build_hotel_prop_manifest.py
+py tools\probe_original_hotel_model.py
+```
+
+If that succeeds, use `py tools\probe_original_hotel_model.py --extract` to copy **just the three original chair files** into ignored `research/local/original-models/models/props_furniture/` (never the public GitHub repo). The tool will refuse overwrites and unknown compressed ZIP members. If Source checksums do not agree, inspect the headers before writing any mesh-conversion logic; do not claim the object is renderable simply because three filenames match.
+
+Reference material: [MDL studio headers](https://pysourcesdk.github.io/ValveMDL/datastructures/studiohdr.html), [VVD vertex headers](https://pysourcesdk.github.io/ValveMDL/datastructures/vvd.html), and [VTX optimized mesh header](https://pysourcesdk.github.io/ValveMDL/datastructures/vtx.html). The actual original Xbox data still needs the owner's local validation.
