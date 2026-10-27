@@ -44,6 +44,25 @@ assert.equal(context.batchValidateMesh(mesh,model),mesh);
 assert.throws(()=>context.batchValidateMesh({...mesh,indices:[0,1,3]},model),
  /vertex\/index bounds/);
 assert.deepEqual(Array.from(context.batchColor(model)),Array.from(context.batchColor(model)));
+const patterned={...mesh,indices:[0,1,2,0,2,1,2,1,0],
+ uvs:[0,0,1,0,0,1],triangle_material_ids:[3,1,3]};
+assert.equal(context.batchValidateMesh(patterned,model),patterned);
+const grouping=context.batchGroupIndices(patterned);
+assert.deepEqual(Array.from(grouping.indices),[0,1,2,2,1,0,0,2,1]);
+assert.deepEqual(Array.from(grouping.groups).map(x=>[x.slot,x.count,x.offsetBytes]),
+ [[3,6,0],[1,3,24]]);
+assert.throws(()=>context.batchValidateMesh({...patterned,uvs:[0]},model),
+ /vertex\\/index\\/material\\/UV bounds/);
+const textureManifest={format:"lfd2-original-hotel-provisional-model-textures-v1",
+ models:[{model,slot:3,texture:"models/furniture/chair",
+    png:"textures/models/furniture/chair.png",
+    mapping:"PROVISIONAL_EXACT_FILENAME_NOT_VMT_VERIFIED"}]};
+assert.equal(context.batchValidateTextureManifest(textureManifest).length,1);
+assert.throws(()=>context.batchValidateTextureManifest({...textureManifest,models:[
+ {...textureManifest.models[0],png:"textures/../unsafe.png"}]}),/Invalid or duplicate/);
+assert.throws(()=>context.batchValidateTextureManifest({...textureManifest,models:[
+ textureManifest.models[0],textureManifest.models[0]]}),/Invalid or duplicate/);
 assert.ok(controls.get("originalBatchFolder").listeners.change);
 assert.ok(controls.get("originalNextModel").listeners.click);
+assert.ok(controls.get("originalBatchTextureFolder").listeners.change);
 console.log("Offline original hotel batch model folder validation and GPU instance transforms passed");
