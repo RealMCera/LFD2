@@ -145,11 +145,14 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 - [x] Owner verified 120 passing tests, original compressed sprp v9 dictionary with 188 entries and 1,748 records with apparent 72-byte stride; entity placement manifest has 416 authored objects.
 - [x] Add complete Source v9/72-byte static placement decoder with per-record validation and all-Xbox-pack + loose files + BSP Pak model discovery (synthetic tests committed, owner run pending).
 - [ ] Confirm 1,748 static v9 placements against the real Xbox file with the new full-record validation and export private combined 2,164-placement manifest.
+- [x] Owner's actual PC: 127 tests passed, decoded all 1,748 static 72-byte v9 records and 416 entity model placements; private hotel-all-props.json created.
+- [x] Confirm 228/228 referenced MDL filenames across ten asset sources with zero package scan errors; zip0 includes 3,211 MDL, 3,182 VVD, 3,182 VTX, 2,383 PHY.
+- [x] Add read-only exact suffix + nearby companion path diagnostics for models that failed current conventional match (owner output pending).
 - [ ] Locate and decode original .mdl/.vvd/.vtx triplet files before rendering genuine furniture and doors in Chrome.
 
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status (October 26, 2026): Phase 1 verified — 53 original textures on 20,198/27,374 hotel brush triangles (73.8%). Phase 2 owner verified all 120 tests, 1,748 compressed static prop records (188 model dictionary entries, apparent 72-byte v9 stride) and 416 dynamic/physics/door placements; zip0-only model search found no model filenames. New full-record static v9 decoder and all-pack asset discovery committed, awaiting actual-PC run. Original props/characters/gameplay still do NOT render in Chrome.**
+**Status (October 27, 2026): Original browser hotel geometry and texture phase remains screenshot-confirmed. Phase 2 owner verified 127/127 tests, 1,748 static 72-byte v9 placements and 416 entity placements (2,164 total), private manifest exported, and 228/228 referenced MDL paths found in Xbox packages. Thousands of VVD/VTX names exist but standard triplet matcher found 0; next: inspect actual filename suffix conventions, validate mesh binaries and render first real model. No original prop meshes or gameplay yet run in Chrome.**
 
 ### Full-disc ISO input (extraction confirmed; code analysis pending)
 
