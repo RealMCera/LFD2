@@ -51,6 +51,13 @@ footer a{color:#f1ba87}
   <p>ALL ORIGINAL HOTEL MODELS · ONE FOLDER</p>
   <label for="originalBatchFolder">LOAD ENTIRE HOTEL AUTO-PROPS FOLDER</label>
   <input type="file" id="originalBatchFolder" webkitdirectory directory multiple>
+  <div style="margin-top:12px;border-top:1px solid #57717d;padding-top:10px">
+    <p>OPTIONAL · ORIGINAL XBOX MODEL TEXTURE PREVIEWS</p>
+    <p style="font-size:11px">After loading the v2 model bundle, choose the ENTIRE separate private hotel-model-textures folder. These are real original VTFX images matched by exact filenames only. Xbox binary VMT shader bindings remain unverified, so treat appearance as provisional.</p>
+    <label for="originalBatchTextureFolder">LOAD ALL PROVISIONAL ORIGINAL MODEL TEXTURES · ONE FOLDER</label>
+    <input type="file" id="originalBatchTextureFolder" webkitdirectory directory multiple>
+    <div id="originalBatchTextureStatus" style="font:11px/1.6 Consolas,monospace;color:#d7bd8a;margin-top:8px;white-space:pre-wrap">Optional: py tools\\build_hotel_model_texture_candidates.py --run. Select the newly generated hotel-model-textures-v1 folder. No item-by-item loading.</div>
+  </div>
   <div id="originalBatchStatus" style="font:11px/1.6 Consolas,monospace;color:#b5cfb6;margin-top:9px;white-space:pre-wrap">ONE-TIME SETUP: py tools\build_hotel_scene_bundle.py --run. Then select the full research/local/hotel-auto-props folder. The importer reads all supported original model meshes and all their hotel placements together; no per-object loading.</div>
 </div>
 <details id="originalPropPanel" style="margin-top:16px;padding-top:13px;border-top:1px solid #57717d"><summary style="cursor:pointer;font-size:12px;color:#d5b797;padding:7px 0">OPTIONAL: SINGLE CHAIR DEBUG TOOLS</summary>
