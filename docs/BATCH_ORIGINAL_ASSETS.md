@@ -96,3 +96,39 @@ Next shared improvements: use `py tools\report_hotel_scene_bundle.py`
 on the existing scene report to find failures with the largest number
 of affected original instances, then add model material/texture binding
 at the studio-format level. No per-object manual conversion needed.
+
+## Shared 132-model issue: Xbox LZMA no-EOS one-byte overflow
+
+The October 27 owner-side report found that **all 132 skipped model types**
+(affecting **1,142 original hotel prop references**) failed at the same
+Valve LZMA decoding stage. Example errors include 'expected 1740 bytes;
+got 1741', 'expected 19281 bytes; got 19282', and
+'expected 92202 bytes; got 92203'. This suggests a Source Xbox studio
+raw-LZMA range coder that produces one surplus trailing byte without
+an end-of-stream marker. This has not yet been verified against every
+original model after the change.
+
+The central decoder now has an **explicit studio-only compatibility option**
+for precisely that condition. It accepts the declared uncompressed length
+only when the output is exactly one byte longer, the LZMA end marker is
+absent, and the compressed member occupies the full wrapper payload.
+The normal map/BSP LZMA path remains strict. Studio MDL/VVD/VTX
+callers opt in, and the existing Source-version, MDL/VVD/VTX checksums,
+vertex bounds and strip-index validation remain mandatory.
+
+Regenerate the scene into a **new private folder**, because the original
+`hotel-auto-props` output is intentionally preserved and cannot be overwritten:
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\build_hotel_scene_bundle.py --run --output research\local\hotel-auto-props-v2
+```
+
+Then choose `research/local/hotel-auto-props-v2` in the Chrome viewer's
+**LOAD ENTIRE HOTEL AUTO-PROPS FOLDER** picker. Do not delete or
+re-upload the v1 folder. The first owner run of this decoder modification
+is still pending; success is measured by real decoded model and placement
+counts and a browser visual check, not by an assertion that all 228
+models are automatically recovered.
