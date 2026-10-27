@@ -71,8 +71,15 @@ def pick_samples(models: list[dict], tables: dict, loader, sample_limit: int=8):
     if not 1<=sample_limit<=20:
         raise ValueError("Sample limit must be 1..20")
     referenced=Counter()
+    # Purely an independent filename correlation, NOT a verified
+    # $basetexture binding. Kept separate to prevent wrong model skins.
+    same_name_slots=0
+    same_name_weighted=0
     for m in models:
         for candidates in m["texture_candidates"]:
+            if any(pick_source(tables,"vtfx",candidate) for candidate in candidates):
+                same_name_slots+=1
+                same_name_weighted+=m.get("original_placements",0)
             for candidate in candidates:
                 original=pick_source(tables,"vmt",candidate)
                 if original:
@@ -102,6 +109,8 @@ def pick_samples(models: list[dict], tables: dict, loader, sample_limit: int=8):
          for name,rows in by_kind.items()),
         key=lambda x:-x["file_count"])
     return {"unique_vmt_files":sum(len(rows) for rows in by_kind.values()),
+            "independent_same_name_vtfx_candidate_slots":same_name_slots,
+            "independent_same_name_vtfx_candidate_prop_uses":same_name_weighted,
             "counts_by_kind":ranked,"load_errors":dict(errors)}
 
 def inspect_archive_materials(zip_path:Path,bsp_path:Path,models:list[dict],limit=6):
@@ -144,6 +153,12 @@ def main():
         print("ORIGINAL XBOX 360 STUDIO MATERIAL VMT PAYLOAD FORMATS (READ ONLY)")
         print("Unique original VMT material files examined:",report["unique_vmt_files"])
         print("Unreadable/ambiguous archive entries:",report["load_errors"])
+        print("Independent exact-same-name VTFX filename candidates (UNVERIFIED):",
+              report["independent_same_name_vtfx_candidate_slots"],
+              "studio material slots,",
+              report["independent_same_name_vtfx_candidate_prop_uses"],
+              "prop reference uses")
+        print("Same-name filename candidates are NOT verified $basetexture matches.")
         for group in report["counts_by_kind"]:
             print(f"  {group['file_count']:>3} files | {group['kind']} "
                   f"| {group['referenced_prop_uses']} reference uses")
