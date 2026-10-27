@@ -23,6 +23,27 @@ then **LOAD ENTIRE HOTEL AUTO-PROPS FOLDER** and choose
 `research/local/hotel-auto-props` (one folder, not 96 individual models).
 WebGL rendering of the complete batch still needs the owner's validation.
 
+## Shared Xbox LZMA compatibility fix — all skipped models had the same byte-count mismatch
+
+The first model batch decoded 96/228 unique hotel model types. The report
+showed all 132 failures came from an LZMA stream producing **one byte
+more than the advertised decompressed model length**. A guarded compatibility
+path now handles that Xbox studio-model no-end-marker pattern, while the
+map/BSP decoder remains strict. The updated asset decoder still needs
+owner-side verification; there is no guarantee all formerly skipped
+models will validate.
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\build_hotel_scene_bundle.py --run --output research\local\hotel-auto-props-v2
+```
+
+Pick the new `hotel-auto-props-v2` folder in the Chrome viewer; leave
+the first output folder untouched. See
+[automatic original asset pipeline](docs/BATCH_ORIGINAL_ASSETS.md).
+
 ## Automated model importing — no per-object conversion
 
 With the first original Xbox chair model decoded, the next phase uses the
