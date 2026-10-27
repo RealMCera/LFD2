@@ -22,7 +22,10 @@
 - [x] Commit one-command read-only exact original model MDL material -> VMT `$basetexture` -> Xbox VTFX directory matcher; skips missing or ambiguous references (owner's first actual scan pending).
 - [x] Owner Windows exact studio-VMT-VTFX pass completed: **393 studio material slots, 0 exact VMT+$basetexture+VTFX matches**, 388 slots with a readable VMT archive entry but no recognized `$basetexture`, 5 missing or ambiguous VMT; five checkpoint-door MDL material headers still unsupported.
 - [x] Add one-command read-only Xbox VMT byte-signature diagnostic to distinguish plain text, Valve LZMA wrapper, alternate encoding/binary data, and absent shader parameters; separately count unverified same-filename VTFX candidates without guessing materials.
-- [ ] Validate real VMT payload signatures and implement only the common Xbox-specific decoding change warranted by actual byte evidence.
+- [x] Owner diagnosed **257 original Xbox studio VMTs** as short binary payloads with shared observed `AA 4F F4 D8` prefix; not plain text, not Valve LZMA. Actual binary shader serialization remains unknown.
+- [x] Original VTFX filename audit found **219 material slots** with exact same-name Xbox image candidates; strictly **unverified filename associations**, not decoded `$basetexture` references.
+- [x] Add one-command dry-run and private bulk conversion of authentic Xbox VTFX image candidates, required exact same-name original VMT and VTFX files, and Chrome optional texture-folder picker. Uses original mesh UVs, triangle material slot IDs, GPU instancing, and diagnostic fallback. Synthetic test/owner first actual texture conversion pending.
+- [ ] Validate provisional VTFX PNG batch on Windows, inspect Chrome screenshot, and establish real Xbox binary VMT material lookup/skin/shader parameters without assumed associations.
 - [ ] Batch convert resolved original model VTFX images and apply them to original mesh material/skin mappings with no per-object handwork.
 - [ ] Generalize same asset importer across the other maps and model formats, then integrate faithful model materials and Source gameplay systems
 
