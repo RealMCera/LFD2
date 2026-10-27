@@ -20,7 +20,9 @@
 - [x] Commit a single-command, read-only studio material-name/skin-family reference inventory for all 228 MDL headers (owner validation pending).
 - [x] Owner's original studio inventory: 172 synthetic tests passed, 223/228 readable material tables, 268 *candidate paths*, five checkpoint-door variants need a shared format investigation.
 - [x] Commit one-command read-only exact original model MDL material -> VMT `$basetexture` -> Xbox VTFX directory matcher; skips missing or ambiguous references (owner's first actual scan pending).
-- [ ] Verify physical original VMT/VTFX match count on Windows and investigate five checkpoint-door material-name structures as one family.
+- [x] Owner Windows exact studio-VMT-VTFX pass completed: **393 studio material slots, 0 exact VMT+$basetexture+VTFX matches**, 388 slots with a readable VMT archive entry but no recognized `$basetexture`, 5 missing or ambiguous VMT; five checkpoint-door MDL material headers still unsupported.
+- [x] Add one-command read-only Xbox VMT byte-signature diagnostic to distinguish plain text, Valve LZMA wrapper, alternate encoding/binary data, and absent shader parameters; separately count unverified same-filename VTFX candidates without guessing materials.
+- [ ] Validate real VMT payload signatures and implement only the common Xbox-specific decoding change warranted by actual byte evidence.
 - [ ] Batch convert resolved original model VTFX images and apply them to original mesh material/skin mappings with no per-object handwork.
 - [ ] Generalize same asset importer across the other maps and model formats, then integrate faithful model materials and Source gameplay systems
 
