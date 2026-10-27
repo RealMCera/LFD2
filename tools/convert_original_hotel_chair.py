@@ -22,12 +22,12 @@ import sys
 try:
     from .bsp_to_browser_mesh import ROOT,BspError,decode_valve_lzma
     from .probe_original_hotel_model import (
-        parse_source_header,studio_model_summary,OUT_DIR,DEFAULT_MODEL,
+        parse_source_header,studio_model_summary,OUT_DIR,DEFAULT_MODEL,validate_name,
     )
 except ImportError:
     from bsp_to_browser_mesh import ROOT,BspError,decode_valve_lzma
     from probe_original_hotel_model import (
-        parse_source_header,studio_model_summary,OUT_DIR,DEFAULT_MODEL,
+        parse_source_header,studio_model_summary,OUT_DIR,DEFAULT_MODEL,validate_name,
     )
 
 PRIVATE=(ROOT/"research"/"local").resolve()
@@ -444,7 +444,9 @@ def vtx_triangles(vtx: bytes, studio: list, pool_size: int,
     return result
 
 
-def convert_original_model(mdl: bytes, vvd: bytes, vtx: bytes) -> dict:
+def convert_original_model(mdl: bytes, vvd: bytes, vtx: bytes, *,
+                           model_name: str = DEFAULT_MODEL) -> dict:
+    model_name=validate_name(model_name)
     hdr=parse_source_header(mdl[:64],"mdl")
     checksum=hdr.get("checksum")
     if not checksum:
@@ -461,7 +463,7 @@ def convert_original_model(mdl: bytes, vvd: bytes, vtx: bytes) -> dict:
     face_mats=[mat for *_,mat in triangles]
     return {"format":"lfd2-source-original-model-v1",
             "source":"original local Xbox Source studio files",
-            "model":"models/props_furniture/hotel_chair.mdl",
+            "model":model_name,
             "checksum":checksum,"vertices":positions,"normals":normals,
             "uvs":uvs,"indices":indices,"triangle_material_ids":face_mats,
             "triangle_count":len(triangles),"vertex_count":len(used),
