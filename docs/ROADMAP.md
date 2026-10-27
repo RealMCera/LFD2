@@ -10,7 +10,10 @@
 - [x] Original hotel chair Xbox MDL/VVD/VTX decoded and confirmed rendering in Chrome (1,403 triangles, 1,395 vertices, 47 placements), 154 passing owner tests
 - [x] New one-command batch tool scans 228 referenced hotel model paths and converts supported unique MDL/VVD/VTX sets without stopping for unsupported models
 - [x] New browser one-folder loader with WebGL2 GPU instancing across original model placements; old single-chair test UI collapsed
-- [ ] Owner validate first full private batch run and report total decoded/skipped model types and visual results
+- [x] Owner's first full Windows model batch processed **228/228** original models, decoded **96**, skipped **132** and generated a private scene with **1,022/2,164** original prop placements.
+- [x] Add read-only grouped failure classifier weighted by original placement impact so format fixes can recover many objects at once.
+- [ ] Verify Chrome loads the full original model bundle through a single local directory picker and inspect model rendering.
+- [ ] Review read-only batch report and extend shared MDL/VVD/VTX decoder patterns for the highest-impact rejected category.
 - [ ] Generalize same asset importer across the other maps and model formats, then integrate faithful model materials and Source gameplay systems
 
 See [Batch original model pipeline](BATCH_ORIGINAL_ASSETS.md). User should not have to inspect or manually import items individually.
