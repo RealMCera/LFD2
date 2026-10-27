@@ -400,6 +400,22 @@ py tools\probe_original_hotel_model.py --extract
 
 **Not yet done:** Xbox model vertex/index decoding or displaying authentic chairs inside Chrome. The inspector and its synthetic tests still require verification on the owner's PC. The project remains focused on original models and props, not revisiting textures.
 
+## First original chair binary found — safely decompress model header
+
+Owner extracted the genuine hotel chair MDL/VVD/VTX triplet. The Xbox `.360.mdl` is **Valve LZMA-wrapped (482 bytes)**, while the big-endian VVD and VTX have matching original checksum `f3737e00`. A prior “unrecognized MDL” message came from inspecting the compressed wrapper as if it were an already decoded `IDST` header.
+
+The [revised chair probe](tools/probe_original_hotel_model.py) now decodes the original LZMA MDL in memory, reads its Source studio header (model version, checksum and bodypart/material counts) and checks the entire trio. Only an explicit `--write-decoded-mdl` can save one private, checksum-verified decompressed MDL; it does not overwrite the raw files or commit assets to GitHub.
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\probe_original_hotel_model.py
+py tools\probe_original_hotel_model.py --write-decoded-mdl
+```
+
+Next: genuine Xbox Source model vertex/index decoding and putting the actual 3D hotel chair into Chrome at its known authored placement. New LZMA reader changes await owner-PC validation.
+
 ## Further research and options
 
 - [Ghidra / Xbox module setup](docs/GHIDRA_SETUP.md)
