@@ -4,6 +4,25 @@
 
 The archived [After the Siren demo](docs/legacy-demo.html) is a **separate, basic JavaScript raycasting experiment**. It is NOT the original game, does not use Source, and is **not the target implementation**. We will stop treating improvements to the demo's graphics as progress toward running actual L4D2.
 
+## Automated model importing — no per-object conversion
+
+With the first original Xbox chair model decoded, the next phase uses the
+[automated offline hotel model batch pipeline](docs/BATCH_ORIGINAL_ASSETS.md).
+One command iterates the hotel’s **228 original referenced model types** from
+the local Xbox archive, decodes all supported models, logs unsupported formats
+and writes one gitignored model folder for a **single Chrome folder selection**.
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\build_hotel_scene_bundle.py --run
+```
+
+The model batch and WebGL2 instancing importer are committed but still need
+the owner's first full 228-model run to measure successful conversion coverage.
+Original game assets stay on the owner's PC; this does **not** complete the
+Source gameplay engine, animation, audio or AI port.
 ## The browser-port architecture
 
 The BO1 Zombies project runs native C++ game-engine code recompiled into WebAssembly with custom web graphics, sound and game-data systems. See the [technical description of bo1z-client](https://github.com/jplot/bo1z-client).
