@@ -81,3 +81,18 @@ format fixes instead of manual per-object conversions.
 For the Chrome preview, load the same original hotel UV map as before,
 then choose the entire `research/local/hotel-auto-props` folder using
 **LOAD ENTIRE HOTEL AUTO-PROPS FOLDER** in the map loader.
+
+## Browser batch-import visual confirmation
+
+October 27 user screenshot confirms the existing local `hotel-auto-props`
+bundle was loaded with the original hotel BSP in Chrome. Multiple original
+prop forms (including debris and other hallway objects) visibly appear,
+the NEXT MODEL control is active, and the user's original BSP texture folder
+continues rendering 53 map materials. This confirms the batch loader is
+functional, **not** that every supported model's shading, orientation,
+skin, animation or placement has been fully verified.
+
+Next shared improvements: use `py tools\report_hotel_scene_bundle.py`
+on the existing scene report to find failures with the largest number
+of affected original instances, then add model material/texture binding
+at the studio-format level. No per-object manual conversion needed.
