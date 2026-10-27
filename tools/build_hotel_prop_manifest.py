@@ -188,6 +188,42 @@ def scan_model_archive_directories(root: Path, bsp: bytes | None = None) -> tupl
     return dict(sources),per_pack,problems
 
 
+def diagnose_model_companion_naming(sources: dict, models: list[str],
+                                    limit: int = 6) -> dict:
+    """Compare real filenames near each model stem; metadata-only.
+
+    Print exact suffixes and closest raw central-directory filenames so
+    Xbox-specific companion names can be confirmed, never invented.
+    """
+    all_names=sorted(sources)
+    by_parent=defaultdict(list)
+    for name in all_names:
+        if name.startswith("models/"):
+            by_parent[name.rsplit("/",1)[0]].append(name)
+    result=[]
+    for model in models[:limit]:
+        stem=model[:-4] if model.endswith(".mdl") else model
+        dirname,_,base=stem.rpartition("/")
+        exact=[name for name in by_parent.get(dirname, [])
+               if name.startswith(stem+".") and name != stem+".mdl"]
+        similar=[name for name in by_parent.get(dirname, [])
+                 if (name.rsplit("/",1)[-1].startswith(base[:min(len(base),10)])
+                     and name not in exact and name!=model)]
+        suffixes=[name[len(stem):] for name in exact]
+        result.append({"model":model,"companions":exact[:12],
+                       "suffixes":suffixes[:12],
+                       "nearby":similar[:5]})
+    global_samples={}
+    for ext in (".mdl",".vvd",".vtx",".phy"):
+        matches=(item for item in all_names
+                 if item.startswith("models/") and item.endswith(ext))
+        global_samples[ext]=[]
+        for name in matches:
+            if len(global_samples[ext])>=5:break
+            global_samples[ext].append(name)
+    return {"examples":result,"file_samples":global_samples}
+
+
 def build_inventory(bsp: bytes, sources: dict) -> dict:
     endian,directory,_=read_directory(bsp)
     dynamic=list_model_placements(read_lump(bsp,directory[0],endian))
@@ -256,8 +292,17 @@ def main()->int:
                         print(f"  {kind}: {key} in {', '.join(sources[key][:2])}")
                         break
         else:
-            print("No complete standard model triplet located across these local packages.")
-            print("Inspect model file suffixes and loose disc extraction before decoding.")
+            print("No complete standard model triplet matched by current filename rules.")
+            print("Read-only companion filename diagnostics:")
+            diagnostic=diagnose_model_companion_naming(
+                sources,[name for name,_ in record["top_models"]],limit=6)
+            for kind,items in diagnostic["file_samples"].items():
+                print(f"  ZIP metadata sample {kind}:")
+                for name in items[:3]:print(f"    {name}")
+            for row in diagnostic["examples"]:
+                print("  REFERENCED:",row["model"])
+                print("    exact stem suffixes:",row["suffixes"])
+                print("    nearby candidate filenames:",row["nearby"][:3])
         if args.export:
             target=args.output.expanduser().resolve()
             if not target.is_relative_to(PRIVATE) or target==PRIVATE or target.exists():
