@@ -16,7 +16,9 @@
 - [ ] Add authentic Source studio material and texture assignments for rendered model types (currently diagnostic flat colors); check affected geometry families, not individual objects.
 - [x] Owner-side report grouped all **132 skipped original model types / 1,142 placement references** under the same Xbox raw-LZMA one-byte decoded-length mismatch.
 - [x] Commit a studio-only compatibility guard for streams lacking an LZMA EOS marker with precisely one extra decoded byte; leave BSP/map decoding strict and preserve Source structure/checksum validation.
-- [ ] Validate recovery counts by converting all original hotel assets to a **new private v2 folder**, not overwriting v1. Confirm Chrome prop rendering and the remaining skipped-format families.
+- [x] User reports v2 batch **228/228 original model types decoded**, **0 skipped**, and all **2,164/2,164 placements included**. Geometry conversion coverage is complete for referenced hotel studio models; complete model appearance in browser remains unverified.
+- [x] Commit a single-command, read-only studio material-name/skin-family reference inventory for all 228 MDL headers (owner validation pending).
+- [ ] Match original studio material path candidates to original Xbox VMT/VTFX assets and apply them in the browser with original skins; no hand-mapping individual props.
 - [ ] Generalize same asset importer across the other maps and model formats, then integrate faithful model materials and Source gameplay systems
 
 See [Batch original model pipeline](BATCH_ORIGINAL_ASSETS.md). User should not have to inspect or manually import items individually.
@@ -185,7 +187,7 @@ The `default.xex` launcher has only about **32 KiB** of code, but the newly veri
 
 See [Ghidra setup](GHIDRA_SETUP.md). No proprietary executable or decompiler output is checked into this public repo.
 
-**Status (October 27, 2026): User verified 154/154 Python tests, successfully decoded the genuine Xbox hotel chair to 1,403 triangles and 1,395 original vertices, and exported ignored `research/local/hotel-chair.mesh.json` after successful MDL/VVD/VTX LZMA handling. 47 original authored chair placements remain available. Chrome original-chair overlay and NEXT CHAIR jump control committed; user screenshot/visual inspection still pending. This is only an original-assets research renderer, not playable L4D2 or an engine port.**
+**Status (October 27, 2026): User verified the new v2 local Xbox asset batch decoded all 228/228 original hotel studio model types, with zero failed and all 2,164 authored hotel prop placements included. Existing Chrome screenshot had confirmed the earlier partial-model batch draws alongside the textured BSP. Model textures/skins and animations are not finished. This is an asset research renderer, not playable L4D2 or an engine port.**
 
 ### Full-disc ISO input (extraction confirmed; code analysis pending)
 
