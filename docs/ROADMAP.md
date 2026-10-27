@@ -5,6 +5,16 @@
 > The original game does **not** yet run in Chrome. The current HTML demo is unrelated placeholder technology.
 
 
+## October 27: Automated offline studio-model import for original hotel
+
+- [x] Original hotel chair Xbox MDL/VVD/VTX decoded and confirmed rendering in Chrome (1,403 triangles, 1,395 vertices, 47 placements), 154 passing owner tests
+- [x] New one-command batch tool scans 228 referenced hotel model paths and converts supported unique MDL/VVD/VTX sets without stopping for unsupported models
+- [x] New browser one-folder loader with WebGL2 GPU instancing across original model placements; old single-chair test UI collapsed
+- [ ] Owner validate first full private batch run and report total decoded/skipped model types and visual results
+- [ ] Generalize same asset importer across the other maps and model formats, then integrate faithful model materials and Source gameplay systems
+
+See [Batch original model pipeline](BATCH_ORIGINAL_ASSETS.md). User should not have to inspect or manually import items individually.
+
 ## October 26 milestone: hotel visual pipeline complete
 
 - Original first-person hotel brush geometry: **27,374 triangles**
