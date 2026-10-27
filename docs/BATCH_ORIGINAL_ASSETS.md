@@ -216,3 +216,57 @@ byte ratios and parser flags. It also separately reports direct same-name
 VTFX filename *candidates*, without pretending those are verified
 shader material bindings. Once the format is established, implement
 a shared decoder and retry exact matching, then batch texture conversion.
+
+## October 27: original Xbox material scripts are binary — provisional whole-hotel texture preview
+
+The owner's read-only diagnostic successfully inventoried **257**
+original VMT scripts. Example material bytes start with
+`AA 4F F4 D8`, including 25-byte metal-door/ceiling files and
+52-byte infected apparel files. These are neither plain-text VMT
+scripts nor Valve LZMA-wrapped materials according to the byte check;
+the exact proprietary Xbox compiled material encoding is **not decoded**.
+
+The same scan found **219 material slots** with an independently exact-name
+VTFX filename candidate, covering **2,340 slot × placement references**
+(not 2,340 distinct props and not a verified shader binding).
+Generic names, similar-name heuristics, and manual one-by-one conversions
+are **not** used.
+
+To make visual progress without inventing shader parameters, the
+`tools/build_hotel_model_texture_candidates.py` pipeline requires:
+
+- A valid original studio MDL material path from the existing batch inventory
+- A unique exact-name VMT archive entry with the *observed* Xbox binary prefix
+- A unique exact-name original Xbox VTFX image file; VTFX headers validated by the existing converter
+
+The first command runs read-only and prints prospective count. The second
+converts original VTFX files into a **new private directory**; it does
+not touch `research/local/hotel-auto-props-v2`. The converter uses your
+existing offline `research/local/tools/vtfx_reader.exe`, never downloads
+anything or commits commercial assets:
+
+```powershell
+cd C:\Users\FrontDesk\LFD2
+git pull
+py -m unittest discover -s tests -v
+py tools\build_hotel_model_texture_candidates.py
+py tools\build_hotel_model_texture_candidates.py --run
+```
+
+If the default output folder already exists, choose a new folder via
+`--output research/local/hotel-model-textures-v2`. Outputs remain ignored
+by Git in `research/local`.
+
+### Chrome: two folders total, not hundreds of assets
+
+1. Load original hotel BSP as before and choose
+   `research/local/hotel-auto-props-v2` once using the original model folder button.
+2. Using **LOAD ALL PROVISIONAL ORIGINAL MODEL TEXTURES · ONE FOLDER**,
+   choose `research/local/hotel-model-textures-v1` once. The viewer
+   uses original model UVs and per-triangle studio material IDs with
+   WebGL2 instancing; missing/unsupported image slots stay diagnostic colored.
+
+**IMPORTANT:** Original material shader assignments, transparent/blended
+rendering, skin-family choices, animations, and full game logic are still
+unfinished. These textures are a *provisional exact-filename visual preview*,
+not a verified reproduction of the binary Xbox VMT parameter tree.
