@@ -18,7 +18,10 @@
 - [x] Commit a studio-only compatibility guard for streams lacking an LZMA EOS marker with precisely one extra decoded byte; leave BSP/map decoding strict and preserve Source structure/checksum validation.
 - [x] User reports v2 batch **228/228 original model types decoded**, **0 skipped**, and all **2,164/2,164 placements included**. Geometry conversion coverage is complete for referenced hotel studio models; complete model appearance in browser remains unverified.
 - [x] Commit a single-command, read-only studio material-name/skin-family reference inventory for all 228 MDL headers (owner validation pending).
-- [ ] Match original studio material path candidates to original Xbox VMT/VTFX assets and apply them in the browser with original skins; no hand-mapping individual props.
+- [x] Owner's original studio inventory: 172 synthetic tests passed, 223/228 readable material tables, 268 *candidate paths*, five checkpoint-door variants need a shared format investigation.
+- [x] Commit one-command read-only exact original model MDL material -> VMT `$basetexture` -> Xbox VTFX directory matcher; skips missing or ambiguous references (owner's first actual scan pending).
+- [ ] Verify physical original VMT/VTFX match count on Windows and investigate five checkpoint-door material-name structures as one family.
+- [ ] Batch convert resolved original model VTFX images and apply them to original mesh material/skin mappings with no per-object handwork.
 - [ ] Generalize same asset importer across the other maps and model formats, then integrate faithful model materials and Source gameplay systems
 
 See [Batch original model pipeline](BATCH_ORIGINAL_ASSETS.md). User should not have to inspect or manually import items individually.
